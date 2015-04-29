@@ -1,0 +1,10 @@
+*swp
+*.o
+*Makefile
+Stalker
+moc_*
+*.mat
+*.fig
+stalker_matlab/data/*
+stalker_matlab/lib/*
+
