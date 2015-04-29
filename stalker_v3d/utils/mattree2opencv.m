@@ -1,6 +1,7 @@
 function matrtree2opencv(matrtreepath)
 % Convert .mat file contains a single random forest tree to opencv
 % compatible xml file
+% WIP
 
 matrtree = load(matrtreepath, 'model_alpha');
 matrtree = matrtree.model_alpha;
