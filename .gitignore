@@ -7,5 +7,6 @@ moc_*
 *.fig
 stalker_matlab/data/*
 stalker_matlab/lib/*
+*xml
 
 
