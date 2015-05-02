@@ -2,6 +2,7 @@ function matrtree2opencv(matrtreepath)
 % Convert .mat file contains a single random forest tree to opencv
 % compatible xml file
 % WIP
+addpath('.');
 
 matrtree = load(matrtreepath, 't');
 matrtree = matrtree.t;
@@ -112,14 +113,25 @@ mlrtreesNode.appendChild(ntreesNode);
 
 treesNode = docNode.createElement('trees');
 % --- Start the tree
-for i = 1 : matrtree.trees
+for i = 1 : numel(matrtree.trees)
     treeNode = docNode.createElement('_');
     nodesNode = docNode.createElement('nodes');
-    for j = 1 : NumNodes
-        % Things get a bit complicated here, matlab saves the tree in a
-        % different manner regarding the openCV
-        % Matlab saves the topology by stating the node IDs in an array
-        % The implementation of writeTree in OpenCV - https://github.com/Itseez/opencv/blob/d7cb99254eb4e545bfe9c2d6bed1a2adbe30a547/modules/ml/src/tree.cpp#L1649
+    
+    % Things get a bit complicated here, matlab saves the tree in a
+    % different manner regarding the openCV
+    % Matlab saves the topology by stating the node IDs in an array
+    % According to the implementation of writeTree in OpenCV - 
+    % https://github.com/Itseez/opencv/blob/d7cb99254eb4e545bfe9c2d6bed1a2adbe30a547/modules/ml/src/tree.cpp#L1649
+    % It save the tree nodes following the depth-first order
+
+    % Build Graph G compatible with graphtraverse
+    % graphtraverse doc: http://au.mathworks.com/help/bioinfo/ref/graphtraverse.html
+    [g, s] = tree2graph(matrtree.trees{i});
+    
+    %[disc, pred, closed] = graphtraverse(sparse(g) , s, 'Method', 'DFS');
+    [d dt ft pred] = dfs(sparse(g), s); % Bug: only 3016/3058 nodes were discovered with DFS.
+    
+    for j = 1 : matrtree.trees{i}.NumNodes
         
     end
     treeNode.appendChild(nodesNode);
@@ -131,4 +143,23 @@ end
 opencvrtreepath = fullfile(pathstr, strcat(name,'.xml'));
 
 xmlwrite(opencvrtreepath, docNode);
+end
+
+function [g, s] = tree2graph(tree)
+% Convert the tree node index to a directed graph matrix with size N*N
+% 
+% [g, s] = tree2graph(tree)
+% 
+% It uses the parent index stored in the compact tree
+% input - tree: a CompactTree object
+% output - g: a N*N matrix 
+%          s: the source index
+
+p = tree.Parent;
+g = zeros(tree.NumNodes-1, tree.NumNodes-1);
+s = find(p==0); % Find the source index
+p(s) = [];
+p = [p, (1:numel(p))'];
+idx = sub2ind(size(g), p(:,1), p(:,2));
+g(idx) = 1;
 end
