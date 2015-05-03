@@ -11,13 +11,18 @@ cd utils; addpath(genpath(pwd)); cd ..;
 % Try to enter the raw image ground truth path
 cd(fullfile('data', 'input', 'raw', 'rawimage'...
          , 'op_raw_imagestack')); 
-
+     
 % It will iteratively load the ground truth
-prefix='OP_';
+
 for i =1:9
+    prefix='OP_';
 current_folder=[prefix num2str(i)];
+    Number_file=length(dir(current_folder))-3;
     cd(current_folder);
+    raw_image_prep
     cd ..
+    clc
+    clear all
 end
 
 % addpath(genpath('C:\Users\donghao\Desktop\Sydney\new_construction'));
