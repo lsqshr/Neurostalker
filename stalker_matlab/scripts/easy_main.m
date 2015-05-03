@@ -20,9 +20,22 @@ current_folder=[prefix num2str(i)];
     Number_file=length(dir(current_folder))-3;
     cd(current_folder);
     raw_image_prep
-    cd ..
-    clc
-    clear all
+    cd ..;cd ..;cd ..;cd ..;
+    % Enter the preprocessed folder
+    cd(fullfile('preprocessed'...
+         , 'preprocessed_images')); 
+    
+    save( ([current_folder '_three_dim']), 'three_dim');
+    save( ([current_folder '_salt_pepper_three_dim']), 'salt_pepper_three_dim');
+    save( ([current_folder '_ag_pepper_three_dim']), 'ag_three_dim');
+
+     
+    % Back to the iamge stack folder 
+     cd ..;cd ..;
+     cd(fullfile('raw', 'rawimage'...
+         , 'op_raw_imagestack')); 
+%     clc
+     clear all
 end
 
 % addpath(genpath('C:\Users\donghao\Desktop\Sydney\new_construction'));

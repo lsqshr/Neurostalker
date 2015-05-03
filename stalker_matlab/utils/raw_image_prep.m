@@ -1,4 +1,4 @@
-
+% this file is used to show the original 3D images and the save raw image data 
 for i = 1:Number_file
 string_i=num2str(i);
 fullname=[string_i '.tif'];
@@ -7,7 +7,7 @@ current_pic=transpose(current_pic);
 A(:,:,i)=current_pic;
 %imshow(current_pic);
 end
-
+size(A)
 threshold =15;
 three_dim = A;
 zero_size = 20;
@@ -50,7 +50,7 @@ hold off
 view(3), axis vis3d, box on, rotate3d on
 xlabel('x'), ylabel('y'), zlabel('z')
 
-
+%In the future, we might try the histogram normalization. 
 three_dim_vec=three_dim(:);
 % max(three_dim_vec)
 % min(three_dim_vec)
