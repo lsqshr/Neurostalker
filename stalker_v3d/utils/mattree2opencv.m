@@ -1,3 +1,5 @@
+% Author: SQ Liu
+
 function matrtree2opencv(matrtreepath)
 % Convert .mat file contains a single random forest tree to opencv
 % compatible xml file
@@ -126,17 +128,63 @@ for i = 1 : numel(matrtree.trees)
 
     % Build Graph G compatible with graphtraverse
     % graphtraverse doc: http://au.mathworks.com/help/bioinfo/ref/graphtraverse.html
-    [g, s] = tree2graph(matrtree.trees{i});
+    curtree = matrtree.trees{i};
     
-    %[disc, pred, closed] = graphtraverse(sparse(g) , s, 'Method', 'DFS');
-    [d dt ft pred] = dfs(sparse(g), s); % Bug: only 3016/3058 nodes were discovered with DFS.
+    [g, s] = tree2graph(curtree);
+    [d dt ft pred] = dfs(sparse(g), s); % should work for well-built trees
+    
+    [~, I] = sort(dt);
+    sorteddepth = d(I);
+    sortedvalue = curtree.NodeMean(I);
+    sortedbranchflag = curtree.IsBranchNode(I);
+    sortedfeatidx = curtree.CutPredictor(I);
+    sortederror = curtree.NodeError(I);
+    sortedcutpoints = curtree.CutPoint(I);
     
     for j = 1 : matrtree.trees{i}.NumNodes
+        nodeNode = docNode.createElement('_');
         
+        % Depth
+        depthnode = docNode.createElement('depth');
+        depthnode.appendChild(docNode.createTextNode(num2str(sorteddepth(j))));
+        
+        % Value - According to opencv doc: 
+        % A class label in case of classification or estimated function value in case of regression.
+        valuenode = docNode.createElement('value');
+        valuenode.appendChild(docNode.createTextNode(num2str(sortedvalue(j))));
+        
+        % Split - Only branching node has a split
+        if sortedbranchflag(j)
+            splitsnode = docNode.createElement('split');
+            splitnode = docNode.createElement('_');
+            
+            splitvarnode = docNode.createElement('var');
+            idxstr = strrep(sortedfeatidx(j), 'x', '');
+            splitvarnode.appendChild(docNode.createTextNode(num2str(str2num(idxstr{:})-1)));
+            
+            % The definition of quality may be the squared error for
+            % regression in OpenCV - http://answers.opencv.org/question/566/how-is-decision-tree-split-quality-computed/
+            splitqualitynode = docNode.createElement('quality'); 
+            splitqualitynode.appendChild(docNode.createTextNode(num2str(sortederror(j))));
+            
+            splitlenode = docNode.createElement('le'); 
+            splitlenode.appendChild(docNode.createTextNode(num2str(sortedcutpoints(j))));
+            
+            splitnode.appendChild(splitvarnode);
+            splitnode.appendChild(splitqualitynode);
+            splitnode.appendChild(splitlenode);
+            splitsnode.appendChild(splitnode);
+        end
+        
+        nodeNode.appendChild(splitsnode);
+        nodeNode.appendChild(depthnode);
+        nodesNode.appendChild(nodeNode);
     end
     treeNode.appendChild(nodesNode);
     treesNode.appendChild(treeNode);
 end
+
+mlrtreesNode.appendChild(treesNode);
 
 % --- Extract the path without extension and make new name for the xml
 [pathstr, name, ~] = fileparts(matrtreepath);
@@ -156,10 +204,10 @@ function [g, s] = tree2graph(tree)
 %          s: the source index
 
 p = tree.Parent;
-g = zeros(tree.NumNodes-1, tree.NumNodes-1);
+g = zeros(tree.NumNodes, tree.NumNodes);
 s = find(p==0); % Find the source index
 p(s) = [];
-p = [p, (1:numel(p))'];
+p = [p, (2:numel(tree.Parent))'];
 idx = sub2ind(size(g), p(:,1), p(:,2));
 g(idx) = 1;
 end
