@@ -3,7 +3,7 @@
 % clc
 %add raw voxel and raw voxel with noises
 
- showbox(ag_three_dim,0.1)
+showbox(ag_three_dim,0.1)
 index_ori=ans.data(:,1);
 type1=ans.data(:,2);
 x_location=ans.data(:,3);
