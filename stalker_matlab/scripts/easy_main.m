@@ -34,9 +34,32 @@ current_folder=[prefix num2str(i)];
      cd ..;cd ..;
      cd(fullfile('raw', 'rawimage'...
          , 'op_raw_imagestack')); 
-%     clc
+     clc
      clear all
 end
+
+cd ..;cd ..;cd ..;
+    % Enter the preprocessed folder
+    cd(fullfile('preprocessed'...
+         , 'preprocessed_images')); 
+
+    for i = 1:9
+    prefix='OP_';
+    current_folder=[prefix num2str(i)];
+    zero_size=20;
+    load([current_folder '_three_dim.mat']);
+    load([current_folder '_salt_pepper_three_dim.mat']);
+    load([current_folder '_ag_three_dim.mat']);
+    cd ..; cd ..;
+    cd(fullfile('raw','groundtruth'));
+    % This step save ground truth into the model easy for our training
+    savetree
+    cd ..; cd ..;
+    cd(fullfile('preprocessed'...
+         , 'preprocessed_images')); 
+      end
+     
+%\data\input\raw\groudtruth
 
 % addpath(genpath('C:\Users\donghao\Desktop\Sydney\new_construction'));
 % cd Image_Stacks

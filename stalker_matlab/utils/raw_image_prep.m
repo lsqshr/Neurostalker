@@ -7,7 +7,8 @@ current_pic=transpose(current_pic);
 A(:,:,i)=current_pic;
 %imshow(current_pic);
 end
-size(A)
+%This  line isn just to make sure we use the whole stack 
+% size(A) 
 threshold =15;
 three_dim = A;
 zero_size = 20;
