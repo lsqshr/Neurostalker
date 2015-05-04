@@ -4,6 +4,8 @@ clc
 close all
 warning off;
 
+%Add the script folder into path
+addpath(genpath(pwd));
 % Try to find library and add lib into our path 
 cd ..; cd lib; addpath(genpath(pwd)); cd ..;
 % Try to find utility function and add utility function into our path 
@@ -13,7 +15,7 @@ cd(fullfile('data', 'input', 'raw', 'rawimage'...
          , 'op_raw_imagestack')); 
      
 % It will iteratively load the ground truth
-
+Option = input('Do you want show original 3D images? \nOption 1: Show  Option 2: Do not show:');
 for i =1:9
     prefix='OP_';
 current_folder=[prefix num2str(i)];
@@ -35,17 +37,18 @@ current_folder=[prefix num2str(i)];
      cd(fullfile('raw', 'rawimage'...
          , 'op_raw_imagestack')); 
      clc
-     clear all
+     clearvars -except Option
 end
 
 cd ..;cd ..;cd ..;
     % Enter the preprocessed folder
     cd(fullfile('preprocessed'...
          , 'preprocessed_images')); 
-
+Option = input('Do you want show original ground truth? \nOption 1: Show  Option 2: Do not show:');
+zero_size = 20;
     for i = 1:9
     prefix='OP_';
-    current_folder=[prefix num2str(i)];
+    current_folder=[prefix num2str(i)]
     zero_size=20;
     load([current_folder '_three_dim.mat']);
     load([current_folder '_salt_pepper_three_dim.mat']);
@@ -53,7 +56,8 @@ cd ..;cd ..;cd ..;
     cd ..; cd ..;
     cd(fullfile('raw','groundtruth'));
     % This step save ground truth into the model easy for our training
-    savetree
+    
+    savetree(three_dim, salt_pepper_three_dim, ag_three_dim, current_folder, Option, zero_size);
     cd ..; cd ..;
     cd(fullfile('preprocessed'...
          , 'preprocessed_images')); 

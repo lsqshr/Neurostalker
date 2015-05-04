@@ -8,7 +8,7 @@ A(:,:,i)=current_pic;
 %imshow(current_pic);
 end
 %This  line isn just to make sure we use the whole stack 
-% size(A) 
+ size(A) 
 threshold =15;
 three_dim = A;
 zero_size = 20;
@@ -16,16 +16,18 @@ three_dim=double(padarray(three_dim,[zero_size,zero_size,zero_size]));
 
 A = A > threshold;  % synthetic data
 [x y z] = ind2sub(size(A), find(A));
+if Option==1
 figure
 plot3(x, y, z, 'b.');
-
+end
 incidence_sp=0.0001;
 salt_pepper_three_dim = noise(three_dim,'sp', incidence_sp);
 A = salt_pepper_three_dim > threshold;  % synthetic data
 [x y z] = ind2sub(size(A), find(A));
+if Option==1
 figure
 plot3(x, y, z, 'b.');
-
+end
 
 incidence_ag=0.1;
 variance=1;
@@ -33,15 +35,17 @@ ag_three_dim = noise(three_dim,'ag', variance, incidence_ag);
 
 A = ag_three_dim > threshold;  % synthetic data
 [x y z] = ind2sub(size(A), find(A));
+if Option==1
 figure
 plot3(x, y, z, 'b.');
-
+end
 %# K-means clustering
 %# (K: number of clusters, G: assigned groups, C: cluster centers)
 three_dim_coordinate=[x,y,z];
 cluster_num = 20;
 [assigned_groups,centroid] = kmeans(three_dim_coordinate, cluster_num, 'distance','sqEuclidean', 'start','sample');
 
+if Option==1
 %# show points and clusters (color-coded)
 clr = lines(cluster_num);
 figure, hold on
@@ -50,7 +54,7 @@ scatter3(centroid(:,1), centroid(:,2), centroid(:,3), 100, clr, 'Marker','o', 'L
 hold off
 view(3), axis vis3d, box on, rotate3d on
 xlabel('x'), ylabel('y'), zlabel('z')
-
+end
 %In the future, we might try the histogram normalization. 
 three_dim_vec=three_dim(:);
 % max(three_dim_vec)
