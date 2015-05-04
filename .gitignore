@@ -8,6 +8,11 @@ moc_*
 stalker_matlab/data/*
 stalker_matlab/lib/*
 *xml
-
-
+*CMakeCache.txt
+*.cmake
 *.asv
+*CMakeFiles*
+*sublime-build
+*~
+/stalker_v3d/scaffolds/try_opencv_classification_forest/trytree
+/stalker_v3d/scaffolds/try_opencv_regression_forest/regressiontree
