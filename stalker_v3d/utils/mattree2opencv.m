@@ -42,7 +42,7 @@ mlrtreesNode.appendChild(ordvarcountNode);
 
 catvarcountNode = docNode.createElement('cat_var_count');
 catvarcountNode.appendChild(docNode.createTextNode(num2str(0)));
-mlrtreesNode.appendChild(varcountNode);
+mlrtreesNode.appendChild(catvarcountNode);
 
 % --- Third layer training_params: Keep them as 0 for now, since we only
 % use the saved file for prediction making
@@ -83,15 +83,20 @@ globalvaridxNode.appendChild(docNode.createTextNode('0'));
 mlrtreesNode.appendChild(globalvaridxNode);
 
 varidxNode = docNode.createElement('var_idx');
-varidxNode.appendChild(docNode.createTextNode(num2str(1:matrtree.var_count)));
+varidx = 0:matrtree.var_count-1; % var_idx starts from 0 in OPENCV
+matstr = mat2str(varidx);
+matstr = strrep(matstr, '[', '');
+matstr = strrep(matstr, ']', '');
+matstr = strrep(matstr, ';', sprintf('\n'));
+varidxNode.appendChild(docNode.createTextNode(matstr));
 mlrtreesNode.appendChild(varidxNode);
 
 vartypeNode = docNode.createElement('var_type');
-vartypeNode.appendChild(docNode.createTextNode(num2str(zeros(1,matrtree.var_count))));
+vartypeNode.appendChild(docNode.createTextNode(num2str(zeros(1,matrtree.var_count), '%d ')));
 mlrtreesNode.appendChild(vartypeNode);
 
 catofsNode = docNode.createElement('cat_ofs');
-catofsNode.appendChild(docNode.createTextNode('0 0 0 0')); % Not sure what it is for now
+catofsNode.appendChild(docNode.createTextNode(num2str(zeros(1, matrtree.var_count * 2), '%.1f '))); % Not sure what it is for now
 mlrtreesNode.appendChild(catofsNode);
 
 % This might not be used for regresssion trees
@@ -100,7 +105,7 @@ mlrtreesNode.appendChild(catofsNode);
 %mlrtreesNode.appendChild(classlabelsNode);
 
 missingsubstNode = docNode.createElement('missing_subst');
-missingsubstNode.appendChild(docNode.createTextNode(num2str(zeros(1,matrtree.var_count))));
+missingsubstNode.appendChild(docNode.createTextNode(num2str(zeros(1,matrtree.var_count), '%.1f ')));
 mlrtreesNode.appendChild(missingsubstNode);
 
 % Out-of-bag permutations were not saved. Run with 'oobvarimp' set to 'on'.
@@ -151,7 +156,7 @@ for i = 1 : numel(matrtree.trees)
         % Value - According to opencv doc: 
         % A class label in case of classification or estimated function value in case of regression.
         valuenode = docNode.createElement('value');
-        valuenode.appendChild(docNode.createTextNode(num2str(sortedvalue(j))));
+        valuenode.appendChild(docNode.createTextNode(num2str(sortedvalue(j), '%f ')));
         
         % Split - Only branching node has a split
         if sortedbranchflag(j)
@@ -160,15 +165,15 @@ for i = 1 : numel(matrtree.trees)
             
             splitvarnode = docNode.createElement('var');
             idxstr = strrep(sortedfeatidx(j), 'x', '');
-            splitvarnode.appendChild(docNode.createTextNode(num2str(str2num(idxstr{:})-1)));
+            splitvarnode.appendChild(docNode.createTextNode(num2str(str2num(idxstr{:})-1, '%f ')));
             
             % The definition of quality may be the squared error for
             % regression in OpenCV - http://answers.opencv.org/question/566/how-is-decision-tree-split-quality-computed/
             splitqualitynode = docNode.createElement('quality'); 
-            splitqualitynode.appendChild(docNode.createTextNode(num2str(sortederror(j))));
+            splitqualitynode.appendChild(docNode.createTextNode(num2str(sortederror(j), '%f ')));
             
             splitlenode = docNode.createElement('le'); 
-            splitlenode.appendChild(docNode.createTextNode(num2str(sortedcutpoints(j))));
+            splitlenode.appendChild(docNode.createTextNode(num2str(sortedcutpoints(j), '%f ')));
             
             splitnode.appendChild(splitvarnode);
             splitnode.appendChild(splitqualitynode);
@@ -187,7 +192,8 @@ end
 mlrtreesNode.appendChild(treesNode);
 
 % --- Extract the path without extension and make new name for the xml
-[pathstr, name, ~] = fileparts(matrtreepath);
+[pathstr, ~, ~] = fileparts(mfilename);
+[~, name, ~] = fileparts(matrtreepath);
 opencvrtreepath = fullfile(pathstr, strcat(name,'.xml'));
 
 xmlwrite(opencvrtreepath, docNode);

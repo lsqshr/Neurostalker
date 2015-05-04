@@ -11,8 +11,7 @@ using namespace cv::ml;
 
 int main(int argc, char** argv )
 {
-    // I am tring CVrTrees ignore me
-    const String filename = "data01.xml"; // The dataset used in OpenCV logistic regression sample
+    const String filename = "../../data/mat2opencvdata.xml"; // The mock dataset produced with 'input2opencvdata.m'
 
     // Data for visual representation
     //--------------------- 1. Load Dataset ---------------------------------------
@@ -35,16 +34,18 @@ int main(int argc, char** argv )
         labels.convertTo(labels, CV_32F);
         cout << "read " << data.rows << " rows of data" << endl;
     }
+    cout<<"Data loaded..."<<endl;
 
-    //--------------------- 2. Set up the learning parameters 
-    Ptr<RTrees> tree = RTrees::create();
-    cout << "Starting Training Process"<<endl;
-    //tree->setActiveVarCount(2);
-    tree->setMaxDepth(10);
-    tree->setMinSampleCount(1); 
-    tree->setRegressionAccuracy(0.001f);
-    tree->train(data, ROW_SAMPLE, labels);
+    //--------------------- 2. Set up the learning parameters & Load Tree from example_tree.xml produced from 'mattree2opencv.m'
+    cout << "Loading Forest..."<<endl;
+    Ptr<RTrees> tree = Algorithm::load<RTrees>("../../data/example_tree.xml");
+    cout << "Forest Loaded..."<<endl;
+    //tree->train(data, ROW_SAMPLE, labels);
     cout << "Finish Training Trees"<<endl;
+    cout<<"NTREEVAR:"<<tree->getActiveVarCount()<<"NMATVAR"<<data.size()<<endl;
+
+    float responses = tree->predict(data);
+    cout<<responses<<endl;
 
     tree->save("shittytree3.xml");
 
