@@ -32,7 +32,7 @@ datamatNode.appendChild(dtNode);
 datamatNode.appendChild(dataNode);
 
 % Label
-labelmatNode = docNode.createElement('labelmat');
+labelmatNode = docNode.createElement('labelsmat');
 labelmatNode.setAttribute('type_id', 'opencv-matrix');
 opencvStorageNode.appendChild(labelmatNode);
 
@@ -41,8 +41,8 @@ colsNode = docNode.createElement('cols');
 dtNode = docNode.createElement('dt');
 dataNode = docNode.createElement('data');
 
-rowsNode.appendChild(docNode.createTextNode(num2str(size(Y), 1)));
-colsNode.appendChild(docNode.createTextNode(num2str(size(Y), 2)));
+rowsNode.appendChild(docNode.createTextNode(num2str(size(Y, 1))));
+colsNode.appendChild(docNode.createTextNode(num2str(size(Y, 2))));
 dtNode.appendChild(docNode.createTextNode('f'));
 sY = mat2str(Y);
 sY = strrep(sY, '[', '');

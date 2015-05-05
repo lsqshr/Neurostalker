@@ -39,14 +39,20 @@ int main(int argc, char** argv )
     //--------------------- 2. Set up the learning parameters & Load Tree from example_tree.xml produced from 'mattree2opencv.m'
     cout << "Loading Forest..."<<endl;
     Ptr<RTrees> tree = Algorithm::load<RTrees>("../../data/example_tree.xml");
+    //Ptr<RTrees> tree = Algorithm::load<RTrees>("../../data/shittytree3.xml");
     cout << "Forest Loaded..."<<endl;
     //tree->train(data, ROW_SAMPLE, labels);
     cout << "Finish Training Trees"<<endl;
     cout<<"NTREEVAR:"<<tree->getActiveVarCount()<<"NMATVAR"<<data.size()<<endl;
 
-    float responses = tree->predict(data);
-    cout<<responses<<endl;
+    int nlabel = labels.size().height; // Vector is read in vertically
+    //float * responses = new float[nlabel]();
+    Mat responses(nlabel, 1, CV_32FC2, Scalar::all(0));
+    float returned = tree->predict(data, responses, RTrees::RAW_OUTPUT);
+    cout<< "Is Classifier? " << tree->isClassifier() << endl;
+    cout<< "responses: " << responses.t() << returned <<endl;
+    cout<< "labels: " << labels.t() << returned <<endl;
 
-    tree->save("shittytree3.xml");
+    //tree->save("shittytree3.xml");
 
 }

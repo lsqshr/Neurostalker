@@ -54,7 +54,7 @@ usesurrogatesNode.appendChild(docNode.createTextNode('0'));
 trainingParamsNode.appendChild(usesurrogatesNode);
 
 maxcategoriesNode = docNode.createElement('max_categories');
-maxcategoriesNode.appendChild(docNode.createTextNode('0'));
+maxcategoriesNode.appendChild(docNode.createTextNode('10'));
 trainingParamsNode.appendChild(maxcategoriesNode);
 
 regressionaccuracyNode = docNode.createElement('regression_accuracy');
@@ -66,7 +66,7 @@ maxdepthNode.appendChild(docNode.createTextNode('0'));
 trainingParamsNode.appendChild(maxdepthNode);
 
 minsamplecountNode = docNode.createElement('min_sample_count');
-minsamplecountNode.appendChild(docNode.createTextNode('0'));
+minsamplecountNode.appendChild(docNode.createTextNode('1'));
 trainingParamsNode.appendChild(minsamplecountNode);
 
 crossvalidationfoldsNode = docNode.createElement('cross_validation_folds');
@@ -79,7 +79,7 @@ trainingParamsNode.appendChild(nactivevarsNode);
 % --- End Third layer training_params
 
 globalvaridxNode = docNode.createElement('global_var_idx');
-globalvaridxNode.appendChild(docNode.createTextNode('0'));
+globalvaridxNode.appendChild(docNode.createTextNode('1'));
 mlrtreesNode.appendChild(globalvaridxNode);
 
 varidxNode = docNode.createElement('var_idx');
@@ -183,6 +183,7 @@ for i = 1 : numel(matrtree.trees)
         
         nodeNode.appendChild(splitsnode);
         nodeNode.appendChild(depthnode);
+        nodeNode.appendChild(valuenode);
         nodesNode.appendChild(nodeNode);
     end
     treeNode.appendChild(nodesNode);

@@ -12,7 +12,7 @@ using namespace cv::ml;
 int main(int argc, char** argv )
 {
     // I am tring CVrTrees ignore me
-    const String filename = "data01.xml"; // The dataset used in OpenCV logistic regression sample
+    const String filename = "../mat2opencvdata.xml"; // The dataset used in OpenCV logistic regression sample
 
     // Data for visual representation
     //--------------------- 1. Load Dataset ---------------------------------------
@@ -46,6 +46,13 @@ int main(int argc, char** argv )
     tree->train(data, ROW_SAMPLE, labels);
     cout << "Finish Training Trees"<<endl;
 
-    tree->save("shittytree3.xml");
+    int nlabel = labels.size().height; // Vector is read in vertically
+    Mat responses(nlabel, 1, CV_32FC2, Scalar::all(0));
+    float returned = tree->predict(data, responses);
+    cout<< "Is Classifier?" << tree->isClassifier() << endl;
+    cout<< responses.t() << endl <<labels.t() <<endl;
+    cout<< returned<< endl;
+
+    tree->save("cvtrainedrtree.xml");
 
 }
