@@ -1,9 +1,6 @@
-% clear all
-% close all
-% clc
-%add raw voxel and raw voxel with noises
-
-showbox(ag_three_dim,0.1)
+%
+function robot=savetree(three_dim, salt_pepper_three_dim, ag_three_dim, current_folder, Option, zero_size)
+importdata([current_folder '.swc']);
 index_ori=ans.data(:,1);
 type1=ans.data(:,2);
 x_location=ans.data(:,3);
@@ -29,14 +26,15 @@ for i=2:1:numel(parind)-1
     par_n=par_n-1;
     [t n(i)] = t.addnode(n(par_n), robot_ground_truth(i+1));
 end
-
-% figure
-%  hold on
-%  for i=1:(numel(parind)-1)
-%  test=t.get(n(i));
-%  plot3(test.x_loc, test.y_loc, test.z_loc, 'r+');
-%  %pause(0.1)
-%  end
+ if Option==1
+ figure
+ hold on
+ for i=1:(numel(parind)-1)
+ test=t.get(n(i));
+ plot3(test.x_loc, test.y_loc, test.z_loc, 'r+');
+ %pause(0.1)
+ end
+ end
 
 df_order = tree(t, 'clear'); % Generate an empty synchronized tree
 iterator = t.depthfirstiterator; % Doesn't matter whether you call this on |t| or |df_order|
@@ -60,9 +58,6 @@ box_size_define=13;
 % figure
 % showbox(ag_three_dim,0.3)
 
-
-
-
 current=t.get(1);
 ori_saved_box=savebox(three_dim, box_size_define, current.x_loc,current.y_loc,current.z_loc,zero_size);
 robot(1).ori_vision_box=ori_saved_box;
@@ -70,20 +65,7 @@ ori_saved_box=savebox(salt_pepper_three_dim, box_size_define, current.x_loc,curr
 robot(1).sp_vision_box=ori_saved_box;
 ori_saved_box=savebox(ag_three_dim, box_size_define, current.x_loc,current.y_loc,current.z_loc,zero_size);
 robot(1).ag_vision_box=ori_saved_box;
-% ori_saved_box=savebox(ag_three_dim, box_size_define, (current.x_loc-1),current.y_loc,current.z_loc,zero_size);
-% robot(1).ag_vision_box_x_minus_one=ori_saved_box;
-% ori_saved_box=savebox(ag_three_dim, box_size_define, (current.x_loc+1),current.y_loc,current.z_loc,zero_size);
-% robot(1).ag_vision_box_x_plus_one=ori_saved_box;
-% ori_saved_box=savebox(ag_three_dim, box_size_define, current.x_loc,(current.y_loc-1),current.z_loc,zero_size);
-% robot(1).ag_vision_box_y_minus_one=ori_saved_box;
-% ori_saved_box=savebox(ag_three_dim, box_size_define, current.x_loc,(current.y_loc+1),current.z_loc,zero_size);
-% robot(1).ag_vision_box_y_plus_one=ori_saved_box;
-% ori_saved_box=savebox(ag_three_dim, box_size_define, current.x_loc,current.y_loc,(current.z_loc-1),zero_size);
-% robot(1).ag_vision_box_z_minus_one=ori_saved_box;
-% ori_saved_box=savebox(ag_three_dim, box_size_define, current.x_loc,current.y_loc,(current.z_loc+1),zero_size);
-% robot(1).ag_vision_box_z_plus_one=ori_saved_box;
 robot(1).fissure=0;
-
 
  current=t.get(n(1));
  ori_saved_box=savebox(three_dim, box_size_define, current.x_loc,current.y_loc,current.z_loc,zero_size);
@@ -92,18 +74,6 @@ robot(1).fissure=0;
  robot(2).sp_vision_box=ori_saved_box;
  ori_saved_box=savebox(ag_three_dim, box_size_define, current.x_loc,current.y_loc,current.z_loc,zero_size);
  robot(2).ag_vision_box=ori_saved_box;
-%  ori_saved_box=savebox(ag_three_dim, box_size_define, (current.x_loc-1),current.y_loc,current.z_loc,zero_size);
-%  robot(2).ag_vision_box_x_minus_one=ori_saved_box;
-%  ori_saved_box=savebox(ag_three_dim, box_size_define, (current.x_loc+1),current.y_loc,current.z_loc,zero_size);
-%  robot(2).ag_vision_box_x_plus_one=ori_saved_box; 
-%  ori_saved_box=savebox(ag_three_dim, box_size_define, current.x_loc,(current.y_loc-1),current.z_loc,zero_size);
-%  robot(2).ag_vision_box_y_minus_one=ori_saved_box;
-%  ori_saved_box=savebox(ag_three_dim, box_size_define, current.x_loc,(current.y_loc+1),current.z_loc,zero_size);
-%  robot(2).ag_vision_box_y_plus_one=ori_saved_box;
-%  ori_saved_box=savebox(ag_three_dim, box_size_define, current.x_loc,current.y_loc,(current.z_loc-1),zero_size);
-%  robot(2).ag_vision_box_z_minus_one=ori_saved_box;
-%  ori_saved_box=savebox(ag_three_dim, box_size_define, current.x_loc,current.y_loc,(current.z_loc+1),zero_size);
-%  robot(2).ag_vision_box_z_plus_one=ori_saved_box;
  robot(2).fissure=0;
 
 %initilize the unit vector 
@@ -127,10 +97,6 @@ robot(1).prev_y_dir=next_y_direction;
 robot(1).prev_z_dir=next_z_direction;
 robot(1).prev_mag=next_magnitude;
 
-
-
-
-
 %initialize the children parameter
  for   i=2:numel(parind)-1
   %i
@@ -149,20 +115,6 @@ robot(i).sp_vision_box=ori_saved_box;
 ori_saved_box=savebox(ag_three_dim, box_size_define, current.x_loc,current.y_loc,current.z_loc,zero_size);
 %third parameter done
 robot(i).ag_vision_box=ori_saved_box;
-%Start to get more box from the picture
-% ori_saved_box=savebox(ag_three_dim, box_size_define, (current.x_loc-1),current.y_loc,current.z_loc,zero_size);
-% robot(i).ag_vision_box_x_minus_one=ori_saved_box;
-% ori_saved_box=savebox(ag_three_dim, box_size_define, (current.x_loc+1),current.y_loc,current.z_loc,zero_size);
-% robot(i).ag_vision_box_x_plus_one=ori_saved_box;
-% ori_saved_box=savebox(ag_three_dim, box_size_define, current.x_loc,(current.y_loc-1),current.z_loc,zero_size);
-% robot(i).ag_vision_box_y_minus_one=ori_saved_box;
-% ori_saved_box=savebox(ag_three_dim, box_size_define, current.x_loc,(current.y_loc+1),current.z_loc,zero_size);
-% robot(i).ag_vision_box_y_plus_one=ori_saved_box;
-% ori_saved_box=savebox(ag_three_dim, box_size_define, current.x_loc,current.y_loc,(current.z_loc-1),zero_size);
-% robot(i).ag_vision_box_z_minus_one=ori_saved_box;
-% ori_saved_box=savebox(ag_three_dim, box_size_define, current.x_loc,current.y_loc,(current.z_loc+1),zero_size);
-% robot(i).ag_vision_box_z_plus_one=ori_saved_box;
-
 
 %Use this robot location minus previous robot location
 parent=t.get(t.getparent(n(node_ind)));
@@ -181,8 +133,6 @@ robot(i).see_x_dir=(prev_x_direction);
 robot(i).see_y_dir=(prev_y_direction);
 robot(i).see_z_dir=(prev_z_direction);
 
-
-
 robot(i).prev_mag=prev_magnitude;
 %this is just for bebug
 %currenti=current.index_ori;
@@ -198,14 +148,15 @@ else
 end
 if size_children==1
 next=t.get(n(node_ind_next));
-% line([current.x_loc, next.x_loc], [current.y_loc,next.y_loc], [current.z_loc, next.z_loc]);
+
+if Option==1
+line([current.x_loc, next.x_loc], [current.y_loc,next.y_loc], [current.z_loc, next.z_loc]);
+end
 
 %start to define midrobot
 robot(i).mid_robot.x_loc=(current.x_loc+next.x_loc)/2;
 robot(i).mid_robot.y_loc=(current.y_loc+next.y_loc)/2;
 robot(i).mid_robot.z_loc=(current.z_loc+next.z_loc)/2;
-
-
 
 %next direction
 next_x=next.x_loc-current.x_loc;
@@ -249,13 +200,11 @@ next_z_direction=next_z/next_magnitude;
 robot(i).next_x_dir=abs(next_x_direction);
 robot(i).next_y_dir=abs(next_y_direction);
 robot(i).next_z_dir=abs(next_z_direction);
-
-
-
-
 robot(i).next_mag=next_magnitude;
 
- line([current.x_loc, next.x_loc], [current.y_loc,next.y_loc], [current.z_loc, next.z_loc]);
+if Option==1
+line([current.x_loc, next.x_loc], [current.y_loc,next.y_loc], [current.z_loc, next.z_loc]);
+end
 %pause(0.3)
 val=node_ind_next(2);
 
@@ -275,7 +224,9 @@ robot(i).next_two_mag=next_magnitude;
 
 %this is just for debug
 %next.index_ori;
-% line([current.x_loc, next.x_loc], [current.y_loc,next.y_loc], [current.z_loc, next.z_loc]);
+if Option==1
+line([current.x_loc, next.x_loc], [current.y_loc,next.y_loc], [current.z_loc, next.z_loc]);
+end
 %pause(0.3)
 end
  end
@@ -289,27 +240,10 @@ end
  %r_one
  [robot(i).next_alpha,robot(i).next_beta,r_one]= cart2sph(robot(i).next_x_dir,robot(i).next_y_dir,robot(i).next_z_dir);
  %r_one
- if robot(i).fissure==1
- [robot(i).next_two_alpha,robot(i).next_two_beta]=emulerangle(robot(i).next_two_x_dir,robot(i).next_two_y_dir,robot(i).next_two_z_dir);
- end
-  
-% save the voxel box for the mid robot
-%    if robot(i).fissure==0&&(i>1)
-% %first parameter done
-% ori_saved_box=savebox(three_dim, box_size_define, robot(i).mid_robot.x_loc,robot(i).mid_robot.y_loc,robot(i).mid_robot.z_loc,zero_size);
-% robot(i).mid_robot.ori_vision_box=ori_saved_box;
-% 
-% ori_saved_box=savebox(salt_pepper_three_dim, box_size_define, robot(i).mid_robot.x_loc,robot(i).mid_robot.y_loc,robot(i).mid_robot.z_loc,zero_size);
-% %second parameter done
-% robot(i).mid_robot.sp_vision_box=ori_saved_box;
-% 
-% ori_saved_box=savebox(ag_three_dim, box_size_define, robot(i).mid_robot.x_loc,robot(i).mid_robot.y_loc,robot(i).mid_robot.z_loc,zero_size);
-% %third parameter done
-% robot(i).mid_robot.ag_vision_box=ori_saved_box;
-%    end
+
  end
 
- 
+ size(robot)
  
  
  
