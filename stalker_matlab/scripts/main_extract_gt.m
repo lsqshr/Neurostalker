@@ -1,78 +1,61 @@
 % this script can extract multiple robot(voxel box and spherical angles. prepare for the training) 
-clear all
-clc
-close all
-warning off;
+clear all; clc; close all; warning off;
+
+% PARA
+ZERO_SIZE = 20;
+TESTSIZE = 1;
+FRTHRESHOLD = 15;
+SALTPEPPER_PERCENT = 0.0001;
+GAUSS_PERCENT = 0.1;
+GAUSS_VARIANCE = 1;
+NCLUSTER = 20;
+%
 
 %Add the script folder into path
 addpath(genpath(pwd));
-% Try to find library and add lib into our path 
+
+% Add dependencies 
 addpath(genpath(fullfile('..','lib')));
-% Try to find utility function and add utility function into our path 
-addpath(genpath(fullfile('..', 'utils'))); cd ..;
+addpath(genpath(fullfile('..', 'utils')));
+
 % Try to enter the raw image ground truth path
-cd(fullfile('data', 'input', 'raw', 'rawimage'...
-         , 'op_raw_imagestack')); 
+gtpath = fullfile('..', 'data', 'input', 'raw', 'groundtruth'); 
+oppath = fullfile('..', 'data', 'input', 'raw', 'rawimage'); 
      
 % It will iteratively load the ground truth
-Option = input('Do you want show original 3D images? \nOption 1: Show  Option 2: Do not show:');
-for i =1:9
-    prefix='OP_';
-    current_folder=[prefix num2str(i)];
-    Number_file=length(dir(current_folder))-3;
-    cd(current_folder);
-    raw_image_prep
-    cd ..;cd ..;cd ..;cd ..;
-    % Enter the preprocessed folder
-    cd(fullfile('preprocessed'...
-         , 'preprocessed_images')); 
-    
-    save( ([current_folder '_three_dim']), 'three_dim');
-    save( ([current_folder '_salt_pepper_three_dim']), 'salt_pepper_three_dim');
-    save( ([current_folder '_ag_pepper_three_dim']), 'ag_three_dim');
-
-     
-    % Back to the iamge stack folder 
-     cd ..;cd ..;
-     cd(fullfile('raw', 'rawimage'...
-         , 'op_raw_imagestack')); 
-     clc
-     clearvars -except Option
+if input('Do you want show original 3D images? \nOption 1: Show  Option 2: Do not show:') == 1
+    SHOWIMG = 'DISPLAY'
+else
+    SHOWIMG = 'NODISPLAY'
 end
 
-cd ..;cd ..;cd ..;
+if input('Do you want show original ground truth? \nOption 1: Show  Option 2: Do not show:') == 1
+    SHOWGT = 'DISPLAY' 
+else
+    SHOWGT = 'NODISPLAY' 
+end
+
+prefix='OP_';
+
+ltrainrobot=[];
+ltestrobot=[];
+
+lrobot = {}
+for i = 1 : length(dir([gtpath, [filesep '*.swc']])) % iterate each subject
+    disp(i)
+    sbjid = [prefix num2str(i)];
+    sbjpath = fullfile(oppath, sbjid);
+    nfile = length(dir([sbjpath, '*.tif']));
+
+    % TODO: changed interface, make sure it can run
+    img3d = raw_image_prep(nfile, sbjpath, SHOWIMG, FRTHRESHOLD, ZERO_SIZE, SALTPEPPER_PERCENT, GAUSS_PERCENT, GAUSS_VARIANCE, NCLUSTER);
+
     % Enter the preprocessed folder
-    cd(fullfile('preprocessed'...
-         , 'preprocessed_images')); 
-Option = input('Do you want show original ground truth? \nOption 1: Show  Option 2: Do not show:');
-zero_size = 20;
-training_robot_list=[];
-test_robot=[];
-    for i = 1:9
-    prefix='OP_';
-    current_folder=[prefix num2str(i)]
-    zero_size=20;
-    load([current_folder '_three_dim.mat']);
-    % size(three_dim) Make sure I load different raw voxels.
-    load([current_folder '_salt_pepper_three_dim.mat']);
-    load([current_folder '_ag_three_dim.mat']);
-    cd ..; cd ..;
-    cd(fullfile('raw','groundtruth'));
-    % This step save ground truth into the model easy for our training
-    
-    robot=extract_gt(three_dim, salt_pepper_three_dim, ag_three_dim, current_folder, Option, zero_size);
-    if (i<9)
-    training_robot_list{i} = robot;
-    else
-    test_robot = robot;    
-    end
-    cd ..; cd ..;
-    cd(fullfile('preprocessed'...
-         , 'preprocessed_images')); 
-      end
-cd ..; cd(fullfile('groundtruth'...
-         , 'normal')); 
-     
-     % Extract the groundtruth for training 
-     save('training_robot_list','training_robot_list')
-     save('test_robot','test_robot')
+    preppath = fullfile('preprocessed', 'preprocessed_images'); 
+
+    % Extract directions and radius
+    lrobot{i} = extract_gt(img3d, sbjpath, SHOWGT, ZERO_SIZE);
+end
+
+ltrainrobot = lrobot(1 : (numel(lrobot) - TESTSIZE));
+ltestrobot = lrobot((numel(lrobot)-TESTSIZE+1):end);
