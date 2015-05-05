@@ -7,9 +7,9 @@ warning off;
 %Add the script folder into path
 addpath(genpath(pwd));
 % Try to find library and add lib into our path 
-cd ..; cd lib; addpath(genpath(pwd)); cd ..;
+addpath(genpath(fullfile('..','lib')));
 % Try to find utility function and add utility function into our path 
-cd utils; addpath(genpath(pwd)); cd ..;
+addpath(genpath(fullfile('..', 'utils'))); cd ..;
 % Try to enter the raw image ground truth path
 cd(fullfile('data', 'input', 'raw', 'rawimage'...
          , 'op_raw_imagestack')); 
@@ -18,7 +18,7 @@ cd(fullfile('data', 'input', 'raw', 'rawimage'...
 Option = input('Do you want show original 3D images? \nOption 1: Show  Option 2: Do not show:');
 for i =1:9
     prefix='OP_';
-current_folder=[prefix num2str(i)];
+    current_folder=[prefix num2str(i)];
     Number_file=length(dir(current_folder))-3;
     cd(current_folder);
     raw_image_prep

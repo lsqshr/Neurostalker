@@ -5,26 +5,27 @@ function robot=savetree(three_dim, salt_pepper_three_dim, ag_three_dim, current_
 % threedim - ...
 % salt_pepper_three_dim - ..
 
-importdata([current_folder '.swc']);
-index_ori=ans.data(:,1);
-type1=ans.data(:,2);
-x_location=ans.data(:,3);
-y_location=ans.data(:,4);
-z_location=ans.data(:,5);
-r=ans.data(:,6);
-parind=ans.data(:,7);
+%addpath(genpath(fullfile('..', 'lib', '@tree'))); % We need to add 
 
-for i=1:numel(parind)
-robot_ground_truth(i).type=type1(i);
-robot_ground_truth(i).radius=r(i);
-robot_ground_truth(i).x_loc=x_location(i);
-robot_ground_truth(i).y_loc=y_location(i);
-robot_ground_truth(i).z_loc=z_location(i);
-robot_ground_truth(i).p_index_ori=parind(i);
-robot_ground_truth(i).index_ori=index_ori(i);
+swc = importdata([current_folder '.swc']);
+
+% Parse Each Line of the swc file
+for i = 1:size(swc.data, 1)
+	robot_ground_truth(i).nodeidx = swc.data(i, 1);
+	robot_ground_truth(i).type = swc.data(i, 2);
+	robot_ground_truth(i).x_loc = swc.data(i, 3);
+	robot_ground_truth(i).y_loc = swc.data(i, 4);
+	robot_ground_truth(i).z_loc = swc.data(i, 5);
+	robot_ground_truth(i).radius = swc.data(i, 6);
+	robot_ground_truth(i).p_nodeidx = swc.data(i, 7);
 end
 
-t = tree(robot_ground_truth(1));
+% Find the root node whose parind is -1
+lparind = swc.data(:, 7);
+[~, I] = find(lparind == -1 );
+assert numel(I) == 1;
+
+t = tree(robot_ground_truth(1)); % tree structure in ../lib/@tree
 [t n(1)] = t.addnode(1, robot_ground_truth(2));
 for i=2:1:numel(parind)-1
     par_n=parind(i+1);
@@ -140,7 +141,7 @@ robot(i).see_z_dir=(prev_z_direction);
 
 robot(i).prev_mag=prev_magnitude;
 %this is just for bebug
-%currenti=current.index_ori;
+%currenti=current.nodeidx;
 node_ind_next=t.getchildren(n(node_ind))-1;
 size_children=numel(node_ind_next);
 
@@ -194,7 +195,7 @@ elseif size_children==2
 val=node_ind_next(1);
 next=t.get(n(val));
 %this is just for debug
-%next.index_ori;
+%next.nodeidx;
 next_x=next.x_loc-current.x_loc;
 next_y=next.y_loc-current.y_loc;
 next_z=next.z_loc-current.z_loc;
@@ -228,7 +229,7 @@ robot(i).next_two_z_dir=next_z_direction;
 robot(i).next_two_mag=next_magnitude;
 
 %this is just for debug
-%next.index_ori;
+%next.nodeidx;
 if Option==1
 line([current.x_loc, next.x_loc], [current.y_loc,next.y_loc], [current.z_loc, next.z_loc]);
 end
