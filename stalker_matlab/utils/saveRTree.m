@@ -20,6 +20,7 @@ t.ord_var_count = size(tree2save.X, 2); % All variables we are using here should
 t.ntrees = tree2save.NTrees;
 t.trees = tree2save.Trees;
 
-save('example_tree.mat', 't');
+
+save(path, 't');
 end
 

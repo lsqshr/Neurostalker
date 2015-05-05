@@ -165,7 +165,7 @@ for i = 1 : numel(matrtree.trees)
             
             splitvarnode = docNode.createElement('var');
             idxstr = strrep(sortedfeatidx(j), 'x', '');
-            splitvarnode.appendChild(docNode.createTextNode(num2str(str2num(idxstr{:})-1, '%f ')));
+            splitvarnode.appendChild(docNode.createTextNode(num2str(str2num(idxstr{:})-1, '%d ')));
             
             % The definition of quality may be the squared error for
             % regression in OpenCV - http://answers.opencv.org/question/566/how-is-decision-tree-split-quality-computed/

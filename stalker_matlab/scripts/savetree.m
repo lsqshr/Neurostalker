@@ -1,5 +1,10 @@
-%
 function robot=savetree(three_dim, salt_pepper_three_dim, ag_three_dim, current_folder, Option, zero_size)
+% Extract the voxel vision blocks of 1 imagestack and the ground truth
+% directions
+% Parameters: 
+% threedim - ...
+% salt_pepper_three_dim - ..
+
 importdata([current_folder '.swc']);
 index_ori=ans.data(:,1);
 type1=ans.data(:,2);
