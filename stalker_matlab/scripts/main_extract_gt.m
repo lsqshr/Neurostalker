@@ -6,12 +6,12 @@ disp(sprintf('currentpath:%s', curdir));
 
 % PARA
 ZERO_SIZE = 20;
-TESTSIZE = 1;
 FRTHRESHOLD = 15;
 SALTPEPPER_PERCENT = 0.0001;
 GAUSS_PERCENT = 0.1;
 GAUSS_VARIANCE = 1;
 NCLUSTER = 20;
+VBOXSIZE = 13;
 %
 
 %Add the script folder into path
@@ -21,7 +21,6 @@ addpath(genpath(pwd));
 addpath(genpath(fullfile(curdir, '..', 'lib')));
 addpath(genpath(fullfile(curdir, '..', 'utils')));
 
-disp(sprintf('Fullpath to lib: %s\n', fullfile(curdir, '..', 'lib')));
 
 % Try to enter the raw image ground truth path
 gtpath = fullfile(curdir, '..', 'data', 'input', 'raw', 'groundtruth'); 
@@ -45,38 +44,33 @@ prefix='OP_';
 ltrainrobot=[];
 ltestrobot=[];
 
-lrobot = {}
+lrobot = {};
+nrobot = 0;
 for i = 1 : length(dir([gtpath, [filesep, '*.swc']])) % iterate each subject
-    disp(i)
     sbjid = [prefix num2str(i)];
+    disp(sprintf('Working On Sbj %s\n', sbjid));
     sbjimgpath = fullfile(oppath, sbjid);
     sbjgtpath = fullfile(gtpath, sbjid);
     nfile = length(dir([sbjimgpath, [filesep, '*.tif']]));
-
-    disp(sprintf('sbjimgpath %s\n', sbjimgpath));
-    disp(sprintf('nfile %d\n', nfile));
-
-    % TODO: changed interface, make sure it can run
-    img3d = raw_image_prep(nfile, sbjimgpath, SHOWIMG, FRTHRESHOLD, ZERO_SIZE, SALTPEPPER_PERCENT, GAUSS_PERCENT, GAUSS_VARIANCE, NCLUSTER);
-
-    % Enter the preprocessed folder
+    img3d = raw_image_prep(nfile, sbjimgpath, SHOWIMG, FRTHRESHOLD, ZERO_SIZE,...
+                           SALTPEPPER_PERCENT, GAUSS_PERCENT, GAUSS_VARIANCE, NCLUSTER);
     preppath = fullfile('preprocessed', 'preprocessed_images'); 
-
     % Extract directions and radius
-    disp(sprintf('sbjgtpath for extract_gt: %s\n', sbjgtpath));
-    lrobot{i} = extract_gt(img3d, sbjgtpath, SHOWGT, ZERO_SIZE);
+    sbj.lrobot = extract_gt(img3d, sbjgtpath, SHOWGT, ZERO_SIZE, VBOXSIZE);
+    sbj.imgpath = sbjimgpath;
+    sbj.gtpath = sbjgtpath;
+    %sbj.img3d = img3d;
+    sbj.zerosize = ZERO_SIZE;
+    sbj.vboxsize = VBOXSIZE;
+    save(fullfile(curdir, '..', 'data', 'input', 'preprocessed', strcat(num2str(sbjid),'.mat')), 'sbj', 'img3d');
+    clearvars sbj;
+    clearvars img3d;
 end
 
-assert(numel(lrobot) ~= 0, 'no robot was saved')
-data.ltrainrobot = lrobot(1 : (numel(lrobot) - TESTSIZE));
-data.ltestrobot = lrobot((numel(lrobot)-TESTSIZE+1):end);
-
-save(fullfile(curdir, '..', 'data', 'input', 'preprocessed', 'groundtruth', 'normal', 'groundtruth.mat'), 'data');
-
 end
 
 
-function robot = extract_gt(img3d, sbjpath, SHOWIMG, zero_size)
+function robot = extract_gt(img3d, sbjpath, SHOWIMG, zero_size, vboxsize)
 % Extract the voxel vision blocks of 1 imagestack and the ground truth
 % directions
 % Parameters: 
@@ -131,20 +125,18 @@ iterator = t.depthfirstiterator; % Doesn't matter whether you call this on |t| o
 iterator=iterator-1;
 
 % Initialize the root parameter
-box_size_define = 13;
 curnode = t.get(1); % t is the whole tree, t.get(1) is the root
 fields = fieldnames(img3d);
 
 for i = 1 : numel(fields)
-    disp(sprintf('Fieldname: %s\n', fields{i}));
-    robot(1).visionbox.(fields{i}) = savebox(img3d.(fields{i}), box_size_define, curnode.x_loc,curnode.y_loc,curnode.z_loc, zero_size);
+    robot(1).visionbox.(fields{i}) = savebox(img3d.(fields{i}), vboxsize, curnode.x_loc,curnode.y_loc,curnode.z_loc, zero_size);
     robot(1).fissure = 0;
 end
 
 % Move to the second node
 curnode = t.get(n(1)); % n(1) is the first children
 for i = 1 : numel(fields)
-    robot(2).visionbox.(fields{i}) = savebox(img3d.(fields{i}), box_size_define, curnode.x_loc,curnode.y_loc,curnode.z_loc, zero_size);
+    robot(2).visionbox.(fields{i}) = savebox(img3d.(fields{i}), vboxsize, curnode.x_loc,curnode.y_loc,curnode.z_loc, zero_size);
     robot(2).fissure=0;
 end
 
@@ -181,7 +173,7 @@ for i = 2:numel(lparind)-1
     % Save visionboxes to robots from tree
     fields = fieldnames(img3d);
     for j = 1 : numel(fields)
-        robot(i).visionbox.(fields{j}) = savebox(img3d.(fields{j}), box_size_define, curnode.x_loc,curnode.y_loc,curnode.z_loc,zero_size);
+        robot(i).visionbox.(fields{j}) = savebox(img3d.(fields{j}), vboxsize, curnode.x_loc,curnode.y_loc,curnode.z_loc,zero_size);
         robot(i).fissure=0;
     end
 
@@ -238,9 +230,9 @@ end
 
 %% start to extract spherical angle 
 for i = 1:numel(lparind)-1
-    [robot(i).prev_alpha, robot(i).prev_beta,r_one] = ...
+    [robot(i).prev_th, robot(i).prev_phi,r_one] = ...
                              cart2sph(robot(i).prev_x_dir,robot(i).prev_y_dir,robot(i).prev_z_dir);
-    [robot(i).next_alpha, robot(i).next_beta,r_one] = ...
+    [robot(i).next_th, robot(i).next_phi,r_one] = ...
                              cart2sph(robot(i).next_x_dir,robot(i).next_y_dir,robot(i).next_z_dir);
 end
 
@@ -253,7 +245,7 @@ function [img3d, centroid] = raw_image_prep(nfile, imgpath, SHOWIMG, FRTHRESHOLD
 
 assert( nfile~=0, 'At least one image is needed');
 for i = 1 : nfile
-    curslice = imread([num2str(i) '.tif']);
+    curslice = imread(fullfile(imgpath, [num2str(i) '.tif']));
     % The X Y coordinate in tif is reversed according to the swc files
     A(:,:,i) = transpose(curslice); % Assign each slice to a 3D matrix
 end
