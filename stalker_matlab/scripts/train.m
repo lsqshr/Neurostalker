@@ -14,6 +14,8 @@ MTRY = 140;
 CACHETRAIN = true;
 
 PREFIX = 'OP_';
+
+CACHETRAINDATA = true;
 % ENDPARA
 
 curdir = fileparts(mfilename('fullpath'));
@@ -49,27 +51,39 @@ for r = 1 : numel(ltestrobot)
 end
 
 % Make the Train X and Y
-vboxsize = lsbj{1}.vboxsize;
-train_x = zeros(ntrain, vboxsize^3);
-row = 1;
-for i = 1 : numel(lsbj) - TESTSIZE
-    for j = 1 : numel(lsbj{i}.lrobot)
-    	disp(sprintf('Reading train matrix row %d\n', row));
-    	vb = lsbj{i}.lrobot(j).visionbox.(NOISETYPE);
+% Load the cached Train X and Y matrix if possible
+if CACHETRAINDATA && exist(fullfile(curdir, 'traincache.mat'))
+    fcache = load(fullfile(curdir, 'traincache.mat'));
+    train_x = fcache.train_x;
+    train_y = fcache.train_y;
+    clearvars fcache; 
+else
+    vboxsize = lrobot{1}.vboxsize;
+    train_x = zeros(ntrain, vboxsize^3);
+    row = 1;
+    for i = 1 : numel(lsbj) - TESTSIZE
+        for j = 1 : numel(lsbj{i}.lrobot)
+            disp(sprintf('Reading train matrix row %d\n', row));
+            vb = lsbj{i}.lrobot(j).visionbox.(NOISETYPE);
 
-        if lsbj{i}.lrobot(j).fissure == 1 % Only use the vboxes not at branching locations
-        	continue;
+            if lsbj{i}.lrobot(j).fissure == 1 % Only use the vboxes not at branching locations
+                continue;
+            end
+
+        	train_x(row, :) = vb(:);
+            train_y(row, 1) = lrobot{i}{j}.next_alpha;
+            train_y(row, 2) = lrobot{i}{j}.next_beta;
+            row = row + 1;
         end
+    end
 
-    	train_x(row, :) = vb(:);
-        train_y(row, 1) = lsbj{i}.lrobot(j).next_th;
-        train_y(row, 2) = lsbj{i}.lrobot(j).next_phi;
-        row = row + 1;
+    train_x(row:end,:) = []; % Delete the redundent rows not used because of the branching
+    train_y(row:end,:) = [];
+
+    if CACHETRAINDATA % Cache the X and Y matrix
+        save(fullfile(curdir, 'traincache.mat'), 'train_x', 'train_y');
     end
 end
-
-train_x(row:end,:) = []; % Delete the redundent rows not used because of the branching
-train_y(row:end,:) = [];
 
 clearvars lsbj;
 
