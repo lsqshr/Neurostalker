@@ -76,7 +76,7 @@ clearvars lsbj;
 % Train RF
 %tic; model_x_dir = regRF_train(train_x, train_y, NTREE, MTRY); toc;
 disp('Start to train RF...');
-tic; rf_th = TreeBagger(NTREE, train_x, train_y(:, 1), 'Method', 'regression', 'NVarToSample', MTRY, 'Options', 'UseParallel', true, 'NPrint', true); toc;
+tic; rf_th = TreeBagger(NTREE, train_x, train_y(:, 1), 'Method', 'regression', 'NVarToSample', MTRY, 'Options', 'UseParallel', 'NPrint',10); toc;
 %tic; rf_phi = TreeBagger(NTREE, train_x, train_y(:, 2), 'Method', 'regression', 'NVarToSample', MTRY); toc;
 
 % % Test RF
