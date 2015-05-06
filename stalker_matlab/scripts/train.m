@@ -6,6 +6,7 @@ TESTSIZE = 1;
 TESTSTARTLOC = [[76.663, 324, 9.749]];
 TESTSTARTDIR = [[-0.9278, 0.1916]];
 NTESTSTEP = 40;
+STEPSIZE = 0.4;
 
 NOISETYPE = 'original'; % The noise added to vision blocks: original, gauss, salt_pepper
 NTREE = 200;
@@ -16,10 +17,12 @@ CACHETRAIN = true;
 PREFIX = 'OP_';
 
 CACHETRAINDATA = true;
+CACHETRAINMODEL = true;
 % ENDPARA
 
 curdir = fileparts(mfilename('fullpath'));
 datadir = fullfile(curdir, '..', 'data', 'input', 'preprocessed');
+addpath(fullfile(curdir, '..', 'utils'));
 
 nsbj = numel(dir([datadir, [filesep, '*.mat']]));
 
@@ -28,27 +31,6 @@ disp(['data dir:', datadir]);
 disp(dir([datadir, [filesep, '*.mat']]));
 disp(sprintf('nsbj: %d\n', nsbj));
 
-% Read in the robots 
-% Only deal with low memory use
-for i = 1 : nsbj
-    fsbj = load(fullfile(datadir, strcat(PREFIX, num2str(nsbj), '.mat')), 'sbj');	
-    lsbj{i} = fsbj.sbj;
-end
-
-ltrainrobot = lsbj{1 : numel(lsbj)-TESTSIZE};
-ltestrobot = lsbj{numel(lsbj)-TESTSIZE+1 : end};
-
-% Count the train vbox
-ntrain = 0;
-for r = 1 : numel(ltrainrobot)
-	ntrain = ntrain + numel(ltrainrobot(r));
-end
-
-% Count the test vbox
-ntest = 0;
-for r = 1 : numel(ltestrobot)
-	ntest = ntest + numel(ltestrobot(r));
-end
 
 % Make the Train X and Y
 % Load the cached Train X and Y matrix if possible
@@ -58,6 +40,28 @@ if CACHETRAINDATA && exist(fullfile(curdir, 'traincache.mat'))
     train_y = fcache.train_y;
     clearvars fcache; 
 else
+    % Read in the robots 
+    % Only deal with low memory use
+    for i = 1 : nsbj-TESTSIZE
+        fsbj = load(fullfile(datadir, strcat(PREFIX, num2str(nsbj), '.mat')), 'sbj');   
+        ltrainrobot{i} = fsbj.sbj;
+    end
+
+    %ltrainrobot = lsbj{1 : numel(lsbj)-TESTSIZE};
+    %ltestrobot = lsbj{numel(lsbj)-TESTSIZE+1 : end};
+
+    % Count the train vbox
+    ntrain = 0;
+    for r = 1 : numel(ltrainrobot)
+        ntrain = ntrain + numel(ltrainrobot(r));
+    end
+
+    % Count the test vbox
+    ntest = 0;
+    for r = 1 : numel(ltestrobot)
+        ntest = ntest + numel(ltestrobot(r));
+    end
+
     vboxsize = lsbj{1}.vboxsize;
     train_x = zeros(ntrain, vboxsize^3);
     row = 1;
@@ -89,52 +93,62 @@ clearvars lsbj;
 
 % Train RF
 %tic; model_x_dir = regRF_train(train_x, train_y, NTREE, MTRY); toc;
-disp('Start to train RF...');
-options = statset('UseParallel', 'Always');
-tic; rf_th = TreeBagger(NTREE, train_x, train_y(:, 1), 'Method', 'regression', 'NVarToSample', MTRY, 'NPrint', true,'Options',options); toc;
-%tic; rf_phi = TreeBagger(NTREE, train_x, train_y(:, 2), 'Method', 'regression', 'NVarToSample', MTRY); toc;
+if CACHETRAINMODEL && exist(fullfile(curdir, 'modelcache.mat'))
+    fmodel = load(fullfile(curdir, 'modelcache.mat'), 'rf_th', 'rf_phi');
+    rf_th = fmodel.rf_th;
+    rf_phi = fmodel.rf_phi;
+else
+    disp('Start to train RF...');
+    options = statset('UseParallel', 'Always');
+    tic; rf_th = TreeBagger(NTREE, train_x, train_y(:, 1), 'Method', 'regression', 'NVarToSample', MTRY, 'NPrint', true,'Options',options); toc;
+    tic; rf_phi = TreeBagger(NTREE, train_x, train_y(:, 2), 'Method', 'regression', 'NVarToSample', MTRY, 'NPrint', true,'Options',options); toc;
+
+    if CACHETRAINMODEL 
+        save(fullfile(curdir, 'modelcache.mat'), 'rf_th', 'rf_phi');
+    end
+end
 
 % % Test RF
-% for r = 1 : numel(ltestrobot)
-% 	testimg = ltestrobot{r}.img3d.(NOISETYPE);
-% 
-% 	% Start Location
-% 	curnode.x = TESTSTARTLOC(r, 1);
-% 	curnode.y = TESTSTARTLOC(r, 2);
-% 	curnode.z = TESTSTARTLOC(r, 3);
-% 
-% 	% Start Direction
-% 	curnode.prev_th = TESTSTARTDIR(r, 1);
-% 	curnode.prev_phi = TESTSTARTDIR(r, 2);
-% 
-%     for s = 1 : NTESTSTEP 
-%         
-%     end
-% 
-% 	line([curnode.x, next.x], [curnode.y,next.y], [curnode.z, next.z],'Color','k','LineWidth',5);
-% 
-% 	ori_saved_box = savebox(ag_three_dim, box_size_define, curnode.x,curnode.y,curnode.z,zero_size);
-% end
-% 
-% hold on
-% 
-% for step=1:40
-% 
-% 	pre_x_dir = cur_x_dir;
-% 	pre_y_dir = cur_y_dir;
-% 	pre_z_dir = cur_z_dir;
-% 
-% 	cur_x_dir = regRF_predict(tmp_voxel', model_x_dir);
-% 	cur_y_dir = regRF_predict(tmp_voxel',model_y_dir);
-% 	cur_z_dir = regRF_predict(tmp_voxel',model_z_dir);
-% 	cur_mg = regRF_predict(tmp_voxel',model_mg);
-% 	[cur_x_dir, cur_y_dir, cur_z_dir]=decide_sign(pre_x_dir, pre_y_dir, pre_z_dir, cur_x_dir, cur_y_dir, cur_z_dir);
-% 	next.x=curnode.x+cur_x_dir*cur_mg;
-% 	next.y=curnode.y+cur_y_dir*cur_mg;
-% 	next.z=curnode.z+cur_z_dir*cur_mg*0.1;
-% 	line([curnode.x, next.x], [curnode.y,next.y], [curnode.z, next.z],'Color','k','LineWidth',5);
-% 	pause(0.5)
-% 	curnode.x=next.x;
-% 	curnode.y=next.y;
-% 	curnode.z=next.z;
-% end
+% Read in the test subject
+
+img3dctr = 1; % counter for img3d cell array
+for i = nsbj - TESTSIZE + 1 : nsbj 
+    fsbj = load(fullfile(datadir, strcat(PREFIX, num2str(nsbj), '.mat')), 'sbj', 'img3d'); 
+    ltestrobot{img3dctr} = fsbj.sbj;
+    img3d{img3dctr} = fsbj.img3d;
+    img3dctr = img3dctr + 1;
+end
+
+for r = 1 : numel(ltestrobot)
+    disp(img3d{r});
+ 	testimg = img3d{r}.(NOISETYPE);
+ 
+ 	% Start Location
+ 	curnode.x = TESTSTARTLOC(r, 1);
+ 	curnode.y = TESTSTARTLOC(r, 2);
+ 	curnode.z = TESTSTARTLOC(r, 3);
+ 
+ 	% Start Direction
+ 	curnode.prev_th = TESTSTARTDIR(r, 1);
+ 	curnode.prev_phi = TESTSTARTDIR(r, 2);
+
+    % Iterate each step of the prediction
+    for s = 1 : NTESTSTEP 
+        disp(['ltestrobot', ltestrobot])
+        disp({'ltestrobot{r}', ltestrobot{r}})
+        disp(fieldnames(ltestrobot{r}))
+        vbox = extractbox(testimg, ltestrobot{r}.vboxsize, curnode.x, curnode.y, curnode.z, ltestrobot{r}.zerosize);
+        th = rf_th.predict(vbox(:)');
+        phi = rf_phi.predict(vbox(:)');
+
+        % Move one step
+        [dx, dy, dz] = sph2cart(th, phi, STEPSIZE);
+        nextnode.x = curnode.x + dx;
+        nextnode.y = curnode.y + dy;
+        nextnode.z = curnode.z + dz*0.1;
+
+        fprintf('Move to direction (%f, %f) - (%f, %f, %f)\n', th, phi, dx, dy, dz);
+        line([curnode.x, nextnode.x], [curnode.y, nextnode.y], [curnode.z, nextnode.z], 'Color','k', 'LineWidth',5);
+        curnode = nextnode;
+    end
+ end

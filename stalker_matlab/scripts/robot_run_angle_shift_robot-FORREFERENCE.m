@@ -94,14 +94,14 @@ box_size_define=13;
 current.x_loc=76.663;current.y_loc=324;current.z_loc=9.749;
 %current.x_loc=99.13; current.y_loc=302.3; current.z_loc=10.794;
 %current.x_loc=40.281; current.y_loc=323.11; current.z_loc=26.642;
-ori_saved_box=savebox(ag_three_dim, box_size_define, current.x_loc,current.y_loc,current.z_loc,zero_size);
+ori_saved_box=extractbox(ag_three_dim, box_size_define, current.x_loc,current.y_loc,current.z_loc,zero_size);
 tmp_voxel=ori_saved_box(:);
 cur_alpha = regRF_predict(tmp_voxel',model_alpha);
 cur_beta = regRF_predict(tmp_voxel',model_beta);
 [cur_x_dir, cur_y_dir, cur_z_dir]= sph2cart(cur_alpha,cur_beta,1);
 cur_y_dir=-cur_y_dir;
 for step=1:40
-ori_saved_box=savebox(ag_three_dim, box_size_define, current.x_loc,current.y_loc,current.z_loc,zero_size);
+ori_saved_box=extractbox(ag_three_dim, box_size_define, current.x_loc,current.y_loc,current.z_loc,zero_size);
 tmp_voxel=ori_saved_box(:);
 
 pre_x_dir=cur_x_dir;

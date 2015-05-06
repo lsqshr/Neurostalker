@@ -62,7 +62,8 @@ for i = 1 : length(dir([gtpath, [filesep, '*.swc']])) % iterate each subject
     %sbj.img3d = img3d;
     sbj.zerosize = ZERO_SIZE;
     sbj.vboxsize = VBOXSIZE;
-    save(fullfile(curdir, '..', 'data', 'input', 'preprocessed', strcat(num2str(sbjid),'.mat')), 'sbj', 'img3d');
+    nvbox = numel(sbj.lrobot);
+    save(fullfile(curdir, '..', 'data', 'input', 'preprocessed', strcat(num2str(sbjid),'.mat')), 'sbj', 'img3d', 'nvbox');
     clearvars sbj;
     clearvars img3d;
 end
@@ -129,14 +130,14 @@ curnode = t.get(1); % t is the whole tree, t.get(1) is the root
 fields = fieldnames(img3d);
 
 for i = 1 : numel(fields)
-    robot(1).visionbox.(fields{i}) = savebox(img3d.(fields{i}), vboxsize, curnode.x_loc,curnode.y_loc,curnode.z_loc, zero_size);
+    robot(1).visionbox.(fields{i}) = extractbox(img3d.(fields{i}), vboxsize, curnode.x_loc,curnode.y_loc,curnode.z_loc, zero_size);
     robot(1).fissure = 0;
 end
 
 % Move to the second node
 curnode = t.get(n(1)); % n(1) is the first children
 for i = 1 : numel(fields)
-    robot(2).visionbox.(fields{i}) = savebox(img3d.(fields{i}), vboxsize, curnode.x_loc,curnode.y_loc,curnode.z_loc, zero_size);
+    robot(2).visionbox.(fields{i}) = extractbox(img3d.(fields{i}), vboxsize, curnode.x_loc,curnode.y_loc,curnode.z_loc, zero_size);
     robot(2).fissure=0;
 end
 
@@ -173,7 +174,7 @@ for i = 2:numel(lparind)-1
     % Save visionboxes to robots from tree
     fields = fieldnames(img3d);
     for j = 1 : numel(fields)
-        robot(i).visionbox.(fields{j}) = savebox(img3d.(fields{j}), vboxsize, curnode.x_loc,curnode.y_loc,curnode.z_loc,zero_size);
+        robot(i).visionbox.(fields{j}) = extractbox(img3d.(fields{j}), vboxsize, curnode.x_loc,curnode.y_loc,curnode.z_loc,zero_size);
         robot(i).fissure=0;
     end
 

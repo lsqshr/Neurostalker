@@ -2,7 +2,7 @@ function running_robot=initialize_robot(running_robot,ag_three_dim,box_size_defi
 [~,running_robot_num]=size(running_robot);
 load('model_rotate.mat');
 for i=1:running_robot_num
-ori_saved_box=savebox(ag_three_dim, box_size_define, ...
+ori_saved_box=extractbox(ag_three_dim, box_size_define, ...
 running_robot(i).current.x_loc,running_robot(i).current.y_loc,running_robot(i).current.z_loc,zero_size);
 tmp_voxel=ori_saved_box(:);
 running_robot(i).current.x_dir = model_x_dir.predict(tmp_voxel');

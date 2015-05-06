@@ -7,7 +7,7 @@ for i=1:running_robots_num
     running_robots(i).previous.x_dir = running_robots(i).current.x_dir;
     running_robots(i).previous.y_dir = running_robots(i).current.y_dir;
     running_robots(i).previous.z_dir = running_robots(i).current.z_dir;
-    ori_saved_box=savebox(ag_three_dim, box_size_define, ...
+    ori_saved_box=extractbox(ag_three_dim, box_size_define, ...
         running_robots(i).current.x_loc,running_robots(i).current.y_loc,running_robots(i).current.z_loc,zero_size);
     tmp_voxel=ori_saved_box(:);
     %if sum(tmp_voxel) > 45

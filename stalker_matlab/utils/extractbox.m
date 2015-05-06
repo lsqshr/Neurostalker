@@ -1,4 +1,4 @@
-function saved_box=savebox(ori_box, size, x,y,z,zero_size)
+function saved_box=extractbox(ori_box, size, x,y,z,zero_size)
 % to make sure every index is an integer
 size_box=floor(size/2);
 test_location(1)=floor(x+zero_size);

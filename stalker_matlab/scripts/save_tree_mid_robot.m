@@ -64,45 +64,45 @@ box_size_define=13;
 
 
 current=t.get(1);
-ori_saved_box=savebox(three_dim, box_size_define, current.x_loc,current.y_loc,current.z_loc,zero_size);
+ori_saved_box=extractbox(three_dim, box_size_define, current.x_loc,current.y_loc,current.z_loc,zero_size);
 robot(1).ori_vision_box=ori_saved_box;
-ori_saved_box=savebox(salt_pepper_three_dim, box_size_define, current.x_loc,current.y_loc,current.z_loc,zero_size);
+ori_saved_box=extractbox(salt_pepper_three_dim, box_size_define, current.x_loc,current.y_loc,current.z_loc,zero_size);
 robot(1).sp_vision_box=ori_saved_box;
-ori_saved_box=savebox(ag_three_dim, box_size_define, current.x_loc,current.y_loc,current.z_loc,zero_size);
+ori_saved_box=extractbox(ag_three_dim, box_size_define, current.x_loc,current.y_loc,current.z_loc,zero_size);
 robot(1).ag_vision_box=ori_saved_box;
-% ori_saved_box=savebox(ag_three_dim, box_size_define, (current.x_loc-1),current.y_loc,current.z_loc,zero_size);
+% ori_saved_box=extractbox(ag_three_dim, box_size_define, (current.x_loc-1),current.y_loc,current.z_loc,zero_size);
 % robot(1).ag_vision_box_x_minus_one=ori_saved_box;
-% ori_saved_box=savebox(ag_three_dim, box_size_define, (current.x_loc+1),current.y_loc,current.z_loc,zero_size);
+% ori_saved_box=extractbox(ag_three_dim, box_size_define, (current.x_loc+1),current.y_loc,current.z_loc,zero_size);
 % robot(1).ag_vision_box_x_plus_one=ori_saved_box;
-% ori_saved_box=savebox(ag_three_dim, box_size_define, current.x_loc,(current.y_loc-1),current.z_loc,zero_size);
+% ori_saved_box=extractbox(ag_three_dim, box_size_define, current.x_loc,(current.y_loc-1),current.z_loc,zero_size);
 % robot(1).ag_vision_box_y_minus_one=ori_saved_box;
-% ori_saved_box=savebox(ag_three_dim, box_size_define, current.x_loc,(current.y_loc+1),current.z_loc,zero_size);
+% ori_saved_box=extractbox(ag_three_dim, box_size_define, current.x_loc,(current.y_loc+1),current.z_loc,zero_size);
 % robot(1).ag_vision_box_y_plus_one=ori_saved_box;
-% ori_saved_box=savebox(ag_three_dim, box_size_define, current.x_loc,current.y_loc,(current.z_loc-1),zero_size);
+% ori_saved_box=extractbox(ag_three_dim, box_size_define, current.x_loc,current.y_loc,(current.z_loc-1),zero_size);
 % robot(1).ag_vision_box_z_minus_one=ori_saved_box;
-% ori_saved_box=savebox(ag_three_dim, box_size_define, current.x_loc,current.y_loc,(current.z_loc+1),zero_size);
+% ori_saved_box=extractbox(ag_three_dim, box_size_define, current.x_loc,current.y_loc,(current.z_loc+1),zero_size);
 % robot(1).ag_vision_box_z_plus_one=ori_saved_box;
 robot(1).fissure=0;
 
 
 current=t.get(n(1));
-ori_saved_box=savebox(three_dim, box_size_define, current.x_loc,current.y_loc,current.z_loc,zero_size);
+ori_saved_box=extractbox(three_dim, box_size_define, current.x_loc,current.y_loc,current.z_loc,zero_size);
 robot(2).ori_vision_box=ori_saved_box;
-ori_saved_box=savebox(salt_pepper_three_dim, box_size_define, current.x_loc,current.y_loc,current.z_loc,zero_size);
+ori_saved_box=extractbox(salt_pepper_three_dim, box_size_define, current.x_loc,current.y_loc,current.z_loc,zero_size);
 robot(2).sp_vision_box=ori_saved_box;
-ori_saved_box=savebox(ag_three_dim, box_size_define, current.x_loc,current.y_loc,current.z_loc,zero_size);
+ori_saved_box=extractbox(ag_three_dim, box_size_define, current.x_loc,current.y_loc,current.z_loc,zero_size);
 robot(2).ag_vision_box=ori_saved_box;
-%  ori_saved_box=savebox(ag_three_dim, box_size_define, (current.x_loc-1),current.y_loc,current.z_loc,zero_size);
+%  ori_saved_box=extractbox(ag_three_dim, box_size_define, (current.x_loc-1),current.y_loc,current.z_loc,zero_size);
 %  robot(2).ag_vision_box_x_minus_one=ori_saved_box;
-%  ori_saved_box=savebox(ag_three_dim, box_size_define, (current.x_loc+1),current.y_loc,current.z_loc,zero_size);
+%  ori_saved_box=extractbox(ag_three_dim, box_size_define, (current.x_loc+1),current.y_loc,current.z_loc,zero_size);
 %  robot(2).ag_vision_box_x_plus_one=ori_saved_box;
-%  ori_saved_box=savebox(ag_three_dim, box_size_define, current.x_loc,(current.y_loc-1),current.z_loc,zero_size);
+%  ori_saved_box=extractbox(ag_three_dim, box_size_define, current.x_loc,(current.y_loc-1),current.z_loc,zero_size);
 %  robot(2).ag_vision_box_y_minus_one=ori_saved_box;
-%  ori_saved_box=savebox(ag_three_dim, box_size_define, current.x_loc,(current.y_loc+1),current.z_loc,zero_size);
+%  ori_saved_box=extractbox(ag_three_dim, box_size_define, current.x_loc,(current.y_loc+1),current.z_loc,zero_size);
 %  robot(2).ag_vision_box_y_plus_one=ori_saved_box;
-%  ori_saved_box=savebox(ag_three_dim, box_size_define, current.x_loc,current.y_loc,(current.z_loc-1),zero_size);
+%  ori_saved_box=extractbox(ag_three_dim, box_size_define, current.x_loc,current.y_loc,(current.z_loc-1),zero_size);
 %  robot(2).ag_vision_box_z_minus_one=ori_saved_box;
-%  ori_saved_box=savebox(ag_three_dim, box_size_define, current.x_loc,current.y_loc,(current.z_loc+1),zero_size);
+%  ori_saved_box=extractbox(ag_three_dim, box_size_define, current.x_loc,current.y_loc,(current.z_loc+1),zero_size);
 %  robot(2).ag_vision_box_z_plus_one=ori_saved_box;
 robot(2).fissure=0;
 
@@ -138,29 +138,29 @@ for   i=2:numel(parind)-1
     %node_ind_next=iterator(i+1);
     current=t.get(n(node_ind));
     robot(i).radius=current.radius;
-    ori_saved_box=savebox(three_dim, box_size_define, current.x_loc,current.y_loc,current.z_loc,zero_size);
+    ori_saved_box=extractbox(three_dim, box_size_define, current.x_loc,current.y_loc,current.z_loc,zero_size);
     %first parameter done
     robot(i).ori_vision_box=ori_saved_box;
     
-    ori_saved_box=savebox(salt_pepper_three_dim, box_size_define, current.x_loc,current.y_loc,current.z_loc,zero_size);
+    ori_saved_box=extractbox(salt_pepper_three_dim, box_size_define, current.x_loc,current.y_loc,current.z_loc,zero_size);
     %second parameter done
     robot(i).sp_vision_box=ori_saved_box;
     
-    ori_saved_box=savebox(ag_three_dim, box_size_define, current.x_loc,current.y_loc,current.z_loc,zero_size);
+    ori_saved_box=extractbox(ag_three_dim, box_size_define, current.x_loc,current.y_loc,current.z_loc,zero_size);
     %third parameter done
     robot(i).ag_vision_box=ori_saved_box;
     %Start to get more box from the picture
-    % ori_saved_box=savebox(ag_three_dim, box_size_define, (current.x_loc-1),current.y_loc,current.z_loc,zero_size);
+    % ori_saved_box=extractbox(ag_three_dim, box_size_define, (current.x_loc-1),current.y_loc,current.z_loc,zero_size);
     % robot(i).ag_vision_box_x_minus_one=ori_saved_box;
-    % ori_saved_box=savebox(ag_three_dim, box_size_define, (current.x_loc+1),current.y_loc,current.z_loc,zero_size);
+    % ori_saved_box=extractbox(ag_three_dim, box_size_define, (current.x_loc+1),current.y_loc,current.z_loc,zero_size);
     % robot(i).ag_vision_box_x_plus_one=ori_saved_box;
-    % ori_saved_box=savebox(ag_three_dim, box_size_define, current.x_loc,(current.y_loc-1),current.z_loc,zero_size);
+    % ori_saved_box=extractbox(ag_three_dim, box_size_define, current.x_loc,(current.y_loc-1),current.z_loc,zero_size);
     % robot(i).ag_vision_box_y_minus_one=ori_saved_box;
-    % ori_saved_box=savebox(ag_three_dim, box_size_define, current.x_loc,(current.y_loc+1),current.z_loc,zero_size);
+    % ori_saved_box=extractbox(ag_three_dim, box_size_define, current.x_loc,(current.y_loc+1),current.z_loc,zero_size);
     % robot(i).ag_vision_box_y_plus_one=ori_saved_box;
-    % ori_saved_box=savebox(ag_three_dim, box_size_define, current.x_loc,current.y_loc,(current.z_loc-1),zero_size);
+    % ori_saved_box=extractbox(ag_three_dim, box_size_define, current.x_loc,current.y_loc,(current.z_loc-1),zero_size);
     % robot(i).ag_vision_box_z_minus_one=ori_saved_box;
-    % ori_saved_box=savebox(ag_three_dim, box_size_define, current.x_loc,current.y_loc,(current.z_loc+1),zero_size);
+    % ori_saved_box=extractbox(ag_three_dim, box_size_define, current.x_loc,current.y_loc,(current.z_loc+1),zero_size);
     % robot(i).ag_vision_box_z_plus_one=ori_saved_box;
     
     
@@ -294,14 +294,14 @@ for   i=1:numel(parind)-1
     
     if robot(i).fissure==0&&(i>1)
         %first parameter done
-        ori_saved_box=savebox(three_dim, box_size_define, robot(i).mid_robot.x_loc,robot(i).mid_robot.y_loc,robot(i).mid_robot.z_loc,zero_size);
+        ori_saved_box=extractbox(three_dim, box_size_define, robot(i).mid_robot.x_loc,robot(i).mid_robot.y_loc,robot(i).mid_robot.z_loc,zero_size);
         robot(i).mid_robot.ori_vision_box=ori_saved_box;
         
-        ori_saved_box=savebox(salt_pepper_three_dim, box_size_define, robot(i).mid_robot.x_loc,robot(i).mid_robot.y_loc,robot(i).mid_robot.z_loc,zero_size);
+        ori_saved_box=extractbox(salt_pepper_three_dim, box_size_define, robot(i).mid_robot.x_loc,robot(i).mid_robot.y_loc,robot(i).mid_robot.z_loc,zero_size);
         %second parameter done
         robot(i).mid_robot.sp_vision_box=ori_saved_box;
         
-        ori_saved_box=savebox(ag_three_dim, box_size_define, robot(i).mid_robot.x_loc,robot(i).mid_robot.y_loc,robot(i).mid_robot.z_loc,zero_size);
+        ori_saved_box=extractbox(ag_three_dim, box_size_define, robot(i).mid_robot.x_loc,robot(i).mid_robot.y_loc,robot(i).mid_robot.z_loc,zero_size);
         %third parameter done
         robot(i).mid_robot.ag_vision_box=ori_saved_box;
     end
