@@ -35,8 +35,8 @@ for i = 1 : nsbj
     lsbj{i} = fsbj.sbj;
 end
 
-ltrainrobot = lsbj{1 : numel(lsbj)-TESTSIZE}
-ltestrobot = lsbj{numel(lsbj)-TESTSIZE+1 : end}
+ltrainrobot = lsbj{1 : numel(lsbj)-TESTSIZE};
+ltestrobot = lsbj{numel(lsbj)-TESTSIZE+1 : end};
 
 % Count the train vbox
 ntrain = 0;
@@ -58,7 +58,7 @@ if CACHETRAINDATA && exist(fullfile(curdir, 'traincache.mat'))
     train_y = fcache.train_y;
     clearvars fcache; 
 else
-    vboxsize = lrobot{1}.vboxsize;
+    vboxsize = lsbj{1}.vboxsize;
     train_x = zeros(ntrain, vboxsize^3);
     row = 1;
     for i = 1 : numel(lsbj) - TESTSIZE
@@ -71,8 +71,8 @@ else
             end
 
         	train_x(row, :) = vb(:);
-            train_y(row, 1) = lrobot{i}{j}.next_alpha;
-            train_y(row, 2) = lrobot{i}{j}.next_beta;
+            train_y(row, 1) = lsbj{i}.lrobot(j).next_th;
+            train_y(row, 2) = lsbj{i}.lrobot(j).next_phi;
             row = row + 1;
         end
     end
@@ -90,7 +90,7 @@ clearvars lsbj;
 % Train RF
 %tic; model_x_dir = regRF_train(train_x, train_y, NTREE, MTRY); toc;
 disp('Start to train RF...');
-tic; rf_th = TreeBagger(NTREE, train_x, train_y(:, 1), 'Method', 'regression', 'NVarToSample', MTRY, 'Options', 'UseParallel', 'NPrint',10); toc;
+tic; rf_th = TreeBagger(NTREE, train_x, train_y(:, 1), 'Method', 'regression', 'NVarToSample', MTRY, 'NPrint', true); toc;
 %tic; rf_phi = TreeBagger(NTREE, train_x, train_y(:, 2), 'Method', 'regression', 'NVarToSample', MTRY); toc;
 
 % % Test RF
