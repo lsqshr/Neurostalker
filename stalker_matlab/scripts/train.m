@@ -11,6 +11,8 @@ NOISETYPE = 'original'; % The noise added to vision blocks: original, gauss, sal
 NTREE = 200;
 MTRY = 140;
 
+CACHETRAIN = true;
+
 PREFIX = 'OP_';
 % ENDPARA
 
@@ -28,11 +30,11 @@ disp(sprintf('nsbj: %d\n', nsbj));
 % Only deal with low memory use
 for i = 1 : nsbj
     fsbj = load(fullfile(datadir, strcat(PREFIX, num2str(nsbj), '.mat')), 'sbj');	
-    lrobot{i} = fsbj.sbj;
+    lsbj{i} = fsbj.sbj;
 end
 
-ltrainrobot = lrobot{1 : numel(lrobot)-TESTSIZE}
-ltestrobot = lrobot{numel(lrobot)-TESTSIZE+1 : end}
+ltrainrobot = lsbj{1 : numel(lsbj)-TESTSIZE}
+ltestrobot = lsbj{numel(lsbj)-TESTSIZE+1 : end}
 
 % Count the train vbox
 ntrain = 0;
@@ -47,21 +49,21 @@ for r = 1 : numel(ltestrobot)
 end
 
 % Make the Train X and Y
-vboxsize = lrobot{1}.vboxsize;
+vboxsize = lsbj{1}.vboxsize;
 train_x = zeros(ntrain, vboxsize^3);
 row = 1;
-for i = 1 : numel(lrobot) - TESTSIZE
-    for j = 1 : numel(lrobot{i})
+for i = 1 : numel(lsbj) - TESTSIZE
+    for j = 1 : numel(lsbj{i}.lrobot)
     	disp(sprintf('Reading train matrix row %d\n', row));
-    	vb = lrobot{i}{j}.visionbox.(NOISETYPE);
+    	vb = lsbj{i}.lrobot(j).visionbox.(NOISETYPE);
 
-        if lrobot{i}{j}.fissure == 1 % Only use the vboxes not at branching locations
+        if lsbj{i}.lrobot(j).fissure == 1 % Only use the vboxes not at branching locations
         	continue;
         end
 
     	train_x(row, :) = vb(:);
-        train_y(row, 1) = lrobot{i}{j}.next_alpha;
-        train_y(row, 2) = lrobot{i}{j}.next_beta;
+        train_y(row, 1) = lsbj{i}.lrobot(j).next_th;
+        train_y(row, 2) = lsbj{i}.lrobot(j).next_phi;
         row = row + 1;
     end
 end
@@ -69,12 +71,13 @@ end
 train_x(row:end,:) = []; % Delete the redundent rows not used because of the branching
 train_y(row:end,:) = [];
 
-clearvars lrobot;
+clearvars lsbj;
 
 % Train RF
 %tic; model_x_dir = regRF_train(train_x, train_y, NTREE, MTRY); toc;
 disp('Start to train RF...');
-tic; rf = TreeBagger(NTREE, train_x, train_y, 'Method', 'regression', 'NVarToSample', MTRY); toc;
+tic; rf_th = TreeBagger(NTREE, train_x, train_y(:, 1), 'Method', 'regression', 'NVarToSample', MTRY, 'Options', 'UseParallel', true, 'NPrint', true); toc;
+%tic; rf_phi = TreeBagger(NTREE, train_x, train_y(:, 2), 'Method', 'regression', 'NVarToSample', MTRY); toc;
 
 % % Test RF
 % for r = 1 : numel(ltestrobot)
