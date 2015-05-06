@@ -42,11 +42,12 @@ end
 
 % Count the test vbox
 ntest = 0;
-for r = 1 : ltestrobot
+for r = 1 : numel(ltestrobot)
 	ntest = ntest + numel(ltestrobot(r));
 end
 
 % Make the Train X and Y
+vboxsize = lrobot{1}.vboxsize;
 train_x = zeros(ntrain, vboxsize^3);
 row = 1;
 for i = 1 : numel(lrobot) - TESTSIZE
