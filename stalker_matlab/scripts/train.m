@@ -51,7 +51,6 @@ for r = 1 : numel(ltestrobot)
 end
 
 % Make the Train X and Y
-<<<<<<< HEAD
 % Load the cached Train X and Y matrix if possible
 if CACHETRAINDATA && exist(fullfile(curdir, 'traincache.mat'))
     fcache = load(fullfile(curdir, 'traincache.mat'));
