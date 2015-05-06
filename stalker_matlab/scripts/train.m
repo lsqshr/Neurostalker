@@ -90,7 +90,8 @@ clearvars lsbj;
 % Train RF
 %tic; model_x_dir = regRF_train(train_x, train_y, NTREE, MTRY); toc;
 disp('Start to train RF...');
-tic; rf_th = TreeBagger(NTREE, train_x, train_y(:, 1), 'Method', 'regression', 'NVarToSample', MTRY, 'NPrint', true); toc;
+options = statset('UseParallel', 'Always');
+tic; rf_th = TreeBagger(NTREE, train_x, train_y(:, 1), 'Method', 'regression', 'NVarToSample', MTRY, 'NPrint', true,'Options',options); toc;
 %tic; rf_phi = TreeBagger(NTREE, train_x, train_y(:, 2), 'Method', 'regression', 'NVarToSample', MTRY); toc;
 
 % % Test RF
