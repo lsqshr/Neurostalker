@@ -12,6 +12,7 @@ GAUSS_PERCENT = 0.1;
 GAUSS_VARIANCE = 1;
 NCLUSTER = 20;
 VBOXSIZE = 13;
+RANDPERMDIM = true; % If TRUE, some axis of the cubes will be transposed to elliminate the ignorance of the z axis
 %
 
 %Add the script folder into path
@@ -43,9 +44,9 @@ prefix='OP_';
 
 ltrainrobot=[];
 ltestrobot=[];
-
 lrobot = {};
 nrobot = 0;
+
 for i = 1 : length(dir([gtpath, [filesep, '*.swc']])) % iterate each subject
     sbjid = [prefix num2str(i)];
     disp(sprintf('Working On Sbj %s\n', sbjid));
@@ -55,6 +56,7 @@ for i = 1 : length(dir([gtpath, [filesep, '*.swc']])) % iterate each subject
     img3d = raw_image_prep(nfile, sbjimgpath, SHOWIMG, FRTHRESHOLD, ZERO_SIZE,...
                            SALTPEPPER_PERCENT, GAUSS_PERCENT, GAUSS_VARIANCE, NCLUSTER);
     preppath = fullfile('preprocessed', 'preprocessed_images'); 
+
     % Extract directions and radius
     sbj.lrobot = extract_gt(img3d, sbjgtpath, SHOWGT, ZERO_SIZE, VBOXSIZE);
     sbj.imgpath = sbjimgpath;
@@ -63,7 +65,8 @@ for i = 1 : length(dir([gtpath, [filesep, '*.swc']])) % iterate each subject
     sbj.zerosize = ZERO_SIZE;
     sbj.vboxsize = VBOXSIZE;
     nvbox = numel(sbj.lrobot);
-    save(fullfile(curdir, '..', 'data', 'input', 'preprocessed', strcat(num2str(sbjid),'.mat')), 'sbj', 'img3d', 'nvbox');
+    save(fullfile(curdir, '..', 'data', 'input', 'preprocessed',...
+         strcat(num2str(sbjid),'.mat')), 'sbj', 'img3d', 'nvbox');
     clearvars sbj;
     clearvars img3d;
 end
@@ -71,7 +74,7 @@ end
 end
 
 
-function robot = extract_gt(img3d, sbjpath, SHOWIMG, zero_size, vboxsize)
+function robot = extract_gt(img3d, sbjpath, SHOWIMG, zero_size, vboxsize, randpermdim)
 % Extract the voxel vision blocks of 1 imagestack and the ground truth
 % directions
 % Parameters: 
@@ -186,15 +189,10 @@ for i = 2:numel(lparind)-1
 
     dmagnitude = norm([dx, dy, dz]);
 
-    % TODO: Simply make abs is WRONG!!!!!
-    robot(i).prev_x_dir = abs(dx / dmagnitude);
-    robot(i).prev_y_dir = abs(dy / dmagnitude);
-    robot(i).prev_z_dir = abs(dz / dmagnitude);
-
-    % Initialize the direction of x y z
-    % robot(i).see_x_dir = (prev_x_direction);
-    % robot(i).see_y_dir = (prev_y_direction);
-    % robot(i).see_z_dir = (prev_z_direction);
+    % Keep the sign of the directions as-is
+    robot(i).prev_x_dir = dx / dmagnitude;
+    robot(i).prev_y_dir = dy / dmagnitude;
+    robot(i).prev_z_dir = dz / dmagnitude;
 
     robot(i).prev_mag = dmagnitude;
     node_ind_next = t.getchildren(n(node_ind))-1;
@@ -209,15 +207,17 @@ for i = 2:numel(lparind)-1
 
     for c = 1 : nchildren
         next = t.get(n(node_ind_next(c)));
+
+        % Keep the sign of the directions as-is
         dx = nextnode.x_loc - curnode.x_loc;
         dy = nextnode.y_loc - curnode.y_loc;
         dz = nextnode.z_loc - curnode.z_loc;
         dmagnitude = norm([dx, dy, dz]);
 
         % Each child is associated with a next direction
-        robot(i).next_x_dir(c) = abs(dx/dmagnitude); 
-        robot(i).next_y_dir(c) = abs(dy/dmagnitude);
-        robot(i).next_z_dir(c) = abs(dz/dmagnitude);
+        robot(i).next_x_dir(c) = dx/dmagnitude; 
+        robot(i).next_y_dir(c) = dy/dmagnitude;
+        robot(i).next_z_dir(c) = dz/dmagnitude;
         robot(i).next_mag(c) = dmagnitude;
 
         if strcmp(SHOWIMG, 'DISPLAY') 
