@@ -107,12 +107,12 @@ lparind = swc.data(:, 7);
 assert(numel(I) == 1, 'One and only one root node should be found in this .swc');
 
 morphtree = tree(robot_ground_truth(1)); % Tree structure in ../lib/@tree
-[morphtree n(1)] = morphtree.addnode(1, robot_ground_truth(2));
+[morphtree lnode(1)] = morphtree.addnode(1, robot_ground_truth(2));
 
-for i=2:1:numel(lparind)-1
+for i = 2:numel(lparind)-1
     par_n = lparind(i+1);
     par_n = par_n-1;
-    [morphtree n(i)] = morphtree.addnode(n(par_n), robot_ground_truth(i+1));
+    [morphtree lnode(i)] = morphtree.addnode(lnode(par_n), robot_ground_truth(i+1));
 end
 % ---------- END build the tree
 
@@ -120,7 +120,7 @@ if SHOWIMG==1
     figure
     hold on
     for i=1:(numel(lparind)-1)
-    tnode=morphtree.get(n(i));
+    tnode=morphtree.get(lnode(i));
     plot3(tnode.x_loc, tnode.y_loc, tnode.z_loc, 'r+');
     end
 end
@@ -139,16 +139,16 @@ for i = 1 : numel(fields)
 end
 
 % Move to the second node
-curnode = morphtree.get(n(1)); % n(1) is the first children
+curnode = morphtree.get(lnode(1)); % lnode(1) is the first children
 for i = 1 : numel(fields)
     robot(2).visionbox.(fields{i}) = extractbox(img3d.(fields{i}), vboxsize, curnode.x_loc,curnode.y_loc,curnode.z_loc, zero_size);
     robot(2).fissure=0;
 end
 
-% Assign the cartisian direction vector of node 1 and node 2
+% Assign the cartisian direction vector of root 
 % Because they are special 
 curnode = morphtree.get(1);
-nextnode = morphtree.get(n(1));
+nextnode = morphtree.get(lnode(1));
 next_x = nextnode.x_loc-curnode.x_loc;
 next_y = nextnode.y_loc-curnode.y_loc;
 next_z = nextnode.z_loc-curnode.z_loc;
@@ -161,16 +161,15 @@ robot(1).next_y_dir = next_y_direction;
 robot(1).next_z_dir = next_z_direction;
 robot(1).next_mag = next_magnitude;
 robot(1).radius = curnode.radius;
-
 robot(1).prev_x_dir = next_x_direction;
 robot(1).prev_y_dir = next_y_direction;
 robot(1).prev_z_dir = next_z_direction;
 robot(1).prev_mag = next_magnitude;
 
 % Assign the cartisian direction vectors of all the other nodes 
-for i = 2:numel(lparind)-1
+for i = 2:numel(lparind)
     node_ind = iterator(i); % DFS traverse 
-    curnode = morphtree.get(n(node_ind));
+    curnode = morphtree.get(lnode(node_ind));
     
     % Radius
     robot(i).radius = curnode.radius;
@@ -183,20 +182,20 @@ for i = 2:numel(lparind)-1
     end
 
     % Use this robot location minus previous robot location
-    parent = morphtree.get(morphtree.getparent(n(node_ind)));
-    dx = curnode.x_loc - parent.x_loc;
-    dy = curnode.y_loc - parent.y_loc;
-    dz = curnode.z_loc - parent.z_loc;
+    parnode = morphtree.get(morphtree.getparnode(lnode(node_ind)));
+    dx = curnode.x_loc - parnode.x_loc;
+    dy = curnode.y_loc - parnode.y_loc;
+    dz = curnode.z_loc - parnode.z_loc;
 
     dmagnitude = norm([dx, dy, dz]);
 
-    % Keep the sign of the directions as-is
+    % Keep the sign of the directions as-is & normalise the displacements
     robot(i).prev_x_dir = dx / dmagnitude;
     robot(i).prev_y_dir = dy / dmagnitude;
     robot(i).prev_z_dir = dz / dmagnitude;
-
     robot(i).prev_mag = dmagnitude;
-    node_ind_next = morphtree.getchildren(n(node_ind))-1;
+
+    node_ind_next = morphtree.getchildren(lnode(node_ind)) - 1; % DH, double check!!!
     nchildren = numel(node_ind_next); % The number of children nodes
 
     % Define fissure based on the poupulation of children nodes
@@ -207,7 +206,7 @@ for i = 2:numel(lparind)-1
     end
 
     for c = 1 : nchildren
-        next = morphtree.get(n(node_ind_next(c)));
+        next = morphtree.get(lnode(node_ind_next(c)));
 
         % Keep the sign of the directions as-is
         dx = nextnode.x_loc - curnode.x_loc;
