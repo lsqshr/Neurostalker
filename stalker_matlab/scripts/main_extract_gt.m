@@ -70,7 +70,8 @@ for i = 1 : length(dir([gtpath, [filesep, '*.swc']])) % iterate each subject
     clearvars sbj;
     clearvars img3d;
 end
-
+    save(fullfile(curdir, '..', 'data', 'input', 'preprocessed',...
+         'gt_i.mat'), 'VBOXSIZE','ZERO_SIZE');
 end
 
 
