@@ -1,22 +1,21 @@
+function train()
 % Train neurostalker based on groundtruth extracted from swf trees and input from imagesstacks
 % This version disregard the memory cost of loading training cases
+tic;
 clc; clear all; close all;
+
 % PARA
-TESTSIZE = 1;
-TESTSTARTLOC = [[76.663, 324, 9.749]];
-TESTSTARTDIR = [[-0.9278, 0.1916]];
-NTESTSTEP = 40;
-STEPSIZE = 0.4;
-
-NOISETYPE = 'original'; % The noise added to vision blocks: original, gauss, salt_pepper
-NTREE = 200;
-MTRY = 140;
-
-CACHETRAIN = true;
-
-PREFIX = 'OP_';
-
-CACHETRAINDATA = true;
+TESTSIZE        = 1;
+TESTSTARTLOC    = [[89, 363, 30]];
+TESTSTARTDIR    = [[-0.9278, 0.1916]];
+NTESTSTEP       = 100;
+STEPSIZE        = 1;
+NOISETYPE       = 'original'; % The noise added to vision blocks: original, gauss, salt_pepper
+NTREE           = 200;
+MTRY            = 140;
+CACHETRAIN      = true;
+PREFIX          = 'OP_';
+CACHETRAINDATA  = true;
 CACHETRAINMODEL = true;
 % ENDPARA
 
@@ -100,17 +99,37 @@ if CACHETRAINMODEL && exist(fullfile(curdir, 'modelcache.mat'))
 else
     disp('Start to train RF...');
     options = statset('UseParallel', 'Always');
-    tic; rf_th = TreeBagger(NTREE, train_x, train_y(:, 1), 'Method', 'regression', 'NVarToSample', MTRY, 'NPrint', true,'Options',options); toc;
-    tic; rf_phi = TreeBagger(NTREE, train_x, train_y(:, 2), 'Method', 'regression', 'NVarToSample', MTRY, 'NPrint', true,'Options',options); toc;
+    
+    orith = train_y(:, 1);
+    oriphi = train_y(:, 2);
+    [gtx, gty, gtz] = sph2cart(orith, oriphi, ones(numel(orith, 1)));
+    [invth, invphi] = cart2sph(-gtx, -gty, -gtz);
+    gtth = orith;
+    gtphi = oriphi;
+    gtth(orith > pi) = invth(orith > pi);
+    gtphi(orith > pi) = invphi(orith > pi);
+    disp('gtth')
+    disp(gtth);
+
+    % Train Theta
+    rf_th = TreeBagger(NTREE, train_x, gtth,...
+                            'Method', 'regression', 'NVarToSample',...
+                             MTRY, 'NPrint', true,'Options',options); 
+
+    % Train Phi
+    rf_phi = TreeBagger(NTREE, train_x, gtphi,... 
+                             'Method', 'regression', 'NVarToSample',...
+                              MTRY, 'NPrint', true,'Options',options);
 
     if CACHETRAINMODEL 
         save(fullfile(curdir, 'modelcache.mat'), 'rf_th', 'rf_phi');
     end
 end
 
-% % Test RF
-% Read in the test subject
 
+
+% % Test RF by walking 
+% Read in the test subject
 img3dctr = 1; % counter for img3d cell array
 for i = nsbj - TESTSIZE + 1 : nsbj 
     fsbj = load(fullfile(datadir, strcat(PREFIX, num2str(nsbj), '.mat')), 'sbj', 'img3d'); 
@@ -119,36 +138,69 @@ for i = nsbj - TESTSIZE + 1 : nsbj
     img3dctr = img3dctr + 1;
 end
 
+
 for r = 1 : numel(ltestrobot)
-    disp(img3d{r});
+    figure
+    hold on
+    showbox(img3d{r}.original, 0.1);
  	testimg = img3d{r}.(NOISETYPE);
  
  	% Start Location
  	curnode.x = TESTSTARTLOC(r, 1);
  	curnode.y = TESTSTARTLOC(r, 2);
  	curnode.z = TESTSTARTLOC(r, 3);
+    fprintf('Starting at (%f, %f, %f)', curnode.x, curnode.y, curnode.z);
  
  	% Start Direction
  	curnode.prev_th = TESTSTARTDIR(r, 1);
  	curnode.prev_phi = TESTSTARTDIR(r, 2);
+    fprintf('Starting from direction (%f, %f)\n', curnode.prev_th, curnode.prev_phi);
 
     % Iterate each step of the prediction
     for s = 1 : NTESTSTEP 
-        disp(['ltestrobot', ltestrobot])
-        disp({'ltestrobot{r}', ltestrobot{r}})
-        disp(fieldnames(ltestrobot{r}))
-        vbox = extractbox(testimg, ltestrobot{r}.vboxsize, curnode.x, curnode.y, curnode.z, ltestrobot{r}.zerosize);
+        % Extract the vbox of the stalker
+        vbox = extractbox(testimg, ltestrobot{r}.vboxsize,...
+                          curnode.x, curnode.y, curnode.z,...
+                          ltestrobot{r}.zerosize);
+
         th = rf_th.predict(vbox(:)');
         phi = rf_phi.predict(vbox(:)');
+
+        % Calculate the cosine of the forward and backward
+        % Larger cosine means smaller angle
+        % Choose the direction with the small angle based on the assumption that turning angles larger than pi/2
+        % is not common in bio systems
+        dcosforward = sphveccos(th, phi, curnode.prev_th, curnode.prev_phi);
+        dcosbackward = sphveccos(th+pi, -phi, curnode.prev_th, curnode.prev_phi);
+
+        if dcosbackward > dcosforward
+            [x, y, z] = sph2cart(th, phi);
+            [th, phi] = cart2sph(-x, -y, -z);
+        end
 
         % Move one step
         [dx, dy, dz] = sph2cart(th, phi, STEPSIZE);
         nextnode.x = curnode.x + dx;
         nextnode.y = curnode.y + dy;
-        nextnode.z = curnode.z + dz*0.1;
+        nextnode.z = curnode.z + dz;
+        nextnode.prev_th = th;
+        nextnode.prev_phi = phi;
 
-        fprintf('Move to direction (%f, %f) - (%f, %f, %f)\n', th, phi, dx, dy, dz);
+        fprintf('Step %d: Move to direction (%f, %f) - (%f, %f, %f)\n', s, th, phi, dx, dy, dz);
         line([curnode.x, nextnode.x], [curnode.y, nextnode.y], [curnode.z, nextnode.z], 'Color','k', 'LineWidth',5);
         curnode = nextnode;
+        drawnow
     end
- end
+    hold off
+end
+
+end
+
+function dcos = sphveccos(th1, phi1, th2, phi2)
+% Calculate the value of the cosine of the angle between two spherical vectors
+% Ref: http://math.stackexchange.com/questions/231221/great-arc-distance-between-two-points-on-a-unit-sphere
+% Larger cosine between these two angles means closer these two angles are
+
+dcos = cos(th1) * cos(th2) + sin(th1) * sin(th2) * cos(phi1 - phi2);
+toc;
+end

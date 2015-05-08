@@ -1,5 +1,6 @@
 function main_extract_gt()
-% this script can extract multiple robot(voxel box and spherical angles. prepare for the training) 
+% Extract the groundtruth for training 
+
 clear all; clc; close all; warning on;
 curdir = fileparts(mfilename('fullpath'));
 disp(sprintf('currentpath:%s', curdir));
@@ -12,7 +13,6 @@ GAUSS_PERCENT = 0.1;
 GAUSS_VARIANCE = 1;
 NCLUSTER = 20;
 VBOXSIZE = 13;
-RANDPERMDIM = true; % If TRUE, some axis of the cubes will be transposed to elliminate the ignorance of the z axis
 %
 
 %Add the script folder into path
@@ -53,6 +53,7 @@ for i = 1 : length(dir([gtpath, [filesep, '*.swc']])) % iterate each subject
     sbjimgpath = fullfile(oppath, sbjid);
     sbjgtpath = fullfile(gtpath, sbjid);
     nfile = length(dir([sbjimgpath, [filesep, '*.tif']]));
+
     img3d = raw_image_prep(nfile, sbjimgpath, SHOWIMG, FRTHRESHOLD, ZERO_SIZE,...
                            SALTPEPPER_PERCENT, GAUSS_PERCENT, GAUSS_VARIANCE, NCLUSTER);
     preppath = fullfile('preprocessed', 'preprocessed_images'); 
@@ -61,7 +62,6 @@ for i = 1 : length(dir([gtpath, [filesep, '*.swc']])) % iterate each subject
     sbj.lrobot = extract_gt(img3d, sbjgtpath, SHOWGT, ZERO_SIZE, VBOXSIZE);
     sbj.imgpath = sbjimgpath;
     sbj.gtpath = sbjgtpath;
-    %sbj.img3d = img3d;
     sbj.zerosize = ZERO_SIZE;
     sbj.vboxsize = VBOXSIZE;
     nvbox = numel(sbj.lrobot);
@@ -74,8 +74,8 @@ end
 end
 
 
-function robot = extract_gt(img3d, sbjpath, SHOWIMG, zero_size, vboxsize, randpermdim)
-% Extract the voxel vision blocks of 1 imagestack and the ground truth
+function robot = extract_gt(img3d, sbjpath, SHOWIMG, zero_size, vboxsize)
+% Extract the voxel vision blocks of 1 imagestack and the ground truth diections
 % directions
 % Parameters: 
 % img3d - a structure of input voxels (3D image stack) of 1 single subject 
@@ -99,37 +99,38 @@ for i = 1:size(swc.data, 1)
     robot_ground_truth(i).p_nodeidx = swc.data(i, 7);
 end
 
+% ---------- START build the tree
 % Find the root node whose parind is -1
 lparind = swc.data(:, 7);
 [~, I] = find(lparind == -1);
 
 assert(numel(I) == 1, 'One and only one root node should be found in this .swc');
 
-t = tree(robot_ground_truth(1)); % Tree structure in ../lib/@tree
-[t n(1)] = t.addnode(1, robot_ground_truth(2));
+morphtree = tree(robot_ground_truth(1)); % Tree structure in ../lib/@tree
+[morphtree n(1)] = morphtree.addnode(1, robot_ground_truth(2));
 
 for i=2:1:numel(lparind)-1
     par_n = lparind(i+1);
     par_n = par_n-1;
-    [t n(i)] = t.addnode(n(par_n), robot_ground_truth(i+1));
+    [morphtree n(i)] = morphtree.addnode(n(par_n), robot_ground_truth(i+1));
 end
+% ---------- END build the tree
 
 if SHOWIMG==1
     figure
     hold on
     for i=1:(numel(lparind)-1)
-    test=t.get(n(i));
-    plot3(test.x_loc, test.y_loc, test.z_loc, 'r+');
-    %pause(0.1)
+    tnode=morphtree.get(n(i));
+    plot3(tnode.x_loc, tnode.y_loc, tnode.z_loc, 'r+');
     end
 end
 
-df_order = tree(t, 'clear'); % Generate an empty synchronized tree
-iterator = t.depthfirstiterator; % Doesn't matter whether you call this on |t| or |df_order|
-iterator=iterator-1;
+df_order = tree(morphtree, 'clear'); % Generate an empty synchronized tree
+iterator = morphtree.depthfirstiterator; % Doesn't matter whether you call this on |t| or |df_order|
+iterator = iterator-1;
 
 % Initialize the root parameter
-curnode = t.get(1); % t is the whole tree, t.get(1) is the root
+curnode = morphtree.get(1); % t is the whole tree, t.get(1) is the root
 fields = fieldnames(img3d);
 
 for i = 1 : numel(fields)
@@ -138,16 +139,16 @@ for i = 1 : numel(fields)
 end
 
 % Move to the second node
-curnode = t.get(n(1)); % n(1) is the first children
+curnode = morphtree.get(n(1)); % n(1) is the first children
 for i = 1 : numel(fields)
     robot(2).visionbox.(fields{i}) = extractbox(img3d.(fields{i}), vboxsize, curnode.x_loc,curnode.y_loc,curnode.z_loc, zero_size);
     robot(2).fissure=0;
 end
 
-% Initilize the Cartisian unit vector of node 1 and node 2
+% Assign the cartisian direction vector of node 1 and node 2
 % Because they are special 
-curnode = t.get(1);
-nextnode = t.get(n(1));
+curnode = morphtree.get(1);
+nextnode = morphtree.get(n(1));
 next_x = nextnode.x_loc-curnode.x_loc;
 next_y = nextnode.y_loc-curnode.y_loc;
 next_z = nextnode.z_loc-curnode.z_loc;
@@ -166,10 +167,10 @@ robot(1).prev_y_dir = next_y_direction;
 robot(1).prev_z_dir = next_z_direction;
 robot(1).prev_mag = next_magnitude;
 
-% Initialize the children parameter
+% Assign the cartisian direction vectors of all the other nodes 
 for i = 2:numel(lparind)-1
-    node_ind = iterator(i);
-    curnode = t.get(n(node_ind));
+    node_ind = iterator(i); % DFS traverse 
+    curnode = morphtree.get(n(node_ind));
     
     % Radius
     robot(i).radius = curnode.radius;
@@ -182,7 +183,7 @@ for i = 2:numel(lparind)-1
     end
 
     % Use this robot location minus previous robot location
-    parent = t.get(t.getparent(n(node_ind)));
+    parent = morphtree.get(morphtree.getparent(n(node_ind)));
     dx = curnode.x_loc - parent.x_loc;
     dy = curnode.y_loc - parent.y_loc;
     dz = curnode.z_loc - parent.z_loc;
@@ -195,7 +196,7 @@ for i = 2:numel(lparind)-1
     robot(i).prev_z_dir = dz / dmagnitude;
 
     robot(i).prev_mag = dmagnitude;
-    node_ind_next = t.getchildren(n(node_ind))-1;
+    node_ind_next = morphtree.getchildren(n(node_ind))-1;
     nchildren = numel(node_ind_next); % The number of children nodes
 
     % Define fissure based on the poupulation of children nodes
@@ -206,7 +207,7 @@ for i = 2:numel(lparind)-1
     end
 
     for c = 1 : nchildren
-        next = t.get(n(node_ind_next(c)));
+        next = morphtree.get(n(node_ind_next(c)));
 
         % Keep the sign of the directions as-is
         dx = nextnode.x_loc - curnode.x_loc;
@@ -215,9 +216,9 @@ for i = 2:numel(lparind)-1
         dmagnitude = norm([dx, dy, dz]);
 
         % Each child is associated with a next direction
-        robot(i).next_x_dir(c) = dx/dmagnitude; 
-        robot(i).next_y_dir(c) = dy/dmagnitude;
-        robot(i).next_z_dir(c) = dz/dmagnitude;
+        robot(i).next_x_dir(c) = dx / dmagnitude; 
+        robot(i).next_y_dir(c) = dy / dmagnitude;
+        robot(i).next_z_dir(c) = dz / dmagnitude;
         robot(i).next_mag(c) = dmagnitude;
 
         if strcmp(SHOWIMG, 'DISPLAY') 
@@ -229,12 +230,12 @@ for i = 2:numel(lparind)-1
     end
 end
 
-%% start to extract spherical angle 
+% Extract spherical angle 
 for i = 1:numel(lparind)-1
     [robot(i).prev_th, robot(i).prev_phi,r_one] = ...
-                             cart2sph(robot(i).prev_x_dir,robot(i).prev_y_dir,robot(i).prev_z_dir);
+                             cart2sph(robot(i).prev_x_dir, robot(i).prev_y_dir, robot(i).prev_z_dir);
     [robot(i).next_th, robot(i).next_phi,r_one] = ...
-                             cart2sph(robot(i).next_x_dir,robot(i).next_y_dir,robot(i).next_z_dir);
+                             cart2sph(robot(i).next_x_dir, robot(i).next_y_dir, robot(i).next_z_dir);
 end
 
 end
@@ -302,9 +303,10 @@ if strcmp(SHOWIMG, 'DISPLAY')
 end
 
 % TODO: In the future, we might try the histogram normalization. 
+
 % Simple Normalization : ZERO-MEAN
 Avec = A(:);
-img3d.original = (A-min(Avec))/(max(Avec)-min(Avec));
+img3d.original = (A-min(Avec)) / (max(Avec)-min(Avec));
 
 gsAvec = gsA(:);
 img3d.gauss = (gsA-min(gsAvec)) / (max(gsAvec)-min(gsAvec));
