@@ -182,7 +182,7 @@ for i = 2:numel(lparind)
     end
 
     % Use this robot location minus previous robot location
-    parnode = morphtree.get(morphtree.getpar(lnode(node_ind)));
+    parnode = morphtree.get(morphtree.getparent(lnode(node_ind)));
     dx = curnode.x_loc - parnode.x_loc;
     dy = curnode.y_loc - parnode.y_loc;
     dz = curnode.z_loc - parnode.z_loc;
