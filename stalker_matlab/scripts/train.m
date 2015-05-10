@@ -100,6 +100,8 @@ else
     disp('Start to train RF...');
     options = statset('UseParallel', 'Always');
     
+    % When (2*pi > theta > pi) we invert the ground truth vector to its
+    % inversed direction
     orith = train_y(:, 1);
     oriphi = train_y(:, 2);
     [gtx, gty, gtz] = sph2cart(orith, oriphi, ones(numel(orith, 1)));
