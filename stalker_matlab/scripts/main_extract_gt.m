@@ -2,10 +2,8 @@ function main_extract_gt()
 % Extract the groundtruth for training 
 
 clear all; clc; close all; warning on;
-curdir = fileparts(mfilename('fullpath'));
-disp(sprintf('currentpath:%s', curdir));
 
-% PARA
+% START PARA
 ZERO_SIZE = 20;
 FRTHRESHOLD = 15;
 SALTPEPPER_PERCENT = 0.0001;
@@ -13,15 +11,17 @@ GAUSS_PERCENT = 0.1;
 GAUSS_VARIANCE = 1;
 NCLUSTER = 20;
 VBOXSIZE = 13;
-%
+ADDPREV = true; % Consider the inverse of the previous direction as an output direction as well 
+SPHPROB.SAVESPHPROB = true;
+SPHPROB.NDIRECTION = true;
+% - END PARA
 
 %Add the script folder into path
-addpath(genpath(pwd));
+curdir = fileparts(mfilename('fullpath'));
 
 % Add dependencies 
 addpath(genpath(fullfile(curdir, '..', 'lib')));
 addpath(genpath(fullfile(curdir, '..', 'utils')));
-
 
 % Try to enter the raw image ground truth path
 gtpath = fullfile(curdir, '..', 'data', 'input', 'raw', 'groundtruth'); 
@@ -41,7 +41,6 @@ else
 end
 
 prefix='OP_';
-
 ltrainrobot=[];
 ltestrobot=[];
 lrobot = {};
@@ -59,7 +58,7 @@ for i = 1 : length(dir([gtpath, [filesep, '*.swc']])) % iterate each subject
     preppath = fullfile('preprocessed', 'preprocessed_images'); 
 
     % Extract directions and radius
-    sbj.lrobot = extract_gt(img3d, sbjgtpath, SHOWGT, ZERO_SIZE, VBOXSIZE);
+    sbj.lrobot = extract_gt(img3d, sbjgtpath, SHOWGT, ZERO_SIZE, VBOXSIZE, ADDPREV);
     sbj.imgpath = sbjimgpath;
     sbj.gtpath = sbjgtpath;
     sbj.zerosize = ZERO_SIZE;
@@ -74,7 +73,7 @@ end
 end
 
 
-function robot = extract_gt(img3d, sbjpath, SHOWIMG, zero_size, vboxsize)
+function robot = extract_gt(img3d, sbjpath, showimg, zero_size, vboxsize, addprev, sphprob)
 % Extract the voxel vision blocks of 1 imagestack and the ground truth diections
 % directions
 % Parameters: 
@@ -82,9 +81,11 @@ function robot = extract_gt(img3d, sbjpath, SHOWIMG, zero_size, vboxsize)
 %         fields -- original, salt_pepper, gauss
 %
 % sbjpath - the name before .swc
-% SHOWIMG - 'DISPLAY'/'NODISPLAY'
+% showimg - 'DISPLAY'/'NODISPLAY'
 % zero_size - The size of the zero-padding on each plane of the cube (3D image stack). 
-%addpath(genpath(fullfile('..', 'lib', '@tree'))); % We need to add 
+% vboxsize - The size of the vision box
+% addprev - true if add the inverse of the previous direction into the inputs
+% addprev - 
 
 swc = importdata([sbjpath '.swc']);
 
@@ -116,7 +117,7 @@ for i = 2:numel(lparind)-1
 end
 % ---------- END build the tree
 
-if SHOWIMG==1
+if showimg==1
     figure
     hold on
     for i=1:(numel(lparind)-1)
@@ -182,7 +183,7 @@ for i = 2:numel(lparind)
     end
 
     % Use this robot location minus previous robot location
-    parnode = morphtree.get(morphtree.getparnode(lnode(node_ind)));
+    parnode = morphtree.get(morphtree.getparent(lnode(node_ind)));
     dx = curnode.x_loc - parnode.x_loc;
     dy = curnode.y_loc - parnode.y_loc;
     dz = curnode.z_loc - parnode.z_loc;
@@ -220,7 +221,7 @@ for i = 2:numel(lparind)
         robot(i).next_z_dir(c) = dz / dmagnitude;
         robot(i).next_mag(c) = dmagnitude;
 
-        if strcmp(SHOWIMG, 'DISPLAY') 
+        if strcmp(showimg, 'DISPLAY') 
             % Plot the skelonton of tree
             line([curnode.x_loc, nextnode.x_loc],...
                  [curnode.y_loc, nextnode.y_loc],...
@@ -235,12 +236,24 @@ for i = 1:numel(lparind)-1
                              cart2sph(robot(i).prev_x_dir, robot(i).prev_y_dir, robot(i).prev_z_dir);
     [robot(i).next_th, robot(i).next_phi,r_one] = ...
                              cart2sph(robot(i).next_x_dir, robot(i).next_y_dir, robot(i).next_z_dir);
+
+    % Invserse the previous direction and add it to the list of next direction
+    if addprev 
+        [px, py, pz] = sph2cart(robot(i).next_th, robot(i).prev_th, 1);
+        [invprevth, invprevphi, ~] = cart2sph(-px, -py, -pz);  
+        robot(i).next_th = [robot(i).next_th, invprevth];
+        robot(i).next_phi = [robot(i).next_phi, invprevphi];
+    end
+end
+
+if sphprob.SAVESPHPROB % Convert the next directions to a spherical propagation distribution sampling
+     
 end
 
 end
 
 
-function [img3d, centroid] = raw_image_prep(nfile, imgpath, SHOWIMG, FRTHRESHOLD, ZERO_SIZE, SALTPEPPER_PERCENT, GAUSS_PERCENT, GAUSS_VARIANCE, NCLUSTER)
+function [img3d, centroid] = raw_image_prep(nfile, imgpath, showimg, FRTHRESHOLD, ZERO_SIZE, SALTPEPPER_PERCENT, GAUSS_PERCENT, GAUSS_VARIANCE, NCLUSTER)
 % Show the original 3D images and the save raw image data 
 % Save from .tif to .mat
 
@@ -253,13 +266,13 @@ end
 
 %This line isn just to make sure we use the whole stack 
 disp(sprintf('Size of Image %d*%d*%d\n', size(A)));
-A=double(padarray(A,[ZERO_SIZE,ZERO_SIZE,ZERO_SIZE])); % Add zero padding
+A = double(padarray(A,[ZERO_SIZE,ZERO_SIZE,ZERO_SIZE])); % Add zero padding
 
 foregroundmap = A > FRTHRESHOLD; % Binarise 
 [x y z] = ind2sub(size(foregroundmap), find(foregroundmap));
 foregroundidx = [x y z];
 
-if strcmp(SHOWIMG, 'DISPLAY')
+if strcmp(showimg, 'DISPLAY')
     figure
     plot3(x, y, z, 'b.');
 end
@@ -269,7 +282,7 @@ spA = noise(A,'sp', SALTPEPPER_PERCENT);
 sp_foregroundmap = spA > FRTHRESHOLD;  % synthetic data
 [x y z] = ind2sub(size(sp_foregroundmap), find(sp_foregroundmap));
 
-if strcmp(SHOWIMG, 'DISPLAY')
+if strcmp(showimg, 'DISPLAY')
     figure
     plot3(x, y, z, 'b.');
 end
@@ -280,7 +293,7 @@ gsA = noise(A, 'ag', GAUSS_VARIANCE, GAUSS_PERCENT);
 gs_foregroundmap = gsA > FRTHRESHOLD;  % synthetic data
 [x y z] = ind2sub(size(gs_foregroundmap), find(gs_foregroundmap));
 
-if strcmp(SHOWIMG, 'DISPLAY')
+if strcmp(showimg, 'DISPLAY')
     figure
     plot3(x, y, z, 'b.');
 end
@@ -290,7 +303,7 @@ end
 [assigned_groups, centroid] = kmeans(foregroundidx, NCLUSTER, 'distance','sqEuclidean', 'start','sample');
 
 % Plot K-Means
-if strcmp(SHOWIMG, 'DISPLAY')
+if strcmp(showimg, 'DISPLAY')
     % show points and clusters (color-coded)
     clr = lines(NCLUSTER);
     figure, hold on
