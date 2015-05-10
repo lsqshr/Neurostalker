@@ -13,7 +13,7 @@ NCLUSTER = 20;
 VBOXSIZE = 13;
 ADDPREV = true; % Consider the inverse of the previous direction as an output direction as well 
 SPHPROB.SAVESPHPROB = true;
-SPHPROB.NDIRECTION = true;
+SPHPROB.NDIRECTION = false;
 % - END PARA
 
 %Add the script folder into path
