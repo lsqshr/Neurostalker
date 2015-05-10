@@ -11,9 +11,9 @@ GAUSS_PERCENT = 0.1;
 GAUSS_VARIANCE = 1;
 NCLUSTER = 20;
 VBOXSIZE = 13;
-ADDPREV = false; % Consider the inverse of the previous direction as an output direction as well 
-SPHPROB.SAVESPHPROB = false;
-SPHPROB.NDIRECTION = false;
+ADDPREV = true; % Consider the inverse of the previous direction as an output direction as well 
+SPHPROB.SAVESPHPROB = true;
+SPHPROB.NDIRECTION = 1000;
 % - END PARA
 
 %Add the script folder into path
@@ -58,7 +58,8 @@ for i = 1 : length(dir([gtpath, [filesep, '*.swc']])) % iterate each subject
     preppath = fullfile('preprocessed', 'preprocessed_images'); 
 
     % Extract directions and radius
-    sbj.lrobot = extract_gt(img3d, sbjgtpath, SHOWGT, ZERO_SIZE, VBOXSIZE, ADDPREV);
+    [SPHPROB.TH, SPHPROB.PHI] = picksphpoints(SPHPROB.NDIRECTION);
+    sbj.lrobot = extract_gt(img3d, sbjgtpath, SHOWGT, ZERO_SIZE, VBOXSIZE, ADDPREV, SPHPROB);
     sbj.imgpath = sbjimgpath;
     sbj.gtpath = sbjgtpath;
     sbj.zerosize = ZERO_SIZE;
@@ -248,13 +249,16 @@ for i = 1:numel(lparind)-1
 end
 
 if sphprob.SAVESPHPROB % Convert the next directions to a spherical propagation distribution sampling
-     
+    for i = 1 : numel(robot)
+        robot(i).prob = dir2prob(robot(i).next_th, robot(i).next_phi, sphprob.TH, sphprob.PHI);
+    end
 end
 
 end
 
 
-function [img3d, centroid] = raw_image_prep(nfile, imgpath, showimg, FRTHRESHOLD, ZERO_SIZE, SALTPEPPER_PERCENT, GAUSS_PERCENT, GAUSS_VARIANCE, NCLUSTER)
+function [img3d, centroid] = raw_image_prep(nfile, imgpath, showimg, FRTHRESHOLD, ZERO_SIZE,...
+                                            SALTPEPPER_PERCENT, GAUSS_PERCENT, GAUSS_VARIANCE, NCLUSTER)
 % Show the original 3D images and the save raw image data 
 % Save from .tif to .mat
 
