@@ -12,8 +12,9 @@ GAUSS_VARIANCE = 1;
 NCLUSTER = 20;
 VBOXSIZE = 13;
 ADDPREV = true; % Consider the inverse of the previous direction as an output direction as well 
-SPHPROB.SAVESPHPROB = true;
-SPHPROB.NDIRECTION = 1000;
+SPHPROB.SAVESPHPROB = true; % true if save spherical propagation function into the ground truth files
+SPHPROB.NDIRECTION = 1000; % Number of directions to sample the unit sphere 
+SPHPROB.D = 0.3; % The density of the gaussian kernel - smaller number tends to sharper distribution
 % - END PARA
 
 %Add the script folder into path
@@ -250,7 +251,7 @@ end
 
 if sphprob.SAVESPHPROB % Convert the next directions to a spherical propagation distribution sampling
     for i = 1 : numel(robot)
-        robot(i).prob = dir2prob(robot(i).next_th, robot(i).next_phi, sphprob.TH, sphprob.PHI);
+        robot(i).prob = dir2prob(robot(i).next_th, robot(i).next_phi, sphprob.TH, sphprob.PHI, sphprob.D);
     end
 end
 

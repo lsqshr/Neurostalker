@@ -4,19 +4,26 @@ function train()
 tic;
 clc; clear all; close all;
 
-% PARA
+%------ PARA
+% TEST
 TESTSIZE        = 1;
 TESTSTARTLOC    = [[89, 363, 30]];
 TESTSTARTDIR    = [[-0.9278, 0.1916]];
 NTESTSTEP       = 100;
 STEPSIZE        = 1;
 NOISETYPE       = 'original'; % The noise added to vision blocks: original, gauss, salt_pepper
-NTREE           = 200;
-MTRY            = 140;
-CACHETRAIN      = true;
+% General Learning
+FRAMEWORK       = 'PUFFER' % The framework used for training/walking the neurostalker: 'NORMAL'/PUFFER
+LEARNMETHOD     = 'RF'; % The algorithm used to train the learning model: 'RF'/'NN'
 PREFIX          = 'OP_';
 CACHETRAINDATA  = true;
 CACHETRAINMODEL = true;
+CACHETRAIN      = true;
+% Random Forest 
+NTREE           = 200;
+MTRY            = 140;
+% Neural Network
+
 % ENDPARA
 
 curdir = fileparts(mfilename('fullpath'));

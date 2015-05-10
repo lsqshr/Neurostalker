@@ -27,7 +27,7 @@ for i = 1 : numel(gtth)
     cgtphi = repmat(gtphi(i), numel(template_phi), 1);
     
     % Dot Product
-    cosalpha = sphveccos(gtth, gtphi, template_th, template_phi);
+    cosalpha = sphveccos(cgtth, cgtphi, template_th, template_phi);
     cosalpha = sum(cosalpha, 2);
     p = exp(cosalpha ./ d^2);
     P(:, i) = p ./ sum(p, 1); % Normalise to be stochastic
