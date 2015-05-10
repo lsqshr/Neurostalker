@@ -11,7 +11,7 @@ GAUSS_PERCENT = 0.1;
 GAUSS_VARIANCE = 1;
 NCLUSTER = 20;
 VBOXSIZE = 13;
-ADDPREV = true; % Consider the inverse of the previous direction as an output direction as well 
+ADDPREV = false; % Consider the inverse of the previous direction as an output direction as well 
 SPHPROB.SAVESPHPROB = false;
 SPHPROB.NDIRECTION = false;
 % - END PARA
