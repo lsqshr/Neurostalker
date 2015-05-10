@@ -66,13 +66,17 @@ for i = 1 : length(dir([gtpath, [filesep, '*.swc']])) % iterate each subject
     sbj.zerosize = ZERO_SIZE;
     sbj.vboxsize = VBOXSIZE;
     nvbox = numel(sbj.lrobot);
+    sphprob = SPHPROB; % Just change this to lower case matching other saved vars
     save(fullfile(curdir, '..', 'data', 'input', 'preprocessed',...
-         strcat(num2str(sbjid),'.mat')), 'sbj', 'img3d', 'nvbox');
+         strcat(num2str(sbjid),'.mat')), 'sbj', 'img3d', 'nvbox', 'sphprob');
     clearvars sbj;
     clearvars img3d;
 end
-    save(fullfile(curdir, '..', 'data', 'input', 'preprocessed',...
-         'gt_i.mat'), 'VBOXSIZE','ZERO_SIZE');
+
+
+% Seems not used -- Double check before removing
+%save(fullfile(curdir, '..', 'data', 'input', 'preprocessed',...
+%     'gt_i.mat'), 'VBOXSIZE', 'ZERO_SIZE', 'SPHPROB');
 end
 
 

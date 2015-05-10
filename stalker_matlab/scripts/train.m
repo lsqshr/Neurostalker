@@ -14,36 +14,45 @@ STEPSIZE        = 1;
 NOISETYPE       = 'original'; % The noise added to vision blocks: original, gauss, salt_pepper
 % General Learning
 FRAMEWORK       = 'PUFFER' % The framework used for training/walking the neurostalker: 'NORMAL'/PUFFER
-LEARNMETHOD     = 'RF'; % The algorithm used to train the learning model: 'RF'/'NN'
 PREFIX          = 'OP_';
 CACHETRAINDATA  = true;
-CACHETRAINMODEL = true;
-CACHETRAIN      = true;
+CACHETRAINMODEL = false;
+RUNTEST         = false;
 % Random Forest 
-NTREE           = 200;
-MTRY            = 140;
+RF.NTREE        = 200;
+RF.MTRY         = 140;
 % Neural Network
-
+NN.NHLAYER      = 2;
+NN.NHNEURON     = 13 * 13 * 3;
+NN.BATCHSIZE    = 1000;
+NN.SAEEPOCH     = 50;
+NN.NNEPOCH      = 100;
+NN.ZEROMASK     = 0.5;
 % ENDPARA
 
 curdir = fileparts(mfilename('fullpath'));
 datadir = fullfile(curdir, '..', 'data', 'input', 'preprocessed');
 addpath(fullfile(curdir, '..', 'utils'));
+addpath(genpath(fullfile(curdir, '..', 'lib', 'DeepLearnToolbox')));
 
 nsbj = numel(dir([datadir, [filesep, '*.mat']]));
 
 disp(['cur dir:', curdir]);
 disp(['data dir:', datadir]);
-disp(dir([datadir, [filesep, '*.mat']]));
+disp(dir([datadir, [filesep, PREFIX, '*.mat']]));
 disp(sprintf('nsbj: %d\n', nsbj));
 
 
 % Make the Train X and Y
 % Load the cached Train X and Y matrix if possible
-if CACHETRAINDATA && exist(fullfile(curdir, 'traincache.mat'))
-    fcache = load(fullfile(curdir, 'traincache.mat'));
+if CACHETRAINDATA && exist(fullfile(datadir, 'traincache.mat'))
+    fcache = load(fullfile(datadir, 'traincache.mat'));
     train_x = fcache.train_x;
     train_y = fcache.train_y;
+    fprintf('Loaded train X(%d*%d) and Y(%d,%d).', size(train_x, 1),...
+                                                   size(train_x, 2),...
+                                                   size(train_y, 1),...
+                                                   size(train_y, 2));
     clearvars fcache; 
 else
     % Read in the robots 
@@ -53,8 +62,8 @@ else
         ltrainrobot{i} = fsbj.sbj;
     end
 
-    %ltrainrobot = lsbj{1 : numel(lsbj)-TESTSIZE};
-    %ltestrobot = lsbj{numel(lsbj)-TESTSIZE+1 : end};
+    %ltrainrobot = sbj{1 : numel(sbj)-TESTSIZE};
+    %ltestrobot = sbj{numel(sbj)-TESTSIZE+1 : end};
 
     % Count the train vbox
     ntrain = 0;
@@ -63,85 +72,126 @@ else
     end
 
     % Count the test vbox
-    ntest = 0;
-    for r = 1 : numel(ltestrobot)
-        ntest = ntest + numel(ltestrobot(r));
-    end
+    %ntest = 0;
+    %for r = 1 : numel(ltestrobot)
+    %    ntest = ntest + numel(ltestrobot(r));
+    %end
 
-    vboxsize = lsbj{1}.vboxsize;
+    vboxsize = ltrainrobot{1}.vboxsize;
     train_x = zeros(ntrain, vboxsize^3);
     row = 1;
-    for i = 1 : numel(lsbj) - TESTSIZE
-        for j = 1 : numel(lsbj{i}.lrobot)
-            disp(sprintf('Reading train matrix row %d\n', row));
-            vb = lsbj{i}.lrobot(j).visionbox.(NOISETYPE);
 
-            if lsbj{i}.lrobot(j).fissure == 1 % Only use the vboxes not at branching locations
-                continue;
+    for i = 1 : numel(ltrainrobot) - TESTSIZE
+        for j = 1 : numel(ltrainrobot{i}.lrobot)
+            disp(sprintf('Reading train matrix row %d\n', row));
+            vb = ltrainrobot{i}.lrobot(j).visionbox.(NOISETYPE);
+
+            if strcmp(FRAMEWORK, 'NORMAL')
+                if ltrainrobot{i}.lrobot(j).fissure == 1 % Only use the vboxes not at branching locations
+                    continue;
+                end
             end
 
-        	train_x(row, :) = vb(:);
-            train_y(row, 1) = lsbj{i}.lrobot(j).next_th;
-            train_y(row, 2) = lsbj{i}.lrobot(j).next_phi;
+        	train_x(row, :) = vb(:); % Vectorise the visionbox voxels
+
+            if strcmp(FRAMEWORK, 'NORMAL')  
+                % For NORMAL, the ground truth is the spherical coordinates of the output directions
+                train_y(row, 1) = ltrainrobot{i}.lrobot(j).next_th;
+                train_y(row, 2) = ltrainrobot{i}.lrobot(j).next_phi;
+            elseif strcmp(FRAMEWORK, 'PUFFER')
+                % For PUFFER, the ground truth is the sampled probability matching the
+                % uniformly distributed spherical directions
+                train_y(row, :) = ltrainrobot{i}.lrobot(j).prob';
+            else
+                raise Exception(sprintf('FRAMEWORK: %s not defined\n', FRAMEWORK));
+            end
+
             row = row + 1;
         end
     end
 
-    train_x(row:end,:) = []; % Delete the redundent rows not used because of the branching
-    train_y(row:end,:) = [];
+    if strcmp(FRAMEWORK, 'NORMAL')
+        train_x(row:end, :) = []; % Delete the redundent rows not used because of the branching
+        train_y(row:end, :) = [];
+    end
 
     if CACHETRAINDATA % Cache the X and Y matrix
-        save(fullfile(curdir, 'traincache.mat'), 'train_x', 'train_y');
+        save(fullfile(datadir, 'traincache.mat'), 'train_x', 'train_y');
     end
+
+    clearvars sbj;
 end
 
-clearvars lsbj;
 
-% Train RF
-%tic; model_x_dir = regRF_train(train_x, train_y, NTREE, MTRY); toc;
-if CACHETRAINMODEL && exist(fullfile(curdir, 'modelcache.mat'))
-    fmodel = load(fullfile(curdir, 'modelcache.mat'), 'rf_th', 'rf_phi');
-    rf_th = fmodel.rf_th;
-    rf_phi = fmodel.rf_phi;
+% Train Neural Stalker Model 
+if CACHETRAINMODEL && exist(fullfile(datadir, 'modelcache.mat')) % Skip Training
+    if strcmp(FRAMEWORK, 'NORMAL')
+        fmodel = load(fullfile(datadir, 'modelcache.mat'), 'rf_th', 'rf_phi');
+        rf_th = fmodel.rf_th;
+        rf_phi = fmodel.rf_phi;
+    elseif strcmp(FRAMEWORK, 'PUFFER')        
+        fmodel = load(fullfile(datadir, 'modelcache.mat'), 'nn');
+        nn = fmodel.nn; 
+    end
 else
-    disp('Start to train RF...');
-    options = statset('UseParallel', 'Always');
-    
-    % When (2*pi > theta > pi) we invert the ground truth vector to its
-    % inversed direction
-    orith = train_y(:, 1);
-    oriphi = train_y(:, 2);
-    [gtx, gty, gtz] = sph2cart(orith, oriphi, ones(numel(orith, 1)));
-    [invth, invphi] = cart2sph(-gtx, -gty, -gtz);
-    gtth = orith;
-    gtphi = oriphi;
-    gtth(orith > pi) = invth(orith > pi);
-    gtphi(orith > pi) = invphi(orith > pi);
-    disp('gtth')
-    disp(gtth);
+    if strcmp(FRAMEWORK, 'NORMAL')
+        options = statset('UseParallel', 'Always');
+        
+        % When (2*pi > theta > pi) we invert the ground truth vector to its
+        % inversed direction
+        orith = train_y(:, 1);
+        oriphi = train_y(:, 2);
+        [gtx, gty, gtz] = sph2cart(orith, oriphi, ones(numel(orith, 1)));
+        [invth, invphi] = cart2sph(-gtx, -gty, -gtz);
+        gtth = orith;
+        gtphi = oriphi;
+        gtth(orith > pi) = invth(orith > pi);
+        gtphi(orith > pi) = invphi(orith > pi);
 
-    % Train Theta
-    rf_th = TreeBagger(NTREE, train_x, gtth,...
-                            'Method', 'regression', 'NVarToSample',...
-                             MTRY, 'NPrint', true,'Options',options); 
+        % Train Theta
+        disp('Start to train RF THETA...');
+        rf_th = TreeBagger(RF.NTREE, train_x, gtth,...
+                                'Method', 'regression', 'NVarToSample',...
+                                 RF.MTRY, 'NPrint', true,'Options',options); 
 
-    % Train Phi
-    rf_phi = TreeBagger(NTREE, train_x, gtphi,... 
-                             'Method', 'regression', 'NVarToSample',...
-                              MTRY, 'NPrint', true,'Options',options);
+        % Train Phi
+        disp('Start to train RF PHI...');
+        rf_phi = TreeBagger(RF.NTREE, train_x, gtphi,... 
+                                 'Method', 'regression', 'NVarToSample',...
+                                  RF.MTRY, 'NPrint', true,'Options',options);
 
-    if CACHETRAINMODEL 
-        save(fullfile(curdir, 'modelcache.mat'), 'rf_th', 'rf_phi');
+        if CACHETRAINMODEL 
+            save(fullfile(datadir, 'modelcache.mat'), 'rf_th', 'rf_phi');
+        end
+
+    elseif strcmp(FRAMEWORK, 'PUFFER')
+        % Remove the data which can be not fit into the batchsize
+        ntrain = size(train_x, 1);
+        nremainder = mod(ntrain, NN.BATCHSIZE);
+        train_x = train_x(1 : end - nremainder, :);
+        train_y = train_y(1 : end - nremainder, :);
+        fprintf('ntrain after elliminating: %d\n', size(train_x, 1));
+
+        nn = trainNN(train_x, train_y, NN);
+        nn = nnff(nn, train_x);
+        %R = corr(nn.a{end}(:), train_y(:));
+        fprintf('The training correlations is %f\n', R);
+        if CACHETRAINMODEL 
+            save(fullfile(datadir, 'modelcache.mat'), 'nn');
+        end
     end
 end
-
 
 
 % % Test RF by walking 
 % Read in the test subject
+if RUNTEST == false
+    return
+end
+
 img3dctr = 1; % counter for img3d cell array
 for i = nsbj - TESTSIZE + 1 : nsbj 
-    fsbj = load(fullfile(datadir, strcat(PREFIX, num2str(nsbj), '.mat')), 'sbj', 'img3d'); 
+    fsbj = load(fullfile(datadir, strcmp(PREFIX, num2str(nsbj), '.mat')), 'sbj', 'img3d'); 
     ltestrobot{img3dctr} = fsbj.sbj;
     img3d{img3dctr} = fsbj.img3d;
     img3dctr = img3dctr + 1;
@@ -205,3 +255,41 @@ end
 
 end
 
+
+function nn = trainNN(trainx, trainy, NN)
+% Wrapper function for training stacked denoising autoencoders and a softmax output NN
+
+trainx = double(trainx);
+trainy = double(trainy);
+
+% Setup SAE
+rng;
+saearch = [size(trainx, 2), repmat(NN.NHNEURON, 1, NN.NHLAYER)];
+sae = saesetup(saearch);
+
+for i = 1 : NN.NHLAYER
+    sae.ae{i}.activation_function = 'sigm';
+    %sae.ae{i}.learnRate = '1';
+    sae.ae{i}.inputZeroMaskedFraction = NN.ZEROMASK;
+end
+
+opts.numepochs = NN.SAEEPOCH;
+opts.batchsize = NN.BATCHSIZE;
+saetrain(sae, trainx, opts) % Train SDAE
+visualize(sae.ae{1}.W{1}(2:end)')
+
+% Use the SDAE to initialize a FFNN
+nnarch = [saearch size(trainy, 2)];
+nn = nnsetup(nnarch);
+nn.activation_function = 'sigm';
+%nn.learningRate = 1;
+
+for i = 1 : NN.NHLAYER % Transfer weights from SDAE
+    nn.W{i} = sae.ae{i}.W{1};
+end
+
+opts.numepochs = NN.NNEPOCH;
+opts.batchsize = NN.BATCHSIZE;
+% nn = nntrain(nn, trainx, trainy, opts);
+
+end
