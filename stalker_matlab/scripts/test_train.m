@@ -82,21 +82,21 @@ load(fullfile(datadir, 'gt_i.mat'), 'VBOXSIZE', 'ZERO_SIZE');
     train_x(row:end,:) = []; % Delete the redundent rows not used because of the branching
     train_y(row:end,:) = [];
 
-clearvars ltrainrobot ltestrobot; 
+    clearvars ltrainrobot ltestrobot; 
     disp('Start to train RF...');
     options = statset('UseParallel', 'Always');
     
     orith = train_y(:, 1);
     oriphi = train_y(:, 2);
-    [gtx, gty, gtz] = sph2cart(orith, oriphi, ones(numel(orith, 1)));
-    [invth, invphi] = cart2sph(-gtx, -gty, -gtz);
+    [gtx, gty, gtz] = sph2cart_sq(orith, oriphi, ones(numel(orith, 1)));
+    [invth, invphi] = cart2sph_sq(-gtx, -gty, -gtz);
     gtth = orith;
     gtphi = oriphi;
     orith > pi
     gtth(orith > pi) = invth(orith > pi);
     gtphi(orith > pi) = invphi(orith > pi);
    
-   tic
+    tic
     % Train Theta
     rf_th = TreeBagger(NTREE, train_x, gtth,...
                             'Method', 'regression', 'NVarToSample',...

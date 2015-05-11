@@ -176,12 +176,12 @@ for r = 1 : numel(ltestrobot)
         dcosbackward = sphveccos(th+pi, -phi, curnode.prev_th, curnode.prev_phi);
 
         if dcosbackward > dcosforward
-            [x, y, z] = sph2cart(th, phi);
-            [th, phi] = cart2sph(-x, -y, -z);
+            [x, y, z] = sph2cart_sq(th, phi);
+            [th, phi] = cart2sph_sq(-x, -y, -z);
         end
 
         % Move one step
-        [dx, dy, dz] = sph2cart(th, phi, STEPSIZE);
+        [dx, dy, dz] = sph2cart_sq(th, phi, STEPSIZE);
         nextnode.x = curnode.x + dx;
         nextnode.y = curnode.y + dy;
         nextnode.z = curnode.z + dz;
