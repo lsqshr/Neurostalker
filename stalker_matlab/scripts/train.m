@@ -13,6 +13,7 @@ NTESTSTEP       = 100;
 STEPSIZE        = 1;
 NOISETYPE       = 'original'; % The noise added to vision blocks: original, gauss, salt_pepper
 % General Learning
+DEBUG           = true; % DEBUG=true will only train models with 1000 cases
 FRAMEWORK       = 'PUFFER' % The framework used for training/walking the neurostalker: 'NORMAL'/PUFFER
 PREFIX          = 'OP_';
 CACHETRAINDATA  = true;
@@ -23,7 +24,7 @@ RF.NTREE        = 200;
 RF.MTRY         = 140;
 % Neural Network
 NN.NHLAYER      = 2;
-NN.NHNEURON     = 13 * 13 * 3;
+NN.NHNEURON     = 13 * 5;
 NN.BATCHSIZE    = 1000;
 NN.SAEEPOCH     = 50;
 NN.NNEPOCH      = 100;
@@ -122,6 +123,10 @@ else
     clearvars sbj;
 end
 
+if DEBUG == true
+    train_x = train_x(1 : 1000, :);
+    train_y = train_y(1 : 1000, :);
+end
 
 % Train Neural Stalker Model 
 if CACHETRAINMODEL && exist(fullfile(datadir, 'modelcache.mat')) % Skip Training
@@ -173,9 +178,9 @@ else
         fprintf('ntrain after elliminating: %d\n', size(train_x, 1));
 
         nn = trainNN(train_x, train_y, NN);
-        nn = nnff(nn, train_x);
+        %nn = nnff(nn, train_x);
         %R = corr(nn.a{end}(:), train_y(:));
-        fprintf('The training correlations is %f\n', R);
+        %fprintf('The training correlations is %f\n', R);
         if CACHETRAINMODEL 
             save(fullfile(datadir, 'modelcache.mat'), 'nn');
         end
@@ -276,7 +281,7 @@ end
 opts.numepochs = NN.SAEEPOCH;
 opts.batchsize = NN.BATCHSIZE;
 saetrain(sae, trainx, opts) % Train SDAE
-visualize(sae.ae{1}.W{1}(2:end)')
+%visualize(sae.ae{1}.W{1}')
 
 % Use the SDAE to initialize a FFNN
 nnarch = [saearch size(trainy, 2)];
