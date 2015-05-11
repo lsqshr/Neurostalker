@@ -194,6 +194,7 @@ for i = 2:numel(lparind)
     if i == 2
     parnode = morphtree.get(1);
     curnode = morphtree.get(lnode(1));
+    nextnode = morphtree.getchildren(lnode(1));
     end
 
     % Use this robot location minus previous robot location
@@ -221,7 +222,7 @@ for i = 2:numel(lparind)
     end
 
     for c = 1 : nchildren
-        next = morphtree.get(lnode(node_ind_next(c)));
+        nextnode = morphtree.get(lnode(node_ind_next(c)));
 
         % Keep the sign of the directions as-is
         dx = nextnode.x_loc - curnode.x_loc;

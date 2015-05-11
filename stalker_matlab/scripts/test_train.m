@@ -32,7 +32,7 @@ load(fullfile(datadir, 'gt_i.mat'), 'VBOXSIZE', 'ZERO_SIZE');
 %     Read in the robots 
 %     Only deal with low memory use
     for i = 1 : nsbj-TESTSIZE
-        fsbj = load(fullfile(datadir, strcat(PREFIX, num2str(nsbj), '.mat')), 'sbj');   
+        fsbj = load(fullfile(datadir, strcat(PREFIX, num2str(i), '.mat')), 'sbj');   
         ltrainrobot{i} = fsbj.sbj;
     end
 
@@ -41,7 +41,7 @@ load(fullfile(datadir, 'gt_i.mat'), 'VBOXSIZE', 'ZERO_SIZE');
     
     ltestrobot_counter = 1;
     for i = (nsbj - TESTSIZE + 1) : nsbj
-        fsbj = load(fullfile(datadir, strcat(PREFIX, num2str(nsbj), '.mat')), 'sbj');   
+        fsbj = load(fullfile(datadir, strcat(PREFIX, num2str(i), '.mat')), 'sbj');   
         ltestrobot{ltestrobot_counter} = fsbj.sbj;
         ltestrobot_counter = ltestrobot_counter + 1;
     end
@@ -63,7 +63,8 @@ load(fullfile(datadir, 'gt_i.mat'), 'VBOXSIZE', 'ZERO_SIZE');
     train_x = zeros(ntrain, VBOXSIZE^3);
     row = 1;
     for i = 1 : numel(ltrainrobot)
-        for j = 1 : numel(ltrainrobot{1,i}.lrobot)
+        % the root case is usually too noisy
+        for j = 2 : numel(ltrainrobot{1,i}.lrobot)
 %             disp(sprintf('Reading train matrix row %d\n', row));
             vb = ltrainrobot{1,i}.lrobot(j).visionbox.(NOISETYPE);
 
@@ -81,7 +82,7 @@ load(fullfile(datadir, 'gt_i.mat'), 'VBOXSIZE', 'ZERO_SIZE');
 
     train_x(row:end,:) = []; % Delete the redundent rows not used because of the branching
     train_y(row:end,:) = [];
-
+    [row, col] = find(isnan(train_y));
     clearvars ltrainrobot ltestrobot; 
     disp('Start to train RF...');
     options = statset('UseParallel', 'Always');
@@ -89,7 +90,7 @@ load(fullfile(datadir, 'gt_i.mat'), 'VBOXSIZE', 'ZERO_SIZE');
     orith = train_y(:, 1);
     oriphi = train_y(:, 2);
     [gtx, gty, gtz] = sph2cart_sq(orith, oriphi, ones(numel(orith, 1)));
-    [invth, invphi] = cart2sph_sq(-gtx, -gty, -gtz);
+    [invth, invphi, invr] = cart2sph_sq(-gtx, -gty, -gtz);
     gtth = orith;
     gtphi = oriphi;
     orith > pi
