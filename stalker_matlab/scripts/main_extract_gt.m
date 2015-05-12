@@ -261,7 +261,7 @@ for i = 2:numel(lparind)
 end
 
 % Extract spherical angle 
-for i = 1:numel(lparind)-1
+for i = 1:numel(lparind)
     [robot(i).prev_th, robot(i).prev_phi,r_one] = ...
                              cart2sph_sq(robot(i).prev_x_dir, robot(i).prev_y_dir, robot(i).prev_z_dir);
     [robot(i).next_th, robot(i).next_phi,r_one] = ...
@@ -271,7 +271,7 @@ for i = 1:numel(lparind)-1
 
     % Invserse the previous direction and add it to the list of next direction
     if addprev 
-        [px, py, pz] = sph2cart_sq(robot(i).next_th, robot(i).prev_th, 1);
+        [px, py, pz] = sph2cart_sq(robot(i).prev_th, robot(i).prev_phi, 1);
         [invprevth, invprevphi, ~] = cart2sph_sq(-px, -py, -pz);  
         robot(i).next_th = [robot(i).next_th, invprevth];
         robot(i).next_phi = [robot(i).next_phi, invprevphi];
