@@ -23,7 +23,7 @@ else
     PREFIX          = 'OP_';
     CACHETRAINDATA  = false;
     CACHETRAINMODEL = false;
-    RUNTEST         = true;
+    RUNTEST         = false;
     VISUALIZATIONBOXTEST = true;
     VBSIZE          = 13; % Predefined size of the vision box
     % Random Forest 
@@ -240,61 +240,77 @@ for i = nsbj - TESTSIZE + 1 : nsbj
     img3dctr = img3dctr + 1;
 end
 
+if RUNTEST == true
+    for r = 1 : numel(ltestrobot)
+        figure
+        hold on
+        showbox(img3d{r}.original, 0.1);
+        testimg = img3d{r}.(NOISETYPE);
 
-for r = 1 : numel(ltestrobot)
-    figure
-    hold on
-    showbox(img3d{r}.original, 0.1);
- 	testimg = img3d{r}.(NOISETYPE);
- 
- 	% Start Location
- 	curnode.x = TESTSTARTLOC(r, 1);
- 	curnode.y = TESTSTARTLOC(r, 2);
- 	curnode.z = TESTSTARTLOC(r, 3);
-    fprintf('Starting at (%f, %f, %f)', curnode.x, curnode.y, curnode.z);
- 
- 	% Start Direction
- 	curnode.prev_th = TESTSTARTDIR(r, 1);
- 	curnode.prev_phi = TESTSTARTDIR(r, 2);
-    fprintf('Starting from direction (%f, %f)\n', curnode.prev_th, curnode.prev_phi);
+        % Start Location
+        curnode.x = TESTSTARTLOC(r, 1);
+        curnode.y = TESTSTARTLOC(r, 2);
+        curnode.z = TESTSTARTLOC(r, 3);
+        fprintf('Starting at (%f, %f, %f)', curnode.x, curnode.y, curnode.z);
 
-    % Iterate each step of the prediction
-    for s = 1 : NTESTSTEP 
-        % Extract the vbox of the stalker
-        vbox = extractbox(testimg, ltestrobot{r}.vboxsize,...
-                          curnode.x, curnode.y, curnode.z,...
-                          ltestrobot{r}.zerosize);
+        % Start Direction
+        curnode.prev_th = TESTSTARTDIR(r, 1);
+        curnode.prev_phi = TESTSTARTDIR(r, 2);
+        fprintf('Starting from direction (%f, %f)\n', curnode.prev_th, curnode.prev_phi);
 
-        th = rf_th.predict(vbox(:)');
-        phi = rf_phi.predict(vbox(:)');
+        % Iterate each step of the prediction
+        for s = 1 : NTESTSTEP 
+            % Extract the vbox of the stalker
+            vbox = extractbox(testimg, ltestrobot{r}.vboxsize,...
+                              curnode.x, curnode.y, curnode.z,...
+                              ltestrobot{r}.zerosize);
 
-        % Calculate the cosine of the forward and backward
-        % Larger cosine means smaller angle
-        % Choose the direction with the small angle based on the assumption that turning angles larger than pi/2
-        % is not common in bio systems
-        dcosforward = sphveccos(th, phi, curnode.prev_th, curnode.prev_phi);
-        dcosbackward = sphveccos(th+pi, -phi, curnode.prev_th, curnode.prev_phi);
+            th = rf_th.predict(vbox(:)');
+            phi = rf_phi.predict(vbox(:)');
 
-        if dcosbackward > dcosforward
-            [x, y, z] = sph2cart_sq(th, phi, ones(numel(th)));
-            [th, phi, ~] = cart2sph_sq(-x, -y, -z);
+            % Calculate the cosine of the forward and backward
+            % Larger cosine means smaller angle
+            % Choose the direction with the small angle based on the assumption that turning angles larger than pi/2
+            % is not common in bio systems
+            dcosforward = sphveccos(th, phi, curnode.prev_th, curnode.prev_phi);
+            dcosbackward = sphveccos(th+pi, -phi, curnode.prev_th, curnode.prev_phi);
+
+            if dcosbackward > dcosforward
+                [x, y, z] = sph2cart_sq(th, phi, ones(numel(th)));
+                [th, phi] = cart2sph_sq(-x, -y, -z);
+            end
+
+            % Move one step
+            [dx, dy, dz] = sph2cart_sq(th, phi, STEPSIZE);
+            nextnode.x = curnode.x + dx;
+            nextnode.y = curnode.y + dy;
+            nextnode.z = curnode.z + dz;
+            nextnode.prev_th = th;
+            nextnode.prev_phi = phi;
+
+            fprintf('Step %d: Move to direction (%f, %f) - (%f, %f, %f)\n', s, th, phi, dx, dy, dz);
+            line([curnode.x, nextnode.x], [curnode.y, nextnode.y], [curnode.z, nextnode.z], 'Color','k', 'LineWidth',5);
+            curnode = nextnode;
+            drawnow
+
         end
-
-        % Move one step
-        [dx, dy, dz] = sph2cart_sq(th, phi, STEPSIZE);
-        nextnode.x = curnode.x + dx;
-        nextnode.y = curnode.y + dy;
-        nextnode.z = curnode.z + dz;
-        nextnode.prev_th = th;
-        nextnode.prev_phi = phi;
-
-        fprintf('Step %d: Move to direction (%f, %f) - (%f, %f, %f)\n', s, th, phi, dx, dy, dz);
-        line([curnode.x, nextnode.x], [curnode.y, nextnode.y], [curnode.z, nextnode.z], 'Color','k', 'LineWidth',5);
-        curnode = nextnode;
-        drawnow
+        
+        hold off
     end
-    hold off
 end
+% From here I will visulizationboxtest
+if VISUALIZATIONBOXTEST == true
+   for r = 1 : numel(ltestrobot)
+       for vbi = 1 :  numel(ltestrobot.lrobot(r))
+       % Extract the vbox of the stalker
+       vbox = extractbox(testimg, ltestrobot{r}.vboxsize,...
+                              curnode.x, curnode.y, curnode.z,...
+                              ltestrobot{r}.zerosize);
+         th = rf_th.predict(vbox(:)');
+        phi = rf_phi.predict(vbox(:)');
+       end
+   end
+end    
 
 end
 
