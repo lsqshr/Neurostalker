@@ -23,7 +23,7 @@ else
     PREFIX          = 'OP_';
     CACHETRAINDATA  = false;
     CACHETRAINMODEL = false;
-    RUNTEST         = false;
+    RUNTEST         = true;
     VBSIZE          = 13; % Predefined size of the vision box
     % Random Forest 
     RF.NTREE        = 200;
@@ -164,8 +164,8 @@ else
         % inversed direction
         orith = train_y(:, 1);
         oriphi = train_y(:, 2);
-        [gtx, gty, gtz] = sph2cart(orith, oriphi, ones(numel(orith, 1)));
-        [invth, invphi] = cart2sph(-gtx, -gty, -gtz);
+        [gtx, gty, gtz] = sph2cart_sq(orith, oriphi, ones(numel(orith, 1)));
+        [invth, invphi] = cart2sph_sq(-gtx, -gty, -gtz);
         gtth = orith;
         gtphi = oriphi;
         gtth(orith > pi) = invth(orith > pi);
@@ -203,6 +203,7 @@ else
     end
 end
 
+if strcmp(FRAMEWORK, 'PUFFER')
 % Visualise the SDAE
 visualize(sae.ae{1}.W{1}');
 r = visualize_sae3d(sae.ae{1}.W{1}');
@@ -223,7 +224,7 @@ end
 figure(3)
 imagesc(X(25:200, :));
 colormap gray; 
-
+end
 
 % % Test RF by walking 
 % Read in the test subject
@@ -233,7 +234,7 @@ end
 
 img3dctr = 1; % counter for img3d cell array
 for i = nsbj - TESTSIZE + 1 : nsbj 
-    fsbj = load(fullfile(datadir, strcmp(PREFIX, num2str(nsbj), '.mat')), 'sbj', 'img3d'); 
+    fsbj = load(fullfile(datadir, strcat(PREFIX, num2str(nsbj), '.mat')), 'sbj', 'img3d'); 
     ltestrobot{img3dctr} = fsbj.sbj;
     img3d{img3dctr} = fsbj.img3d;
     img3dctr = img3dctr + 1;
@@ -275,7 +276,7 @@ for r = 1 : numel(ltestrobot)
         dcosbackward = sphveccos(th+pi, -phi, curnode.prev_th, curnode.prev_phi);
 
         if dcosbackward > dcosforward
-            [x, y, z] = sph2cart_sq(th, phi);
+            [x, y, z] = sph2cart_sq(th, phi, ones(numel(th)));
             [th, phi] = cart2sph_sq(-x, -y, -z);
         end
 
