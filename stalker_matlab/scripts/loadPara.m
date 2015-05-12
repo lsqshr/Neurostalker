@@ -3,7 +3,7 @@
 TESTSIZE        = 1;
 TESTSTARTLOC    = [[89, 363, 30]];
 TESTSTARTDIR    = [[-0.9278, 0.1916]];
-NTESTSTEP       = 100;
+NTESTSTEP       = 20;
 STEPSIZE        = 1;
 NOISETYPE       = 'original'; % The noise added to vision blocks: original, gauss, salt_pepper
 % General Learning
@@ -12,7 +12,7 @@ FRAMEWORK       = 'NORMAL' % The framework used for training/walking the neurost
 PREFIX          = 'OP_';
 CACHETRAINDATA  = false;
 CACHETRAINMODEL = false;
-RUNTEST         = false;
+RUNTEST         = true;
 VBSIZE          = 13; % Predefined size of the vision box
 % Random Forest 
 RF.NTREE        = 200;
