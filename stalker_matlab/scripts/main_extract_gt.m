@@ -153,7 +153,7 @@ end
 curnode = morphtree.get(lnode(1)); % lnode(1) is the first children
 for i = 1 : numel(fields)
     robot(2).visionbox.(fields{i}) = extractbox(img3d.(fields{i}), vboxsize, curnode.x_loc,curnode.y_loc,curnode.z_loc, zero_size);
-    robot(2).fissure=0;
+    robot(2).fissure = 0;
 end
 
 % Assign the cartisian direction vector of root 
@@ -189,7 +189,7 @@ for i = 2:numel(lparind)
     fields = fieldnames(img3d);
     for j = 1 : numel(fields)
         robot(i).visionbox.(fields{j}) = extractbox(img3d.(fields{j}), vboxsize, curnode.x_loc,curnode.y_loc,curnode.z_loc,zero_size);
-        robot(i).fissure=0;
+        robot(i).fissure = 0;
     end
     
     %lnode list starts from second node this is the reason why second node direction is empty.   
@@ -218,7 +218,7 @@ for i = 2:numel(lparind)
     
     
     % Define fissure based on the poupulation of children nodes
-    % fissure = 0 split direction fissure = 2 no direction fissure = 1 one direction   
+    % fissure = 0: normal; fissure = 2 terminal; fissure = 1 branching   
     if nchildren == 1
         robot(i).fissure = 0;
     elseif nchildren == 0
@@ -272,6 +272,7 @@ end
 if sphprob.SAVESPHPROB % Convert the next directions to a spherical propagation distribution sampling
     for i = 1 : numel(robot)
         robot(i).prob = dir2prob(robot(i).next_th, robot(i).next_phi, sphprob.TH, sphprob.PHI, sphprob.D);
+        assert(any(isnan(robot(i).prob)) ~= 1, sprintf('robot(%d): prob is NaN', i));
     end
 end
 

@@ -133,9 +133,8 @@ else
         train_y(row:end, :) = [];
     end
 
-    if CACHETRAINDATA % Cache the X and Y matrix
-        save(fullfile(datadir, 'traincache.mat'), 'train_x', 'train_y');
-    end
+    % Cache the X and Y matrix
+    save(fullfile(datadir, 'traincache.mat'), 'train_x', 'train_y');
 
     clearvars sbj;
 end
@@ -217,7 +216,7 @@ VolumeRender(normcube);
 
 X = zeros(size(sae.ae{1}.W{1}, 1) * VBSIZE, VBSIZE * VBSIZE);
 for i = 1 : numel(r)
-    fprintf('Reading %dth row of vis matrix X...\n', i);
+    %fprintf('Reading %dth row of vis matrix X...\n', i);
     X(1+(i-1)*VBSIZE:i*VBSIZE, :) = r{i};
 end
 
@@ -277,7 +276,7 @@ for r = 1 : numel(ltestrobot)
 
         if dcosbackward > dcosforward
             [x, y, z] = sph2cart_sq(th, phi, ones(numel(th)));
-            [th, phi] = cart2sph_sq(-x, -y, -z);
+            [th, phi, ~] = cart2sph_sq(-x, -y, -z);
         end
 
         % Move one step
@@ -332,7 +331,7 @@ end
 
 opts.numepochs = NN.NNEPOCH;
 opts.batchsize = NN.BATCHSIZE;
-% nn = nntrain(nn, trainx, trainy, opts);
+nn = nntrain(nn, trainx, trainy, opts);
 
 end
 
