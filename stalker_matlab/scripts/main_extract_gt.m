@@ -269,6 +269,7 @@ function [img3d, centroid] = raw_image_prep(nfile, imgpath, showimg, FRTHRESHOLD
 
 assert( nfile~=0, 'At least one image is needed');
 for i = 1 : nfile
+    disp(fullfile(imgpath, [num2str(i) '.tif']))
     curslice = imread(fullfile(imgpath, [num2str(i) '.tif']));
     % The X Y coordinate in tif is reversed according to the swc files
     A(:,:,i) = transpose(curslice); % Assign each slice to a 3D matrix

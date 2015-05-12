@@ -19,6 +19,7 @@ PREFIX          = 'OP_';
 CACHETRAINDATA  = true;
 CACHETRAINMODEL = false;
 RUNTEST         = false;
+VBSIZE          = 13; % Predefined size of the vision box
 % Random Forest 
 RF.NTREE        = 200;
 RF.MTRY         = 140;
@@ -33,8 +34,9 @@ NN.ZEROMASK     = 0.5;
 
 curdir = fileparts(mfilename('fullpath'));
 datadir = fullfile(curdir, '..', 'data', 'input', 'preprocessed');
-addpath(fullfile(curdir, '..', 'utils'));
+addpath(genpath(fullfile(curdir, '..', 'utils')));
 addpath(genpath(fullfile(curdir, '..', 'lib', 'DeepLearnToolbox')));
+addpath(genpath(fullfile(curdir, '..', 'lib', 'VolumeRender')));
 
 nsbj = numel(dir([datadir, [filesep, '*.mat']]));
 
@@ -129,13 +131,14 @@ if DEBUG == true
 end
 
 % Train Neural Stalker Model 
-if CACHETRAINMODEL && exist(fullfile(datadir, 'modelcache.mat')) % Skip Training
+if CACHETRAINMODEL && exist(fullfile(datadir, '..', '..', 'results', 'trained_models',  'modelcache.mat')) % Skip Training
     if strcmp(FRAMEWORK, 'NORMAL')
-        fmodel = load(fullfile(datadir, 'modelcache.mat'), 'rf_th', 'rf_phi');
+        fmodel = load(fullfile(datadir, '..', '..', 'results', 'trained_models',  'modelcache.mat'), 'rf_th', 'rf_phi');
         rf_th = fmodel.rf_th;
         rf_phi = fmodel.rf_phi;
     elseif strcmp(FRAMEWORK, 'PUFFER')        
-        fmodel = load(fullfile(datadir, 'modelcache.mat'), 'nn');
+        fmodel = load(fullfile(datadir, '..', '..', 'results', 'trained_models',  'modelcache.mat'), 'nn', 'sae');
+        sae = fmodel.sae;
         nn = fmodel.nn; 
     end
 else
@@ -165,9 +168,7 @@ else
                                  'Method', 'regression', 'NVarToSample',...
                                   RF.MTRY, 'NPrint', true,'Options',options);
 
-        if CACHETRAINMODEL 
-            save(fullfile(datadir, 'modelcache.mat'), 'rf_th', 'rf_phi');
-        end
+        save(fullfile(datadir, '..', '..', 'results', 'trained_models',  'modelcache.mat'), 'rf_th', 'rf_phi'); % Save the model all the time
 
     elseif strcmp(FRAMEWORK, 'PUFFER')
         % Remove the data which can be not fit into the batchsize
@@ -177,15 +178,36 @@ else
         train_y = train_y(1 : end - nremainder, :);
         fprintf('ntrain after elliminating: %d\n', size(train_x, 1));
 
-        nn = trainNN(train_x, train_y, NN);
+        [nn, sae] = trainSDAE(train_x, train_y, NN);
+
+
         %nn = nnff(nn, train_x);
         %R = corr(nn.a{end}(:), train_y(:));
         %fprintf('The training correlations is %f\n', R);
-        if CACHETRAINMODEL 
-            save(fullfile(datadir, 'modelcache.mat'), 'nn');
-        end
+        save(fullfile(datadir, '..', '..', 'results', 'trained_models',  'modelcache.mat'), 'nn', 'sae'); % Save the model all the time
     end
 end
+
+% Visualise the SDAE
+visualize(sae.ae{1}.W{1}');
+r = visualize_sae3d(sae.ae{1}.W{1}');
+strip = r{5};
+viscube = reshape(strip, VBSIZE, VBSIZE, VBSIZE);
+fprintf('IN INPUT - MAX: %f, MIN: %f\n', max(train_x(:)), min(train_y(:)));
+fprintf('IN VIS - MAX: %f, MIN: %f\n', max(viscube(:)), min(viscube(:)));
+normcube = viscube+abs(min(viscube(:)));
+normcube = 1 - (normcube / max(normcube(:)));
+VolumeRender(normcube);
+
+X = zeros(size(sae.ae{1}.W{1}, 1) * VBSIZE, VBSIZE * VBSIZE);
+for i = 1 : numel(r)
+    fprintf('Reading %dth row of vis matrix X...\n', i);
+    X(1+(i-1)*VBSIZE:i*VBSIZE, :) = r{i};
+end
+
+figure(3)
+imagesc(X(25:200, :));
+colormap gray; 
 
 
 % % Test RF by walking 
@@ -261,8 +283,8 @@ end
 end
 
 
-function nn = trainNN(trainx, trainy, NN)
-% Wrapper function for training stacked denoising autoencoders and a softmax output NN
+function [nn, sae] = trainSDAE(trainx, trainy, NN)
+% Wrapper function for training stacked denoising autoencoders (SDAE) and a softmax output NN
 
 trainx = double(trainx);
 trainy = double(trainy);
@@ -280,8 +302,7 @@ end
 
 opts.numepochs = NN.SAEEPOCH;
 opts.batchsize = NN.BATCHSIZE;
-saetrain(sae, trainx, opts) % Train SDAE
-%visualize(sae.ae{1}.W{1}')
+sae = saetrain(sae, trainx, opts); % Train SDAE
 
 % Use the SDAE to initialize a FFNN
 nnarch = [saearch size(trainy, 2)];
