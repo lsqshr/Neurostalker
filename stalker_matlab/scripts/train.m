@@ -134,9 +134,8 @@ else
         train_y(row:end, :) = [];
     end
 
-    if CACHETRAINDATA % Cache the X and Y matrix
-        save(fullfile(datadir, 'traincache.mat'), 'train_x', 'train_y');
-    end
+    % Cache the X and Y matrix
+    save(fullfile(datadir, 'traincache.mat'), 'train_x', 'train_y');
 
     clearvars sbj;
 end
@@ -218,7 +217,7 @@ VolumeRender(normcube);
 
 X = zeros(size(sae.ae{1}.W{1}, 1) * VBSIZE, VBSIZE * VBSIZE);
 for i = 1 : numel(r)
-    fprintf('Reading %dth row of vis matrix X...\n', i);
+    %fprintf('Reading %dth row of vis matrix X...\n', i);
     X(1+(i-1)*VBSIZE:i*VBSIZE, :) = r{i};
 end
 
@@ -293,7 +292,9 @@ if RUNTEST == true
             line([curnode.x, nextnode.x], [curnode.y, nextnode.y], [curnode.z, nextnode.z], 'Color','k', 'LineWidth',5);
             curnode = nextnode;
             drawnow
+
         end
+        
         hold off
     end
 end
@@ -347,7 +348,7 @@ end
 
 opts.numepochs = NN.NNEPOCH;
 opts.batchsize = NN.BATCHSIZE;
-% nn = nntrain(nn, trainx, trainy, opts);
+nn = nntrain(nn, trainx, trainy, opts);
 
 end
 
