@@ -13,6 +13,7 @@ PREFIX          = 'OP_';
 CACHETRAINDATA  = false;
 CACHETRAINMODEL = false;
 RUNTEST         = true;
+VISUALIZATIONBOXTEST = true;
 VBSIZE          = 13; % Predefined size of the vision box
 % Random Forest 
 RF.NTREE        = 200;
