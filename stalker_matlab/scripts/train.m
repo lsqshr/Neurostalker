@@ -1,7 +1,7 @@
 function train()
 % Train neurostalker based on groundtruth extracted from swf trees and input from imagesstacks
 % This version disregard the memory cost of loading training cases
-tic;
+
 clc; clear all; close all;
 
 % PARA
@@ -15,15 +15,15 @@ NTREE           = 200;
 MTRY            = 140;
 CACHETRAIN      = true;
 PREFIX          = 'OP_';
-CACHETRAINDATA  = true;
-CACHETRAINMODEL = true;
+CACHETRAINDATA  = false;
+CACHETRAINMODEL = false;
 % ENDPARA
 
 curdir = fileparts(mfilename('fullpath'));
 datadir = fullfile(curdir, '..', 'data', 'input', 'preprocessed');
 addpath(fullfile(curdir, '..', 'utils'));
 
-nsbj = numel(dir([datadir, [filesep, '*.mat']]));
+nsbj = numel(dir([datadir, [filesep, '*.mat']])) - 1;
 
 disp(['cur dir:', curdir]);
 disp(['data dir:', datadir]);
@@ -41,41 +41,53 @@ if CACHETRAINDATA && exist(fullfile(curdir, 'traincache.mat'))
 else
     % Read in the robots 
     % Only deal with low memory use
+
+load(fullfile(datadir, 'gt_i.mat'), 'VBOXSIZE', 'ZERO_SIZE');
+
+%     Read in the robots 
+%     Only deal with low memory use
     for i = 1 : nsbj-TESTSIZE
-        fsbj = load(fullfile(datadir, strcat(PREFIX, num2str(nsbj), '.mat')), 'sbj');   
+        fsbj = load(fullfile(datadir, strcat(PREFIX, num2str(i), '.mat')), 'sbj');   
         ltrainrobot{i} = fsbj.sbj;
     end
 
     %ltrainrobot = lsbj{1 : numel(lsbj)-TESTSIZE};
     %ltestrobot = lsbj{numel(lsbj)-TESTSIZE+1 : end};
-
+    
+    ltestrobot_counter = 1;
+    for i = (nsbj - TESTSIZE + 1) : nsbj
+        fsbj = load(fullfile(datadir, strcat(PREFIX, num2str(i), '.mat')), 'sbj');   
+        ltestrobot{ltestrobot_counter} = fsbj.sbj;
+        ltestrobot_counter = ltestrobot_counter + 1;
+    end
+    
     % Count the train vbox
+        % Count the train vbox
     ntrain = 0;
     for r = 1 : numel(ltrainrobot)
-        ntrain = ntrain + numel(ltrainrobot(r));
+        ntrain = ntrain + numel(ltrainrobot{1,r}.lrobot);
     end
 
     % Count the test vbox
     ntest = 0;
     for r = 1 : numel(ltestrobot)
-        ntest = ntest + numel(ltestrobot(r));
+        ntest = ntest + numel(ltestrobot{1,r}.lrobot);
     end
-
-    vboxsize = lsbj{1}.vboxsize;
-    train_x = zeros(ntrain, vboxsize^3);
+    
+    train_x = zeros(ntrain, VBOXSIZE^3);
     row = 1;
-    for i = 1 : numel(lsbj) - TESTSIZE
-        for j = 1 : numel(lsbj{i}.lrobot)
+    for i = 1 : numel(ltrainrobot)
+        % the root case is usually too noisy
+        for j = 1 : numel(ltrainrobot{1,i}.lrobot)
             disp(sprintf('Reading train matrix row %d\n', row));
-            vb = lsbj{i}.lrobot(j).visionbox.(NOISETYPE);
-
-            if lsbj{i}.lrobot(j).fissure == 1 % Only use the vboxes not at branching locations
-                continue;
-            end
-
-        	train_x(row, :) = vb(:);
-            train_y(row, 1) = lsbj{i}.lrobot(j).next_th;
-            train_y(row, 2) = lsbj{i}.lrobot(j).next_phi;
+            vb = ltrainrobot{1,i}.lrobot(j).visionbox.(NOISETYPE);
+%             % Only use the vboxes not at branching locations
+             if (ltrainrobot{i}.lrobot(j).fissure == 1)||(ltrainrobot{i}.lrobot(j).fissure == 2) 
+                 continue;                 
+             end
+         	train_x(row, :) = vb(:);
+            train_y(row, 1) = ltrainrobot{1,i}.lrobot(j).next_th;
+            train_y(row, 2) = ltrainrobot{1,i}.lrobot(j).next_phi;
             row = row + 1;
         end
     end
@@ -204,5 +216,5 @@ function dcos = sphveccos(th1, phi1, th2, phi2)
 % Larger cosine between these two angles means closer these two angles are
 
 dcos = cos(th1) * cos(th2) + sin(th1) * sin(th2) * cos(phi1 - phi2);
-toc;
+
 end
