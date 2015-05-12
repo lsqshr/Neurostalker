@@ -41,9 +41,9 @@ else
     SHOWGT = 'NODISPLAY' 
 end
 
-prefix='OP_';
-ltrainrobot=[];
-ltestrobot=[];
+prefix = 'OP_';
+ltrainrobot = [];
+ltestrobot = [];
 lrobot = {};
 nrobot = 0;
 
@@ -133,7 +133,9 @@ if showimg==1
     end
 end
 
-df_order = tree(morphtree, 'clear'); % Generate an empty synchronized tree
+% Seems the df_order is not used
+%df_order = tree(morphtree, 'clear'); % Generate an empty synchronized tree
+
 iterator = morphtree.depthfirstiterator; 
 % Doesn't matter whether you call this on |t| or |df_order|
 iterator = iterator-1;
@@ -192,9 +194,9 @@ for i = 2:numel(lparind)
     
     %lnode list starts from second node this is the reason why second node direction is empty.   
     if i == 2
-    parnode = morphtree.get(1);
-    curnode = morphtree.get(lnode(1));
-    nextnode = morphtree.getchildren(lnode(1));
+        parnode = morphtree.get(1);
+        curnode = morphtree.get(lnode(1));
+        nextnode = morphtree.getchildren(lnode(1));
     end
 
     % Use this robot location minus previous robot location
@@ -255,6 +257,8 @@ for i = 1:numel(lparind)-1
                              cart2sph_sq(robot(i).prev_x_dir, robot(i).prev_y_dir, robot(i).prev_z_dir);
     [robot(i).next_th, robot(i).next_phi,r_one] = ...
                              cart2sph_sq(robot(i).next_x_dir, robot(i).next_y_dir, robot(i).next_z_dir);
+    assert(any(isnan(robot(i).next_th)) ~= 1, sprintf('robot(%d): next_th is nan.', i));
+    assert(any(isnan(robot(i).next_phi)) ~= 1, sprintf('robot(%d): next_phi is nan.', i));
 
     % Invserse the previous direction and add it to the list of next direction
     if addprev 
@@ -281,7 +285,7 @@ function [img3d, centroid] = raw_image_prep(nfile, imgpath, showimg, FRTHRESHOLD
 
 assert( nfile~=0, 'At least one image is needed');
 for i = 1 : nfile
-    disp(fullfile(imgpath, [num2str(i) '.tif']))
+    %disp(fullfile(imgpath, [num2str(i) '.tif']))
     curslice = imread(fullfile(imgpath, [num2str(i) '.tif']));
     % The X Y coordinate in tif is reversed according to the swc files
     A(:,:,i) = transpose(curslice); % Assign each slice to a 3D matrix

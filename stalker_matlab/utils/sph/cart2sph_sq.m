@@ -6,6 +6,10 @@ function [th, phi, r] = cart2sph_sq(x, y, z)
 
 r = sqrt(x.^2 + y.^2 + z.^2);
 th = atan(y ./ x);
+% Deal with the x == 0 cases
+th(intersect(x == 0, y > 0)) = pi/2;
+th(intersect(x == 0, y < 0)) = 3 * pi/2;
+th(intersect(x == 0, y == 0)) = 0;
 phi = acos(z ./ r);
 th(th<0) = 2 * pi + th(th<0);
 
