@@ -11,9 +11,10 @@ GAUSS_PERCENT = 0.1;
 GAUSS_VARIANCE = 1;
 NCLUSTER = 20;
 VBOXSIZE = 13;
-ADDPREV = false; % Consider the inverse of the previous direction as an output direction as well 
-SPHPROB.SAVESPHPROB = false;
-SPHPROB.NDIRECTION = false;
+ADDPREV = true; % Consider the inverse of the previous direction as an output direction as well 
+SPHPROB.SAVESPHPROB = true; % true if save spherical propagation function into the ground truth files
+SPHPROB.NDIRECTION = 1000; % Number of directions to sample the unit sphere 
+SPHPROB.D = 0.3; % The density of the gaussian kernel - smaller number tends to sharper distribution
 % - END PARA
 
 %Add the script folder into path
@@ -58,19 +59,24 @@ for i = 1 : length(dir([gtpath, [filesep, '*.swc']])) % iterate each subject
     preppath = fullfile('preprocessed', 'preprocessed_images'); 
 
     % Extract directions and radius
+    [SPHPROB.TH, SPHPROB.PHI] = picksphpoints(SPHPROB.NDIRECTION);
     sbj.lrobot = extract_gt(img3d, sbjgtpath, SHOWGT, ZERO_SIZE, VBOXSIZE, ADDPREV, SPHPROB);
     sbj.imgpath = sbjimgpath;
     sbj.gtpath = sbjgtpath;
     sbj.zerosize = ZERO_SIZE;
     sbj.vboxsize = VBOXSIZE;
     nvbox = numel(sbj.lrobot);
+    sphprob = SPHPROB; % Just change this to lower case matching other saved vars
     save(fullfile(curdir, '..', 'data', 'input', 'preprocessed',...
-         strcat(num2str(sbjid),'.mat')), 'sbj', 'img3d', 'nvbox');
+         strcat(num2str(sbjid),'.mat')), 'sbj', 'img3d', 'nvbox', 'sphprob');
     clearvars sbj;
     clearvars img3d;
 end
-    save(fullfile(curdir, '..', 'data', 'input', 'preprocessed',...
-         'gt_i.mat'), 'VBOXSIZE','ZERO_SIZE');
+
+
+% Seems not used -- Double check before removing
+%save(fullfile(curdir, '..', 'data', 'input', 'preprocessed',...
+%     'gt_i.mat'), 'VBOXSIZE', 'ZERO_SIZE', 'SPHPROB');
 end
 
 
@@ -260,18 +266,22 @@ for i = 1:numel(lparind)-1
 end
 
 if sphprob.SAVESPHPROB % Convert the next directions to a spherical propagation distribution sampling
-     
+    for i = 1 : numel(robot)
+        robot(i).prob = dir2prob(robot(i).next_th, robot(i).next_phi, sphprob.TH, sphprob.PHI, sphprob.D);
+    end
 end
 
 end
 
 
-function [img3d, centroid] = raw_image_prep(nfile, imgpath, showimg, FRTHRESHOLD, ZERO_SIZE, SALTPEPPER_PERCENT, GAUSS_PERCENT, GAUSS_VARIANCE, NCLUSTER)
+function [img3d, centroid] = raw_image_prep(nfile, imgpath, showimg, FRTHRESHOLD, ZERO_SIZE,...
+                                            SALTPEPPER_PERCENT, GAUSS_PERCENT, GAUSS_VARIANCE, NCLUSTER)
 % Show the original 3D images and the save raw image data 
 % Save from .tif to .mat
 
 assert( nfile~=0, 'At least one image is needed');
 for i = 1 : nfile
+    disp(fullfile(imgpath, [num2str(i) '.tif']))
     curslice = imread(fullfile(imgpath, [num2str(i) '.tif']));
     % The X Y coordinate in tif is reversed according to the swc files
     A(:,:,i) = transpose(curslice); % Assign each slice to a 3D matrix
