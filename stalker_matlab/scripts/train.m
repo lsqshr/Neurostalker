@@ -1,7 +1,7 @@
 function train()
 % Train neurostalker based on groundtruth extracted from swf trees and input from imagesstacks
 % This version disregard the memory cost of loading training cases
-tic;
+
 clc; clear all; close all;
 
 %------ PARA
@@ -14,9 +14,9 @@ STEPSIZE        = 1;
 NOISETYPE       = 'original'; % The noise added to vision blocks: original, gauss, salt_pepper
 % General Learning
 DEBUG           = true; % DEBUG=true will only train models with 1000 cases
-FRAMEWORK       = 'PUFFER' % The framework used for training/walking the neurostalker: 'NORMAL'/PUFFER
+FRAMEWORK       = 'NORMAL' % The framework used for training/walking the neurostalker: 'NORMAL'/PUFFER
 PREFIX          = 'OP_';
-CACHETRAINDATA  = true;
+CACHETRAINDATA  = false;
 CACHETRAINMODEL = false;
 RUNTEST         = false;
 VBSIZE          = 13; % Predefined size of the vision box
@@ -38,12 +38,12 @@ addpath(genpath(fullfile(curdir, '..', 'utils')));
 addpath(genpath(fullfile(curdir, '..', 'lib', 'DeepLearnToolbox')));
 addpath(genpath(fullfile(curdir, '..', 'lib', 'VolumeRender')));
 
-nsbj = numel(dir([datadir, [filesep, '*.mat']]));
+nsbj = numel(dir([datadir, [filesep, PREFIX, '*.mat']]));
 
-disp(['cur dir:', curdir]);
-disp(['data dir:', datadir]);
-disp(dir([datadir, [filesep, PREFIX, '*.mat']]));
-disp(sprintf('nsbj: %d\n', nsbj));
+%disp(['cur dir:', curdir]);
+%disp(['data dir:', datadir]);
+%disp(dir([datadir, [filesep, PREFIX, '*.mat']]));
+%disp(sprintf('nsbj: %d\n', nsbj));
 
 
 % Make the Train X and Y
@@ -60,37 +60,47 @@ if CACHETRAINDATA && exist(fullfile(datadir, 'traincache.mat'))
 else
     % Read in the robots 
     % Only deal with low memory use
+
     for i = 1 : nsbj-TESTSIZE
-        fsbj = load(fullfile(datadir, strcat(PREFIX, num2str(nsbj), '.mat')), 'sbj');   
+        fsbj = load(fullfile(datadir, strcat(PREFIX, num2str(i), '.mat')), 'sbj');   
         ltrainrobot{i} = fsbj.sbj;
     end
 
-    %ltrainrobot = sbj{1 : numel(sbj)-TESTSIZE};
-    %ltestrobot = sbj{numel(sbj)-TESTSIZE+1 : end};
-
+    ltestrobot_counter = 1;
+    for i = (nsbj - TESTSIZE + 1) : nsbj
+        fsbj = load(fullfile(datadir, strcat(PREFIX, num2str(i), '.mat')), 'sbj');   
+        ltestrobot{ltestrobot_counter} = fsbj.sbj;
+        ltestrobot_counter = ltestrobot_counter + 1;
+    end
+    
     % Count the train vbox
+        % Count the train vbox
     ntrain = 0;
     for r = 1 : numel(ltrainrobot)
-        ntrain = ntrain + numel(ltrainrobot(r));
+        ntrain = ntrain + numel(ltrainrobot{1,r}.lrobot);
     end
 
     % Count the test vbox
-    %ntest = 0;
-    %for r = 1 : numel(ltestrobot)
-    %    ntest = ntest + numel(ltestrobot(r));
-    %end
+    ntest = 0;
+    for r = 1 : numel(ltestrobot)
+        ntest = ntest + numel(ltestrobot(r));
+    end
 
     vboxsize = ltrainrobot{1}.vboxsize;
     train_x = zeros(ntrain, vboxsize^3);
     row = 1;
 
-    for i = 1 : numel(ltrainrobot) - TESTSIZE
-        for j = 1 : numel(ltrainrobot{i}.lrobot)
+    for i = 1 : numel(ltrainrobot)
+        % The root case is usually too noisy
+        % If the root is going to be elliminated, change j to start from 2
+        for j = 1 : numel(ltrainrobot{1,i}.lrobot)
             disp(sprintf('Reading train matrix row %d\n', row));
-            vb = ltrainrobot{i}.lrobot(j).visionbox.(NOISETYPE);
+            vb = ltrainrobot{1,i}.lrobot(j).visionbox.(NOISETYPE);
 
             if strcmp(FRAMEWORK, 'NORMAL')
-                if ltrainrobot{i}.lrobot(j).fissure == 1 % Only use the vboxes not at branching locations
+                % Only use the vboxes not at branching locations
+                if (ltrainrobot{i}.lrobot(j).fissure == 1) ...
+                   || (ltrainrobot{i}.lrobot(j).fissure == 2) % fissure: 1-branching; 2-terminal nodes
                     continue;
                 end
             end
@@ -99,12 +109,12 @@ else
 
             if strcmp(FRAMEWORK, 'NORMAL')  
                 % For NORMAL, the ground truth is the spherical coordinates of the output directions
-                train_y(row, 1) = ltrainrobot{i}.lrobot(j).next_th;
-                train_y(row, 2) = ltrainrobot{i}.lrobot(j).next_phi;
+                train_y(row, 1) = ltrainrobot{1, i}.lrobot(j).next_th(1);
+                train_y(row, 2) = ltrainrobot{1, i}.lrobot(j).next_phi(1);
             elseif strcmp(FRAMEWORK, 'PUFFER')
                 % For PUFFER, the ground truth is the sampled probability matching the
                 % uniformly distributed spherical directions
-                train_y(row, :) = ltrainrobot{i}.lrobot(j).prob';
+                train_y(row, :) = ltrainrobot{1, i}.lrobot(j).prob';
             else
                 raise Exception(sprintf('FRAMEWORK: %s not defined\n', FRAMEWORK));
             end
@@ -317,5 +327,15 @@ end
 opts.numepochs = NN.NNEPOCH;
 opts.batchsize = NN.BATCHSIZE;
 % nn = nntrain(nn, trainx, trainy, opts);
+
+end
+
+
+function dcos = sphveccos(th1, phi1, th2, phi2)
+% Calculate the value of the cosine of the angle between two spherical vectors
+% Ref: http://math.stackexchange.com/questions/231221/great-arc-distance-between-two-points-on-a-unit-sphere
+% Larger cosine between these two angles means closer these two angles are
+
+dcos = cos(th1) * cos(th2) + sin(th1) * sin(th2) * cos(phi1 - phi2);
 
 end

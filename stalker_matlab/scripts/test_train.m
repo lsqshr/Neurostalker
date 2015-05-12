@@ -19,7 +19,6 @@ CACHETRAINMODEL = true;
 curdir = fileparts(mfilename('fullpath'));
 datadir = fullfile(curdir, '..', 'data', 'input', 'preprocessed');
 addpath(fullfile(curdir, '..', 'utils'));
-
 nsbj = numel(dir([datadir, [filesep, '*.mat']]))-1;
 
 % disp(['cur dir:', curdir]);
@@ -46,8 +45,8 @@ load(fullfile(datadir, 'gt_i.mat'), 'VBOXSIZE', 'ZERO_SIZE');
         ltestrobot_counter = ltestrobot_counter + 1;
     end
     
-    
     % Count the train vbox
+        % Count the train vbox
     ntrain = 0;
     for r = 1 : numel(ltrainrobot)
         ntrain = ntrain + numel(ltrainrobot{1,r}.lrobot);
@@ -58,31 +57,30 @@ load(fullfile(datadir, 'gt_i.mat'), 'VBOXSIZE', 'ZERO_SIZE');
     for r = 1 : numel(ltestrobot)
         ntest = ntest + numel(ltestrobot{1,r}.lrobot);
     end
-
     
     train_x = zeros(ntrain, VBOXSIZE^3);
     row = 1;
     for i = 1 : numel(ltrainrobot)
         % the root case is usually too noisy
-        for j = 2 : numel(ltrainrobot{1,i}.lrobot)
-%             disp(sprintf('Reading train matrix row %d\n', row));
+        for j = 1 : numel(ltrainrobot{1,i}.lrobot)
+            disp(sprintf('Reading train matrix row %d\n', row));
             vb = ltrainrobot{1,i}.lrobot(j).visionbox.(NOISETYPE);
-
-            if ltrainrobot{i}.lrobot(j).fissure == 1 % Only use the vboxes not at branching locations
-%                 disp('fissure')
-                continue;
-            end
-
-        	train_x(row, :) = vb(:);
+%             % Only use the vboxes not at branching locations
+             if (ltrainrobot{i}.lrobot(j).fissure == 1)||(ltrainrobot{i}.lrobot(j).fissure == 2) 
+                 continue;                 
+             end
+         	train_x(row, :) = vb(:);
             train_y(row, 1) = ltrainrobot{1,i}.lrobot(j).next_th;
             train_y(row, 2) = ltrainrobot{1,i}.lrobot(j).next_phi;
             row = row + 1;
         end
     end
-
+    
+    
+    print('Debug begins here')
     train_x(row:end,:) = []; % Delete the redundent rows not used because of the branching
     train_y(row:end,:) = [];
-    [row, col] = find(isnan(train_y));
+    
     clearvars ltrainrobot ltestrobot; 
     disp('Start to train RF...');
     options = statset('UseParallel', 'Always');

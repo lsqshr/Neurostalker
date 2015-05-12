@@ -1,6 +1,6 @@
 function main_extract_gt()
 % Extract the groundtruth for training 
-
+warning off;
 clear all; clc; close all; warning on;
 
 % START PARA
@@ -175,12 +175,6 @@ robot(1).prev_y_dir = next_y_direction;
 robot(1).prev_z_dir = next_z_direction;
 robot(1).prev_mag = next_magnitude;
 
-
-
-
-
-
-
 % Assign the cartisian direction vectors of all the other nodes 
 for i = 2:numel(lparind)
     node_ind = iterator(i); % DFS traverse 
@@ -219,12 +213,16 @@ for i = 2:numel(lparind)
 
     node_ind_next = morphtree.getchildren(lnode(node_ind)) - 1; % DH, double check!!!
     nchildren = numel(node_ind_next); % The number of children nodes
-
+    
+    
     % Define fissure based on the poupulation of children nodes
+    % fissure = 0 split direction fissure = 2 no direction fissure = 1 one direction   
     if nchildren == 1
         robot(i).fissure = 0;
+    elseif nchildren == 0
+        robot(i).fissure = 2;
     else
-        robot(i).fissure = 1;
+        robot(i).fissure = 1;    
     end
 
     for c = 1 : nchildren
