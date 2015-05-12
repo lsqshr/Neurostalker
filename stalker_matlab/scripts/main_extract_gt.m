@@ -134,7 +134,8 @@ if showimg==1
 end
 
 df_order = tree(morphtree, 'clear'); % Generate an empty synchronized tree
-iterator = morphtree.depthfirstiterator; % Doesn't matter whether you call this on |t| or |df_order|
+iterator = morphtree.depthfirstiterator; 
+% Doesn't matter whether you call this on |t| or |df_order|
 iterator = iterator-1;
 
 % Initialize the root parameter
@@ -174,6 +175,12 @@ robot(1).prev_y_dir = next_y_direction;
 robot(1).prev_z_dir = next_z_direction;
 robot(1).prev_mag = next_magnitude;
 
+
+
+
+
+
+
 % Assign the cartisian direction vectors of all the other nodes 
 for i = 2:numel(lparind)
     node_ind = iterator(i); % DFS traverse 
@@ -187,6 +194,13 @@ for i = 2:numel(lparind)
     for j = 1 : numel(fields)
         robot(i).visionbox.(fields{j}) = extractbox(img3d.(fields{j}), vboxsize, curnode.x_loc,curnode.y_loc,curnode.z_loc,zero_size);
         robot(i).fissure=0;
+    end
+    
+    %lnode list starts from second node this is the reason why second node direction is empty.   
+    if i == 2
+    parnode = morphtree.get(1);
+    curnode = morphtree.get(lnode(1));
+    nextnode = morphtree.getchildren(lnode(1));
     end
 
     % Use this robot location minus previous robot location
@@ -214,7 +228,7 @@ for i = 2:numel(lparind)
     end
 
     for c = 1 : nchildren
-        next = morphtree.get(lnode(node_ind_next(c)));
+        nextnode = morphtree.get(lnode(node_ind_next(c)));
 
         % Keep the sign of the directions as-is
         dx = nextnode.x_loc - curnode.x_loc;
@@ -240,14 +254,14 @@ end
 % Extract spherical angle 
 for i = 1:numel(lparind)-1
     [robot(i).prev_th, robot(i).prev_phi,r_one] = ...
-                             cart2sph(robot(i).prev_x_dir, robot(i).prev_y_dir, robot(i).prev_z_dir);
+                             cart2sph_sq(robot(i).prev_x_dir, robot(i).prev_y_dir, robot(i).prev_z_dir);
     [robot(i).next_th, robot(i).next_phi,r_one] = ...
-                             cart2sph(robot(i).next_x_dir, robot(i).next_y_dir, robot(i).next_z_dir);
+                             cart2sph_sq(robot(i).next_x_dir, robot(i).next_y_dir, robot(i).next_z_dir);
 
     % Invserse the previous direction and add it to the list of next direction
     if addprev 
-        [px, py, pz] = sph2cart(robot(i).next_th, robot(i).prev_th, 1);
-        [invprevth, invprevphi, ~] = cart2sph(-px, -py, -pz);  
+        [px, py, pz] = sph2cart_sq(robot(i).next_th, robot(i).prev_th, 1);
+        [invprevth, invprevphi, ~] = cart2sph_sq(-px, -py, -pz);  
         robot(i).next_th = [robot(i).next_th, invprevth];
         robot(i).next_phi = [robot(i).next_phi, invprevphi];
     end
