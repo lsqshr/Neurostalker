@@ -21,6 +21,4 @@ v = v(:);
 th = 2 * pi * u;
 phi = acos(2 * v - 1);
 
-disp([th; phi]')
-
 end
