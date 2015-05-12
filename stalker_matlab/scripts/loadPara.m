@@ -12,7 +12,7 @@ FRAMEWORK       = 'NORMAL' % The framework used for training/walking the neurost
 PREFIX          = 'OP_';
 CACHETRAINDATA  = false;
 CACHETRAINMODEL = false;
-RUNTEST         = true;
+RUNTEST         = false;
 VISUALIZATIONBOXTEST = true;
 VBSIZE          = 13; % Predefined size of the vision box
 % Random Forest 
