@@ -176,6 +176,11 @@ robot(1).prev_x_dir = next_x_direction;
 robot(1).prev_y_dir = next_y_direction;
 robot(1).prev_z_dir = next_z_direction;
 robot(1).prev_mag = next_magnitude;
+% Save the location of each node for visuliation
+robot(1).x_loc=curnode.x_loc;
+robot(1).y_loc=curnode.y_loc;
+robot(1).z_loc=curnode.z_loc;
+    
 
 % Assign the cartisian direction vectors of all the other nodes 
 for i = 2:numel(lparind)
@@ -206,7 +211,11 @@ for i = 2:numel(lparind)
     dz = curnode.z_loc - parnode.z_loc;
 
     dmagnitude = norm([dx, dy, dz]);
-
+    
+    % Save the location of each node for visuliation
+    robot(i).x_loc=curnode.x_loc;
+    robot(i).y_loc=curnode.y_loc;
+    robot(i).z_loc=curnode.z_loc;
     % Keep the sign of the directions as-is & normalise the displacements
     robot(i).prev_x_dir = dx / dmagnitude;
     robot(i).prev_y_dir = dy / dmagnitude;

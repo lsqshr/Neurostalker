@@ -24,6 +24,7 @@ else
     CACHETRAINDATA  = false;
     CACHETRAINMODEL = false;
     RUNTEST         = true;
+    VISUALIZATIONBOXTEST = true;
     VBSIZE          = 13; % Predefined size of the vision box
     % Random Forest 
     RF.NTREE        = 200;
@@ -99,7 +100,7 @@ else
         % The root case is usually too noisy
         % If the root is going to be elliminated, change j to start from 2
         for j = 1 : numel(ltrainrobot{1,i}.lrobot)
-            disp(sprintf('Reading train matrix row %d\n', row));
+            (sprintf('Reading train matrix row %d\n', row));
             vb = ltrainrobot{1,i}.lrobot(j).visionbox.(NOISETYPE);
 
             if strcmp(FRAMEWORK, 'NORMAL')
