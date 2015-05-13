@@ -5,6 +5,9 @@ clear all; clc; close all; warning on;
 
 % The data path should be customisable, since we are going to use the computing farms
 % to store the source data
+%Add the script folder into path
+curdir = fileparts(mfilename('fullpath'));
+
 if ~exist('datapath','var') 
     datapath = fullfile(curdir, '..', 'data', 'input', 'raw', 'rawimage', 'op_raw_imagestack'); 
 end
@@ -19,15 +22,13 @@ GAUSS_VARIANCE = 1;
 NCLUSTER = 20;
 VBOXSIZE = 13;
 ADDPREV = false; % Consider the inverse of the previous direction as an output direction as well 
-SPHPROB.SAVESPHPROB = false; % true if save spherical propagation function into the ground truth files
+SPHPROB.SAVESPHPROB = true; % true if save spherical propagation function into the ground truth files
 SPHPROB.NDIRECTION = 1000; % Number of directions to sample the unit sphere 
 SPHPROB.D = 0.3; % The density of the gaussian kernel - smaller number tends to sharper distribution
 SHOWIMG = 'NODISPLAY'
 SHOWGT = 'NODISPLAY' 
 % - END PARA
 
-%Add the script folder into path
-curdir = fileparts(mfilename('fullpath'));
 
 % Add dependencies 
 addpath(genpath(fullfile(curdir, '..', 'lib')));
