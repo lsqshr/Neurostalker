@@ -21,6 +21,5 @@ stalker_matlab/lib/*
 /stalker_v3d/utils/tests/test_mattree2opencv/build/loadregressionrtree
 /stalker_v3d/scaffolds/try_opencv_regression_forest/build/regressiontree
 /stalker_matlab/scripts/loadPara.m
-/stalker_matlab/scripts/train.pbs
 *-out.txt
 *.e*
