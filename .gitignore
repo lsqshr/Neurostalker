@@ -24,3 +24,4 @@ stalker_matlab/lib/*
 *-out.txt
 *.e*
 /stalker_matlab/scripts/trainlog.txt
+/stalker_matlab/scripts/loadGtPara.m
