@@ -264,7 +264,7 @@ if RUNTEST == true
             nextnode.x = curnode.x + dx;
             nextnode.y = curnode.y + dy;
             nextnode.z = curnode.z + dz;
-            nextnode.prev_th = th;
+            nextnode.prev_th = th;l
             nextnode.prev_phi = phi;
 
             fprintf('Step %d: Move to direction (%f, %f) - (%f, %f, %f)\n', s, th, phi, dx, dy, dz);
@@ -277,8 +277,9 @@ if RUNTEST == true
         hold off
     end
 end
-% From here I will visulizationboxtest
+% From here I will start visulizationbox test
 if VISUALIZATIONBOXTEST == true
+ 
     rf_th
     rf_phi
     th_list = [];
@@ -290,7 +291,7 @@ if VISUALIZATIONBOXTEST == true
             cnsbj = nsbj - r + 1;   
             fsbj = load(fullfile(datadir, strcat(PREFIX, num2str(cnsbj), '.mat')),  'img3d');
             showbox(fsbj.img3d.(NOISETYPE), 0.1);
-        for vbi = 1 :  numel(ltestrobot{r}.lrobot)
+        for vbi = 1 : numel(ltestrobot{r}.lrobot)
             % Extract the vbox of the stalker
             if (ltestrobot{r}.lrobot(vbi).fissure == 0)
             vbox = extractbox(fsbj.img3d.(NOISETYPE), ltestrobot{r}.vboxsize,...
@@ -302,9 +303,10 @@ if VISUALIZATIONBOXTEST == true
             th_list(counter) = th;
             th_list_gt(counter) = ltestrobot{r}.lrobot(vbi).next_th; 
                 counter = counter + 1
-            showdirection(fsbj.img3d.(NOISETYPE), 0.1, th, phi,...
+            showdirection(vbox, 0.1, th, phi,...
              ltestrobot{r}.lrobot(vbi).x_loc, ltestrobot{r}.lrobot(vbi).y_loc,...
-              ltestrobot{r}.lrobot(vbi).z_loc, ltestrobot{r}.zerosize)    
+              ltestrobot{r}.lrobot(vbi).z_loc,ltestrobot{r}.zerosize,...
+               ltestrobot{r}.vboxsize)    
             end
         end
     end  
