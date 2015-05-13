@@ -21,14 +21,14 @@ else
     DEBUG           = true; % DEBUG=true will only train models with 1000 cases
     FRAMEWORK       = 'NORMAL'; % The framework used for training/walking the neurostalker: 'NORMAL'/PUFFER
     PREFIX          = 'OP_';
-    CACHETRAINDATA  = false;
-    CACHETRAINMODEL = false;
+    CACHETRAINDATA  = true;
+    CACHETRAINMODEL = true;
     RUNTEST         = false;
     VISUALIZATIONBOXTEST = true;
     VBSIZE          = 13; % Predefined size of the vision box
     % Random Forest 
-    RF.NTREE        = 200;
-    RF.MTRY         = 140;
+    RF.NTREE        = 400;
+    RF.MTRY         = 50;
     % Neural Network
     NN.NHLAYER      = 2;
     NN.NHNEURON     = 13 * 5;
@@ -209,21 +209,16 @@ if strcmp(FRAMEWORK, 'PUFFER')
 r = visualize_sae3d(sae.ae{1}.W{1}');
 end
 
-% % Test RF by walking 
-% Read in the test subject
-if RUNTEST == false
-    return
-end
-
-img3dctr = 1; % counter for img3d cell array
-for i = nsbj - TESTSIZE + 1 : nsbj 
-    fsbj = load(fullfile(datadir, strcat(PREFIX, num2str(nsbj), '.mat')), 'sbj', 'img3d'); 
-    ltestrobot{img3dctr} = fsbj.sbj;
-    img3d{img3dctr} = fsbj.img3d;
-    img3dctr = img3dctr + 1;
-end
-
 if RUNTEST == true
+     % % Test RF by walking 
+    % Read in the test subject
+    img3dctr = 1; % counter for img3d cell array
+    for i = nsbj - TESTSIZE + 1 : nsbj 
+        fsbj = load(fullfile(datadir, strcat(PREFIX, num2str(nsbj), '.mat')), 'sbj', 'img3d'); 
+        ltestrobot{img3dctr} = fsbj.sbj;
+        img3d{img3dctr} = fsbj.img3d;
+        img3dctr = img3dctr + 1;
+    end
     for r = 1 : numel(ltestrobot)
         figure
         hold on
@@ -283,18 +278,42 @@ if RUNTEST == true
 end
 % From here I will visulizationboxtest
 if VISUALIZATIONBOXTEST == true
-   for r = 1 : numel(ltestrobot)
-       for vbi = 1 :  numel(ltestrobot.lrobot(r))
-       % Extract the vbox of the stalker
-       vbox = extractbox(testimg, ltestrobot{r}.vboxsize,...
-                              curnode.x, curnode.y, curnode.z,...
-                              ltestrobot{r}.zerosize);
-         th = rf_th.predict(vbox(:)');
-        phi = rf_phi.predict(vbox(:)');
-       end
-   end
-end    
-
+    rf_th
+    rf_phi
+    th_list = [];
+    th_list_gt = [];
+    counter = 1;
+    figure
+    hold on
+    for r = 1 : numel(ltestrobot)
+            cnsbj = nsbj - r + 1;   
+            fsbj = load(fullfile(datadir, strcat(PREFIX, num2str(cnsbj), '.mat')),  'img3d');
+            showbox(fsbj.img3d.(NOISETYPE), 0.1);
+        for vbi = 1 :  numel(ltestrobot{r}.lrobot)
+            % Extract the vbox of the stalker
+            if (ltestrobot{r}.lrobot(vbi).fissure == 0)
+            vbox = extractbox(fsbj.img3d.(NOISETYPE), ltestrobot{r}.vboxsize,...
+                ltestrobot{r}.lrobot(vbi).x_loc, ltestrobot{r}.lrobot(vbi).y_loc,...
+                ltestrobot{r}.lrobot(vbi).z_loc,...
+                ltestrobot{r}.zerosize);
+            th = rf_th.predict(vbox(:)');
+            phi = rf_phi.predict(vbox(:)');
+            th_list(counter) = th;
+            th_list_gt(counter) = ltestrobot{r}.lrobot(vbi).next_th; 
+                counter = counter + 1
+            showdirection(fsbj.img3d.(NOISETYPE), 0.1, th, phi,...
+             ltestrobot{r}.lrobot(vbi).x_loc, ltestrobot{r}.lrobot(vbi).y_loc,...
+              ltestrobot{r}.lrobot(vbi).z_loc, ltestrobot{r}.zerosize)    
+            end
+        end
+    end  
+hold off
+figure
+plot(th_list_gt, th_list,'r+')
+xlabel('ground_truth of theta angle')
+ylabel('prediction of theta angle')
+corr(th_list', th_list_gt')
+end
 end
 
 

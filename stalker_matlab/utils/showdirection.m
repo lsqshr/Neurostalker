@@ -1,9 +1,10 @@
-function showdirection(vision_box, threshold, th, phi)
+function showdirection(vision_box, threshold, th, phi, x_loc, y_loc, z_loc, zerosize)
 % This script can be used as visulisation check of ground truth and training result 
 A = vision_box > threshold;  % synthetic data
 [x y z] = ind2sub(size(A), find(A));
-mx = mean(x); my = mean(y); mz = mean(z);
-plot3(x, y, z, 'b.');
+mx = mean(x) + x_loc - zerosize; my = mean(y) + y_loc - zerosize;
+mz = mean(z) + z_loc - zerosize;
+% plot3((x + x_loc), (y + y_loc), (z + z_loc), 'b.');
 [dx, dy, dz] = sph2cart_sq(th, phi ,1);
 scale_ruler = 6;
 line([mx - scale_ruler * dx, mx + scale_ruler * dx], [my - scale_ruler * dy,...
