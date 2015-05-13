@@ -46,7 +46,6 @@ cp $me $cachefolder/run.pbs;
 #     Run Script
 matlab -nodesktop -nodisplay -nosplash -r "run('train.m')";
 
-
 echo "Dumping in the cached model...";
 
 cp trainlog.txt $cachefolder/trainlog.txt;

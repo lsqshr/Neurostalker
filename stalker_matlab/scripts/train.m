@@ -36,6 +36,7 @@ else
     NN.SAEEPOCH     = 50;
     NN.NNEPOCH      = 100;
     NN.ZEROMASK     = 0.5;
+    NN.OUTPUT       = 'softmax'
     % ENDPARA
 end
 
@@ -342,7 +343,7 @@ sae = saetrain(sae, trainx, opts); % Train SDAE
 nnarch = [saearch size(trainy, 2)];
 nn = nnsetup(nnarch);
 nn.activation_function = 'sigm';
-nn.output = 'softmax';
+nn.output = NN.OUTPUT;
 nn.learningRate = NN.LEARNRATE;
 
 for i = 1 : NN.NHLAYER % Transfer weights from SDAE
