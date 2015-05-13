@@ -165,7 +165,7 @@ else
         orith = train_y(:, 1);
         oriphi = train_y(:, 2);
         [gtx, gty, gtz] = sph2cart_sq(orith, oriphi, ones(numel(orith, 1)));
-        [invth, invphi] = cart2sph_sq(-gtx, -gty, -gtz);
+        [invth, invphi, ~] = cart2sph_sq(-gtx, -gty, -gtz);
         gtth = orith;
         gtphi = oriphi;
         gtth(orith > pi) = invth(orith > pi);
@@ -205,25 +205,8 @@ end
 
 if strcmp(FRAMEWORK, 'PUFFER')
 % Visualise the SDAE
-visualize(sae.ae{1}.W{1}');
+%visualize(sae.ae{1}.W{1}');
 r = visualize_sae3d(sae.ae{1}.W{1}');
-strip = r{5};
-viscube = reshape(strip, VBSIZE, VBSIZE, VBSIZE);
-fprintf('IN INPUT - MAX: %f, MIN: %f\n', max(train_x(:)), min(train_y(:)));
-fprintf('IN VIS - MAX: %f, MIN: %f\n', max(viscube(:)), min(viscube(:)));
-normcube = viscube+abs(min(viscube(:)));
-normcube = 1 - (normcube / max(normcube(:)));
-VolumeRender(normcube);
-
-X = zeros(size(sae.ae{1}.W{1}, 1) * VBSIZE, VBSIZE * VBSIZE);
-for i = 1 : numel(r)
-    %fprintf('Reading %dth row of vis matrix X...\n', i);
-    X(1+(i-1)*VBSIZE:i*VBSIZE, :) = r{i};
-end
-
-figure(3)
-imagesc(X(25:200, :));
-colormap gray; 
 end
 
 % % Test RF by walking 
