@@ -25,9 +25,6 @@ cd $PBS_O_WORKDIR;
 #     Launching the job!
 JOBNAME='firstfulltrainop';
 
-#     Run Script
-matlab -nodesktop -nodisplay -nosplash -r "run('train.m')";
-
 #     Transfer the trained model to data folder
 cachefolder=/project/RDS-FEI-NRMMCI-RW/NeurostalkerModelCache/$JOBNAME;
 
@@ -38,8 +35,13 @@ else
 	echo "Cache job folder exists: $cachefolder";
 fi
 
+cp loadPara.m $cachefolder/loadPara.m;
+
+#     Run Script
+matlab -nodesktop -nodisplay -nosplash -r "run('train.m')";
+
+
 echo "Dumping in the cached model...";
 
-cp loadPara.m $cachefolder/loadPara.m;
 cp trainlog.txt $cachefolder/trainlog.txt;
 cp  ../data/results/trained_models/modelcache.mat $cachefolder/modelcache.mat;

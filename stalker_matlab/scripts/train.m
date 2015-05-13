@@ -342,7 +342,8 @@ sae = saetrain(sae, trainx, opts); % Train SDAE
 nnarch = [saearch size(trainy, 2)];
 nn = nnsetup(nnarch);
 nn.activation_function = 'sigm';
-%nn.learningRate = 1;
+nn.output = 'softmax';
+nn.learningRate = NN.LEARNRATE;
 
 for i = 1 : NN.NHLAYER % Transfer weights from SDAE
     nn.W{i} = sae.ae{i}.W{1};

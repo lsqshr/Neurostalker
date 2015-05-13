@@ -1,9 +1,16 @@
-function main_extract_gt()
+function main_extract_gt(datapath)
 % Extract the groundtruth for training 
 warning off;
 clear all; clc; close all; warning on;
 
+% The data path should be customisable, since we are going to use the computing farms
+% to store the source data
+if ~exist('datapath','var') 
+    datapath = fullfile(curdir, '..', 'data', 'input', 'raw', 'rawimage', 'op_raw_imagestack'); 
+end
+
 % START PARA
+DATAFORMAT = 'TIF'; % The extension of the source image files, TIF/V3DRAW
 ZERO_SIZE = 20;
 FRTHRESHOLD = 15;
 SALTPEPPER_PERCENT = 0.0001;
@@ -15,6 +22,8 @@ ADDPREV = false; % Consider the inverse of the previous direction as an output d
 SPHPROB.SAVESPHPROB = false; % true if save spherical propagation function into the ground truth files
 SPHPROB.NDIRECTION = 1000; % Number of directions to sample the unit sphere 
 SPHPROB.D = 0.3; % The density of the gaussian kernel - smaller number tends to sharper distribution
+SHOWIMG = 'NODISPLAY'
+SHOWGT = 'NODISPLAY' 
 % - END PARA
 
 %Add the script folder into path
@@ -26,20 +35,8 @@ addpath(genpath(fullfile(curdir, '..', 'utils')));
 
 % Try to enter the raw image ground truth path
 gtpath = fullfile(curdir, '..', 'data', 'input', 'raw', 'groundtruth'); 
-oppath = fullfile(curdir, '..', 'data', 'input', 'raw', 'rawimage', 'op_raw_imagestack'); 
+datapath = fullfile(curdir, '..', 'data', 'input', 'raw', 'rawimage', 'op_raw_imagestack'); 
      
-% It will iteratively load the ground truth
-if input('Do you want show original 3D images? \nOption 1: Show  Option 2: Do not show:') == 1
-    SHOWIMG = 'DISPLAY'
-else
-    SHOWIMG = 'NODISPLAY'
-end
-
-if input('Do you want show original ground truth? \nOption 1: Show  Option 2: Do not show:') == 1
-    SHOWGT = 'DISPLAY' 
-else
-    SHOWGT = 'NODISPLAY' 
-end
 
 prefix = 'OP_';
 ltrainrobot = [];
@@ -50,10 +47,10 @@ nrobot = 0;
 for i = 1 : length(dir([gtpath, [filesep, '*.swc']])) % iterate each subject
     sbjid = [prefix num2str(i)];
     disp(sprintf('Working On Sbj %s\n', sbjid));
-    sbjimgpath = fullfile(oppath, sbjid);
+    sbjimgpath = fullfile(datapath, sbjid);
     sbjgtpath = fullfile(gtpath, sbjid);
-    nfile = length(dir([sbjimgpath, [filesep, '*.tif']]));
 
+    nfile = length(dir([sbjimgpath, [filesep, '*.tif']]));
     img3d = raw_image_prep(nfile, sbjimgpath, SHOWIMG, FRTHRESHOLD, ZERO_SIZE,...
                            SALTPEPPER_PERCENT, GAUSS_PERCENT, GAUSS_VARIANCE, NCLUSTER);
     preppath = fullfile('preprocessed', 'preprocessed_images'); 
