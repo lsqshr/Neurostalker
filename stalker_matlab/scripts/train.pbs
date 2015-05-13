@@ -35,7 +35,7 @@ else
 	echo "Cache job folder exists: $cachefolder";
 fi
 
-cp loadPara.m $cachefolder/loadPara.m;
+cp loadTrPara.m $cachefolder/loadTrPara.m;
 cp train.pbs $cachefolder/train.pbs;
 
 #     Run Script

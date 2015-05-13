@@ -5,9 +5,9 @@ function train()
 clc; clear all; close all;
 curdir = fileparts(mfilename('fullpath'));
 
-if exist(fullfile(curdir, 'loadPara.m'))
-    disp('Loading parameters from loadPara.m')
-    loadPara
+if exist(fullfile(curdir, 'loadTrPara.m'))
+    disp('Loading parameters from loadTrPara.m')
+    loadTrPara
 else
     %------ PARA
     % TEST
