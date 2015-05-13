@@ -29,7 +29,8 @@ else
     ADDPREV = false; % Consider the inverse of the previous direction as an output direction as well 
     SPHPROB.SAVESPHPROB = false; % true if save spherical propagation function into the ground truth files
     SPHPROB.NDIRECTION = 1000; % Number of directions to sample the unit sphere 
-    SPHPROB.D = 0.3; % The density of the gaussian kernel - smaller number tends to sharper distribution
+    SPHPROB.D = 0.3; % The density of the gaussian kernel - 
+                     % smaller number tends to sharper distribution,
     SHOWIMG = 'NODISPLAY'
     SHOWGT = 'NODISPLAY' 
 end
