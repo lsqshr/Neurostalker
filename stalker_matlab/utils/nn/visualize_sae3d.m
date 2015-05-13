@@ -1,4 +1,4 @@
-function lstrip = visualize_sae3d(W, mm, s1, s2, s3, slicedir)
+function normcube = visualize_sae3d(W, neuidx, mm, s1, s2, s3, slicedir)
 % Visualse the first layer of SAE to 3D little blocks
 % PARA --- 
 % W - the weight matrix with size INPUT*#HIDDEN-NEURON
@@ -31,7 +31,7 @@ X = zeros(size(W));
 norm = sqrt(sum(W .^ 2, 2));
 X = W ./ repmat(norm, 1, size(W, 2));
 fprintf('Trying to reshape (%d, %d) to (%d, %d)\n', size(X', 1), size(X', 2), s1, s2 * s3 * size(X, 2));
-stripX = reshape(X', s1, s2 * s3 * size(X, 2)); % make it a long strip of squares with squaresize*#HNEURON
+stripX = reshape(X', s1, s2 * s3 * size(X, 2)); % Make it a long strip of squares with squaresize * #HNEURON
 
 disp('size stripX')
 disp(size(stripX))
@@ -41,5 +41,28 @@ for i = 1 : size(W, 2)
 	row = row + abs(min(row(:)));
 	lstrip{i} = row / max(row(:));
 end
+
+strip = lstrip{neuidx};
+viscube = reshape(strip, s1, s2, s3);
+%fprintf('IN INPUT - MAX: %f, MIN: %f\n', max(train_x(:)), min(train_y(:)));
+%fprintf('IN VIS - MAX: %f, MIN: %f\n', max(viscube(:)), min(viscube(:)));
+normcube = viscube+abs(min(viscube(:)));
+normcube = 1 - (normcube / max(normcube(:)));
+VolumeRender(normcube);
+
+X = zeros(size(W, 1) * s1, s2 * s3);
+
+for i = 1 : numel(lstrip)
+    %fprintf('Reading %dth row of vis matrix X...\n', i);
+    X(1+(i-1)*s2:i*s3, :) = lstrip{i};
+end
+
+figure(3)
+imagesc(X);
+colormap gray; 
+
+figure(4)
+[x,y,z] = ind2sub([13,13,13], find(X>0.6));
+scatter3(x, y, z );
 
 end
