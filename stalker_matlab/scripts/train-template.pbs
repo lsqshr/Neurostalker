@@ -1,5 +1,6 @@
 #!/bin/bash
 # pbs launching script example for NAMD job
+# PLEASE DO NOT CHANGE THIS FILE. TO SUBMIT QUEUE, PLS MAKE A COPY OF THIS FILE AND MAKE THE ACCORDING CHANGES
 
 #     job name:
 #PBS -N NEUROSTALKER 
@@ -25,8 +26,10 @@ cd $PBS_O_WORKDIR;
 #     Launching the job!
 JOBNAME='sharp-sphere-0.1';
 
+DATETIME=$(date +"%F-%T");
+
 #     Transfer the trained model to data folder
-cachefolder=/project/RDS-FEI-NRMMCI-RW/NeurostalkerModelCache/$JOBNAME;
+cachefolder=/project/RDS-FEI-NRMMCI-RW/NeurostalkerModelCache/$JOBNAME$DATETIME;
 
 if [ ! -d "$cachefolder" ];then
 	echo "Creating cache job folder: $cachefolder";
@@ -37,7 +40,8 @@ fi
 
 cp loadTrPara.m $cachefolder/loadTrPara.m;
 cp loadGtPara.m $cachefolder/loadGtPara.m;
-cp train.pbs $cachefolder/train.pbs;
+me="$(basename "$(test -L "$0" && readlink "$0" || echo "$0")")"
+cp $me $cachefolder/run.pbs;
 
 #     Run Script
 matlab -nodesktop -nodisplay -nosplash -r "run('train.m')";
