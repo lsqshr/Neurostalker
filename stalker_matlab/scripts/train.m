@@ -10,6 +10,7 @@ if exist(fullfile(curdir, 'loadTrPara.m'))
     loadTrPara
 else
     %------ PARA
+    datadir = fullfile(curdir, '..', 'data', 'input', 'preprocessed');
     % TEST
     TESTSIZE        = 1;
     TESTSTARTLOC    = [[89, 363, 30]];
@@ -35,14 +36,16 @@ else
     NN.BATCHSIZE    = 1000;
     NN.SAEEPOCH     = 50;
     NN.NNEPOCH      = 100;
-    NN.ZEROMASK     = 0.5;
-    NN.OUTPUT       = 'softmax'
+    NN.DROPOUT      = 0.5;
+    NN.OUTPUT       = 'softmax';
+    NN.VISSAE       = false;
+    NN.ACTFUN       = 'tanh_opt';
+    NN.GPU          = false;
     % ENDPARA
 end
 
-datadir = fullfile(curdir, '..', 'data', 'input', 'preprocessed');
 addpath(genpath(fullfile(curdir, '..', 'utils')));
-addpath(genpath(fullfile(curdir, '..', 'lib', 'DeepLearnToolbox')));
+addpath(genpath(fullfile(curdir, '..', 'lib', 'DeepLearnToobox-Gpu')));
 addpath(genpath(fullfile(curdir, '..', 'lib', 'VolumeRender')));
 
 nsbj = numel(dir([datadir, [filesep, PREFIX, '*.mat']]));
@@ -204,10 +207,10 @@ else
     end
 end
 
-if strcmp(FRAMEWORK, 'PUFFER')
-% Visualise the SDAE
-%visualize(sae.ae{1}.W{1}');
-r = visualize_sae3d(sae.ae{1}.W{1}');
+if strcmp(FRAMEWORK, 'PUFFER') && NN.VISSAE
+   % Visualise the SDAE
+   %visualize(sae.ae{1}.W{1}');
+   r = visualize_sae3d(sae.ae{1}.W{1}');
 end
 
 if RUNTEST == true
@@ -326,26 +329,40 @@ function [nn, sae] = trainSDAE(trainx, trainy, NN)
 trainx = double(trainx);
 trainy = double(trainy);
 
+if strcmp(NN.OUTPUT, 'sigm')
+    % Normalise each row accoring to its maximum value
+    trainymax = max(trainy, [], 2);
+    trainy = trainy ./ repmat(trainymax, 1, size(trainy, 2));
+end
+
 % Setup SAE
-rng;
-saearch = [size(trainx, 2), repmat(NN.NHNEURON, 1, NN.NHLAYER)];
+rng('shuffle');
+saearch = [size(trainx, 2), repmat(NN.NHNEURON, 1, NN.NHLAYER+1)];
 sae = saesetup(saearch);
 
 for i = 1 : NN.NHLAYER
-    sae.ae{i}.activation_function = 'sigm';
-    %sae.ae{i}.learnRate = '1';
+    sae.ae{i}.activation_function = NN.ACTFUN;
+    sae.ae{i}.learnRate = NN.LEARNRATE;
     sae.ae{i}.inputZeroMaskedFraction = NN.ZEROMASK;
+    sae.ae{i}.dropoutFraction = NN.DROPOUT;
 end
 
 opts.numepochs = NN.SAEEPOCH;
 opts.batchsize = NN.BATCHSIZE;
-sae = saetrain(sae, trainx, opts); % Train SDAE
+if NN.GPU 
+    sae = saetrain_gpu(sae, trainx, opts); % Train SDAE
+else
+    sae = saetrain(sae, trainx, opts); % Train SDAE
+end
 
 % Use the SDAE to initialize a FFNN
-nnarch = [saearch size(trainy, 2)];
+saearch(end) = size(trainy, 2);
+nnarch = saearch;
 nn = nnsetup(nnarch);
-nn.activation_function = 'sigm';
+nn.activation_function = NN.ACTFUN;
 nn.output = NN.OUTPUT;
+nn.dropoutFraction = NN.DROPOUT;
+nn.inputZeroMaskedFraction = NN.ZEROMASK;
 nn.learningRate = NN.LEARNRATE;
 
 for i = 1 : NN.NHLAYER % Transfer weights from SDAE
@@ -354,7 +371,12 @@ end
 
 opts.numepochs = NN.NNEPOCH;
 opts.batchsize = NN.BATCHSIZE;
-nn = nntrain(nn, trainx, trainy, opts);
+
+if NN.GPU 
+    nn = nntrain_gpu(nn, trainx, trainy, opts);
+else
+    nn = nntrain(nn, trainx, trainy, opts);
+end
 
 end
 
