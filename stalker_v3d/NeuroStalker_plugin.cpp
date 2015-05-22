@@ -1,5 +1,5 @@
 /* NeuroStalker_plugin.cpp
- * A learning-based tracing algorithm
+ * 
  * 2015-4-25 : by Siqi Liu, Donghao Zhang
  * WIP!
  */
@@ -8,15 +8,13 @@
 #include "v3d_message.h"
 #include <vector>
 #include "basic_surf_objs.h"
+#include "utils/vn_imgpreprocess.h"
 
-#include "Stalker.h"
 #include "NeuroStalker_plugin.h"
 
 Q_EXPORT_PLUGIN2(NeuroStalker, NeuroStalker);
 
 using namespace std;
-using namespace cv;
-using namespace cv::ml;
 
 struct input_PARA
 {
@@ -173,14 +171,80 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
 
     //main neuron reconstruction code
+    //
+    // --- Standardise the Image
+    V3DLONG pagesz = N*M*P;
+    unsigned char *data1d_1ch;
+    try {data1d_1ch = new unsigned char [pagesz];}
+    catch(...)  {v3d_msg("cannot allocate memory for data1d_1ch."); return;}
 
-    // 0. Load the learning model originally in *.mat format 
+    for(V3DLONG i = 0; i < pagesz; i++)
+        data1d_1ch[i] = data1d[i+(c-1)*pagesz];
 
-    // 1. Auto-Seeding to initialise the neural stalkers
+    Image4DSimple * p4dImageNew = 0;
+    p4dImageNew = new Image4DSimple;
 
-    // 2. Run N neurostalkers in I iterations  
+    if(!p4dImageNew->createImage(N,M,P,1, V3D_UINT8))
+        return;
 
-    // 3. Combine the paths of N neurostalkers to NeuronTree
+    memcpy(p4dImageNew->getRawData(), data1d_1ch, pagesz);
+
+    unsigned char * indata1d = p4dImageNew->getRawDataAtChannel(0);
+
+    in_sz[3] = 1;
+    double dfactor_xy = 1, dfactor_z = 1;
+
+    if (in_sz[0]<=256 && in_sz[1]<=256 && in_sz[2]<=256)
+    {
+        dfactor_z = dfactor_xy = 1;
+    }
+    else if (in_sz[0] >= 2*in_sz[2] || in_sz[1] >= 2*in_sz[2])
+    {
+        if (in_sz[2]<=256)
+        {
+            double MM = in_sz[0];
+            if (MM<in_sz[1]) MM=in_sz[1];
+            dfactor_xy = MM / 256.0;
+            dfactor_z = 1;
+        }
+        else
+        {
+            double MM = in_sz[0];
+            if (MM<in_sz[1]) MM=in_sz[1];
+            if (MM<in_sz[2]) MM=in_sz[2];
+            dfactor_xy = dfactor_z = MM / 256.0;
+        }
+    }
+    else
+    {
+        double MM = in_sz[0];
+        if (MM<in_sz[1]) MM=in_sz[1];
+        if (MM<in_sz[2]) MM=in_sz[2];
+        dfactor_xy = dfactor_z = MM / 256.0;
+    }
+
+    printf("dfactor_xy=%5.3f\n", dfactor_xy);
+    printf("dfactor_z=%5.3f\n", dfactor_z);
+
+    if (dfactor_z>1 || dfactor_xy>1)
+    {
+        v3d_msg("enter ds code", 0);
+
+        V3DLONG out_sz[4];
+        unsigned char * outimg=0;
+        if (!downsampling_img_xyz( indata1d, in_sz, dfactor_xy, dfactor_z, outimg, out_sz))
+            return;
+
+        p4dImageNew->setData(outimg, out_sz[0], out_sz[1], out_sz[2], out_sz[3], V3D_UINT8);
+
+        indata1d = p4dImageNew->getRawDataAtChannel(0);
+        in_sz[0] = p4dImageNew->getXDim();
+        in_sz[1] = p4dImageNew->getYDim();
+        in_sz[2] = p4dImageNew->getZDim();
+        in_sz[3] = p4dImageNew->getCDim();
+    }
+    // -- End of Image Standardisation
+
 
     //Output
     NeuronTree nt;
