@@ -16,6 +16,7 @@ stalker_matlab/lib/*
 *sublime-build
 *~
 *.loadPara.m
+/stalker_v3d/lib
 /stalker_v3d/scaffolds/try_opencv_classification_forest/trytree
 /stalker_v3d/scaffolds/try_opencv_regression_forest/regressiontree
 /stalker_v3d/utils/tests/test_mattree2opencv/build/loadregressionrtree
