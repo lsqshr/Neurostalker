@@ -5,12 +5,15 @@
  */
  
 #include <iostream>
-#include "v3d_message.h"
 #include <vector>
+#include "v3d_message.h"
 #include "basic_surf_objs.h"
 #include "utils/vn_imgpreprocess.h"
 
 #include "NeuroStalker_plugin.h"
+#include "lib/ImageOperation.h"
+
+ImageOperation *IM;
 
 Q_EXPORT_PLUGIN2(NeuroStalker, NeuroStalker);
 
@@ -245,12 +248,33 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     }
     // -- End of Image Standardisation
 
+    // Using the Image Operation found in vaa3d_tools/hackathon/zhi/snake_tracing/TracingCore/ in for some simple Image Processing
+    IM = new ImageOperation;
+
+    // Imcreate takes in_sz with int*
+    int in_sz_int[4];
+    std::copy(in_sz_int, in_sz_int + 4, in_sz);
+    IM->Imcreate(data1d, in_sz_int);
+    //preprocessing
+    std::cout<<"Compute Gradient Vector Flow..."<<std::endl;
+    IM->computeGVF(1000, 5, 1);
+    std::cout<<"Compute Vesselness (CPU)..."<<std::endl;
+    IM->ComputeGVFVesselness();
+    std::cout<<"Detect Seed Points..."<<std::endl;
+    IM->SeedDetection(IM->v_threshold, 0, 0);
+    std::cout<<"Adjust Seed Points..."<<std::endl;
+    IM->SeedAdjustment(10);
+    std::cout<<"Preprocessing Finished..."<<std::endl;
+
+    // Adaptive Tracing here, may replace with graph cut
+    IM->ImComputeInitBackgroundModel(IM->v_threshold);
+    IM->ImComputeInitForegroundModel();
 
     //Output
     NeuronTree nt;
 	QString swc_name = PARA.inimg_file + "_NeuroStalker.swc";
 	nt.name = "NeuroStalker";
-    writeSWC_file(swc_name.toStdString().c_str(),nt);
+    writeSWC_file(swc_name.toStdString().c_str(), nt);
 
     if(!bmenu)
     {
