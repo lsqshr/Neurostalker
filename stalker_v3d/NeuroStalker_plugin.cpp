@@ -100,6 +100,7 @@ bool NeuroStalker::dofunc(const QString & func_name, const V3DPluginArgList & in
 
 void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu)
 {
+    cout<<"Welcome to NeuroStalker!!"<<endl;
     unsigned char* data1d = 0;
     V3DLONG N,M,P,sc,c;
     V3DLONG in_sz[4];
@@ -173,98 +174,38 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     }
 
 
-    //main neuron reconstruction code
-    //
-    // --- Standardise the Image
-    V3DLONG pagesz = N*M*P;
-    unsigned char *data1d_1ch;
-    try {data1d_1ch = new unsigned char [pagesz];}
-    catch(...)  {v3d_msg("cannot allocate memory for data1d_1ch."); return;}
-
-    for(V3DLONG i = 0; i < pagesz; i++)
-        data1d_1ch[i] = data1d[i+(c-1)*pagesz];
-
-    Image4DSimple * p4dImageNew = 0;
-    p4dImageNew = new Image4DSimple;
-
-    if(!p4dImageNew->createImage(N,M,P,1, V3D_UINT8))
-        return;
-
-    memcpy(p4dImageNew->getRawData(), data1d_1ch, pagesz);
-
-    unsigned char * indata1d = p4dImageNew->getRawDataAtChannel(0);
-
-    in_sz[3] = 1;
-    double dfactor_xy = 1, dfactor_z = 1;
-
-    if (in_sz[0]<=256 && in_sz[1]<=256 && in_sz[2]<=256)
-    {
-        dfactor_z = dfactor_xy = 1;
-    }
-    else if (in_sz[0] >= 2*in_sz[2] || in_sz[1] >= 2*in_sz[2])
-    {
-        if (in_sz[2]<=256)
-        {
-            double MM = in_sz[0];
-            if (MM<in_sz[1]) MM=in_sz[1];
-            dfactor_xy = MM / 256.0;
-            dfactor_z = 1;
-        }
-        else
-        {
-            double MM = in_sz[0];
-            if (MM<in_sz[1]) MM=in_sz[1];
-            if (MM<in_sz[2]) MM=in_sz[2];
-            dfactor_xy = dfactor_z = MM / 256.0;
-        }
-    }
-    else
-    {
-        double MM = in_sz[0];
-        if (MM<in_sz[1]) MM=in_sz[1];
-        if (MM<in_sz[2]) MM=in_sz[2];
-        dfactor_xy = dfactor_z = MM / 256.0;
-    }
-
-    printf("dfactor_xy=%5.3f\n", dfactor_xy);
-    printf("dfactor_z=%5.3f\n", dfactor_z);
-
-    if (dfactor_z>1 || dfactor_xy>1)
-    {
-        v3d_msg("enter ds code", 0);
-
-        V3DLONG out_sz[4];
-        unsigned char * outimg=0;
-        if (!downsampling_img_xyz( indata1d, in_sz, dfactor_xy, dfactor_z, outimg, out_sz))
-            return;
-
-        p4dImageNew->setData(outimg, out_sz[0], out_sz[1], out_sz[2], out_sz[3], V3D_UINT8);
-
-        indata1d = p4dImageNew->getRawDataAtChannel(0);
-        in_sz[0] = p4dImageNew->getXDim();
-        in_sz[1] = p4dImageNew->getYDim();
-        in_sz[2] = p4dImageNew->getZDim();
-        in_sz[3] = p4dImageNew->getCDim();
-    }
-    // -- End of Image Standardisation
+    // Main neuron reconstruction code
 
     // Using the Image Operation found in vaa3d_tools/hackathon/zhi/snake_tracing/TracingCore/ in for some simple Image Processing
     IM = new ImageOperation;
 
     // Imcreate takes in_sz with int*
     int in_sz_int[4];
-    std::copy(in_sz_int, in_sz_int + 4, in_sz);
+
+    for(int i = 0; i < 4; i++)
+    {
+        in_sz_int[i] = (int)in_sz[i];
+    }
+
+    cout<<"in_sz_int:\t"<<endl; 
+    std::copy(in_sz_int,
+       in_sz_int + sizeof(in_sz_int) / sizeof(in_sz_int[0]),
+       ostream_iterator<int>(cout, "\n")); 
+    cout<<"in_sz:\t"<<endl; 
+    std::copy(in_sz,
+       in_sz + sizeof(in_sz) / sizeof(in_sz[0]),
+       ostream_iterator<V3DLONG>(cout, "\n")); 
     IM->Imcreate(data1d, in_sz_int);
-    //preprocessing
-    std::cout<<"Compute Gradient Vector Flow..."<<std::endl;
+    // Preprocessing
+    std::cout<<"=== Compute Gradient Vector Flow..."<<std::endl;
     IM->computeGVF(1000, 5, 1);
-    std::cout<<"Compute Vesselness (CPU)..."<<std::endl;
+    std::cout<<"=== Compute Vesselness (CPU)..."<<std::endl;
     IM->ComputeGVFVesselness();
-    std::cout<<"Detect Seed Points..."<<std::endl;
+    std::cout<<"=== Detect Seed Points..."<<std::endl;
     IM->SeedDetection(IM->v_threshold, 0, 0);
-    std::cout<<"Adjust Seed Points..."<<std::endl;
+    std::cout<<"=== Adjust Seed Points..."<<std::endl;
     IM->SeedAdjustment(10);
-    std::cout<<"Preprocessing Finished..."<<std::endl;
+    std::cout<<"=== Preprocessing Finished..."<<std::endl;
 
     // Adaptive Tracing here, may replace with graph cut
     IM->ImComputeInitBackgroundModel(IM->v_threshold);
