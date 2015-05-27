@@ -325,6 +325,4 @@ void downsample(V3DLONG* in_sz, V3DLONG c, unsigned char* data1d)
 
     data1d = 0;
     data1d = indata1d;
-    //delete [] data1d_1ch;
-    //delete p4dImageNew;
 }
