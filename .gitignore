@@ -27,3 +27,4 @@ stalker_matlab/lib/*
 /stalker_matlab/scripts/loadGtPara.m
 /stalker_matlab/scripts/loadTrPara.m
 /stalker_matlab/scripts/train-nn.pbs
+*output.txt
