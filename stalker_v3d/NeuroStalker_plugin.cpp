@@ -26,7 +26,7 @@ struct input_PARA
 {
     QString inimg_file;
     V3DLONG channel;
-    int downsample; // 1 : downsample the image within 256*256*256; 0: keep the original image
+    int preprocessing; // 1 : downsample the image within 256*256*256; 0: keep the original image
 };
 
 void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
@@ -84,7 +84,7 @@ bool NeuroStalker::dofunc(const QString & func_name, const V3DPluginArgList & in
             PARA.inimg_file = infiles[0];
         int k=0;
         PARA.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
-        PARA.downsample = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
+        PARA.preprocessing = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
         reconstruction_func(callback,parent,PARA,bmenu);
     }
     else if (func_name == tr("help"))
@@ -93,9 +93,10 @@ bool NeuroStalker::dofunc(const QString & func_name, const V3DPluginArgList & in
         ////HERE IS WHERE THE DEVELOPERS SHOULD UPDATE THE USAGE OF THE PLUGIN
 
         printf("**** Usage of NeuroStalker tracing **** \n");
-        printf("vaa3d -x NeuroStalker -f tracing_func -i <inimg_file> -p <channel> <other parameters>\n");
+        printf("vaa3d -x NeuroStalker -f tracing_func -i <inimg_file> -p <channel> <preprocessing>\n");
         printf("inimg_file       The input image\n");
         printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
+        printf("preprocessing    The preprocessing flag - 1: crop; 2: crop only; 3: crop and downsampling; \n");
 
         printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
 
@@ -184,27 +185,34 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 
     // ------- Main neuron reconstruction code
     // Crop The image
-    V3DLONG sz_img_crop[4];
-    unsigned char *p_img8u_crop = cropfunc(in_sz, data1d, sz_img_crop);    
-    saveImage("test/testdata/cropoutside.v3draw", p_img8u_crop, sz_img_crop, V3D_UINT8);
-    if (data1d) delete [] data1d;
-    data1d = p_img8u_crop;
+    if (PARA.preprocessing & 1)
+    {
+        cout<<"=============== Cropping the image ==============="<<endl;
+        V3DLONG sz_img_crop[4];
+        unsigned char *p_img8u_crop = cropfunc(in_sz, data1d, sz_img_crop);    
+        cout<<"Saving cropped image to downsample.v3draw"<<endl;
+        saveImage("test/testdata/cropoutside.v3draw", p_img8u_crop, sz_img_crop, V3D_UINT8);
+        if (data1d) delete [] data1d;
+        data1d = p_img8u_crop;
 
-    for (int i=0; i<4; i++){
-        in_sz[i] = sz_img_crop[i];
+        for (int i=0; i<4; i++){
+            in_sz[i] = sz_img_crop[i];
+        }
+        cout<<"=============== Image Cropped ==============="<<endl;
     }
 
     // Downsample the image
-    if (PARA.downsample == 1)
+    if (PARA.preprocessing & 2)
     {
+        cout<<"=============== Downsampling the image..."<<endl;
         V3DLONG downsz[4];
         cout<<"Data size before downsample: "<<in_sz[0]<<","<<in_sz[1]<<","<<in_sz[2]<<endl;
 
         unsigned char* downdata1d = downsample(in_sz, c, data1d, downsz);
         cout<<"Data size after downsample: "<<in_sz[0]<<","<<in_sz[1]<<","<<in_sz[2]<<endl;
         cout<<"Saving downsampled image to test/testdata/downsample.v3draw"<<endl;
-        saveImage("test/testdata/downsample.v3draw", downdata1d, downsz, V3D_UINT8);
-        saveImage("test/testdata/origin.v3draw", data1d, in_sz, V3D_UINT8);
+        saveImage("downsample.v3draw", downdata1d, downsz, V3D_UINT8);
+        cout<<"=============== Image Downsampled..."<<endl;
     }
 
     // Using the Image Operation found in vaa3d_tools/hackathon/zhi/snake_tracing/TracingCore/ in for some simple Image Processing
@@ -218,14 +226,6 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         in_sz_int[i] = (int)in_sz[i];
     }
 
-    cout<<"in_sz_int:\t"<<endl; 
-    std::copy(in_sz_int,
-       in_sz_int + sizeof(in_sz_int) / sizeof(in_sz_int[0]),
-       ostream_iterator<int>(cout, "\n")); 
-    cout<<"in_sz:\t"<<endl; 
-    std::copy(in_sz,
-       in_sz + sizeof(in_sz) / sizeof(in_sz[0]),
-       ostream_iterator<V3DLONG>(cout, "\n")); 
     
     /*
     IM->Imcreate(data1d, in_sz_int);
