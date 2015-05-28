@@ -31,7 +31,8 @@ struct input_PARA
 
 void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
 void downsample(V3DLONG* in_sz, V3DLONG c, unsigned char* data1d, V3DLONG * downsz, unsigned char* downdata1d);
- 
+void cropfunc(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_img_crop[4], unsigned char *p_img8u_crop);
+
 QStringList NeuroStalker::menulist() const
 {
     return QStringList() 
@@ -181,7 +182,14 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
         c = PARA.channel;
     }
 
-    // Main neuron reconstruction code
+    // ------- Main neuron reconstruction code
+    // Crop The image
+    V3DLONG sz_img_crop[4];
+    unsigned char *p_img8u_crop = 0;
+    cropfunc(in_sz, data1d, sz_img_crop, p_img8u_crop);    
+    data1d = p_img8u_crop;
+
+    // Downsample the image
     if (PARA.downsample == 1)
     {
         unsigned char * downdata1d = NULL;
@@ -247,9 +255,9 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     }
 
     v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(swc_name.toStdString().c_str()),bmenu);
-            
     return;
 }
+
 
 void downsample(V3DLONG *in_sz, V3DLONG c, unsigned char* data1d, V3DLONG * downsz, unsigned char * indata1d)
 {
@@ -335,3 +343,59 @@ void downsample(V3DLONG *in_sz, V3DLONG c, unsigned char* data1d, V3DLONG * down
     }
 
 }
+
+
+void cropfunc(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_img_crop[4], unsigned char *p_img8u_crop)
+{    
+    printf("1. Find the bounding box and crop image. \n");
+    V3DLONG long l_boundbox_min[3], l_boundbox_max[3];//xyz
+    long l_npixels_crop;
+    
+    //find bounding box
+    unsigned char ***p_img8u_3d = 0;
+    if(!new3dpointer(p_img8u_3d ,in_sz[0], in_sz[1], in_sz[2], data1d))
+    {
+        printf("ERROR: Fail to allocate memory for the 4d pointer of image.\n");
+        if(p_img8u_3d) {delete3dpointer(p_img8u_3d, in_sz[0], in_sz[1], in_sz[2]);}
+    }
+    printf("boundingbox x dimension: %d,y dimension: %d,z dimension: %d.\n", in_sz[0], in_sz[1], in_sz[2]);
+    l_boundbox_min[0] = in_sz[0];  l_boundbox_min[1] = in_sz[1];  l_boundbox_min[2] = in_sz[2];
+    l_boundbox_max[0] = 0;                l_boundbox_max[1] = 0;                l_boundbox_max[2] = 0;
+    for(long X=0;X<in_sz[0];X++)
+        for(long Y=0;Y<in_sz[1];Y++)
+            for(long Z=0;Z<in_sz[2];Z++)
+                if(p_img8u_3d[Z][Y][X]>0.1)
+                {
+                    if(l_boundbox_min[0] > X) l_boundbox_min[0] = X;    if(l_boundbox_max[0] < X) l_boundbox_max[0] = X;
+                    if(l_boundbox_min[1] > Y) l_boundbox_min[1] = Y;    if(l_boundbox_max[1] < Y) l_boundbox_max[1] = Y;
+                    if(l_boundbox_min[2] > Z) l_boundbox_min[2] = Z;    if(l_boundbox_max[2] < Z) l_boundbox_max[2] = Z;
+                }
+    printf(">>boundingbox: x[%ld~%ld],y[%ld~%ld],z[%ld~%ld]\n",l_boundbox_min[0], l_boundbox_max[0],
+                                                               l_boundbox_min[1], l_boundbox_max[1],
+                                                               l_boundbox_min[2], l_boundbox_max[2]);
+
+    //crop image
+    sz_img_crop[0] = l_boundbox_max[0] - l_boundbox_min[0] + 1;
+    sz_img_crop[1] = l_boundbox_max[1] - l_boundbox_min[1] + 1;
+    sz_img_crop[2] = l_boundbox_max[2] - l_boundbox_min[2] + 1;
+    sz_img_crop[3] = 1;
+    l_npixels_crop = sz_img_crop[0] * sz_img_crop[1] * sz_img_crop[2];
+
+    p_img8u_crop = new(std::nothrow) unsigned char[l_npixels_crop]();
+    if(!p_img8u_crop)
+    {
+        printf("ERROR: Fail to allocate memory for p_img32f_crop!\n");
+        if(p_img8u_3d)              {delete3dpointer(p_img8u_3d, in_sz[0], in_sz[1], in_sz[2]);}
+    }
+    unsigned char *p_tmp = p_img8u_crop;
+    for(long Z = 0;Z < sz_img_crop[2];Z++)
+        for(long Y = 0;Y < sz_img_crop[1];Y++)
+            for(long X = 0;X < sz_img_crop[0];X++)
+            {
+                *p_tmp = p_img8u_3d[Z+l_boundbox_min[2]][Y+l_boundbox_min[1]][X+l_boundbox_min[0]];
+                p_tmp++;
+            }
+    if(p_img8u_3d) {delete3dpointer(p_img8u_3d, in_sz[0], in_sz[1], in_sz[2]);}
+    saveImage("test/testdata/crop.v3draw", p_img8u_crop, sz_img_crop, V3D_UINT8);
+    printf("success or not this time?\n");
+ }   
