@@ -28,7 +28,7 @@ struct input_PARA
 };
 
 void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
-void cropfunc(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_img_crop[4], unsigned char *p_img8u_crop);
+unsigned char * cropfunc(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_img_crop[4]);
 QStringList NeuroStalker::menulist() const
 {
 	return QStringList() 
@@ -100,7 +100,7 @@ bool NeuroStalker::dofunc(const QString & func_name, const V3DPluginArgList & in
 	return true;
 }
 
-void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu)
+unsigned char * reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu)
 {
     cout<<"Welcome to NeuroStalker!!"<<endl;
     unsigned char* data1d = 0;
@@ -180,7 +180,35 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 //-----------------------------------------------------------------------------------------
     V3DLONG sz_img_crop[4];
     unsigned char *p_img8u_crop = 0;
-cropfunc(in_sz, data1d, sz_img_crop, p_img8u_crop);    
+p_img8u_crop = cropfunc(in_sz, data1d, sz_img_crop);
+saveImage("test/testdata/crop.v3draw", p_img8u_crop, sz_img_crop, V3D_UINT8);
+    //convert image data type to float
+/*    long l_npixels_crop;
+    printf("2. Convert image data to float and scale to [0~255]. \n");
+    float *p_img32f_crop=0;
+    p_img32f_crop=new(std::nothrow) float[l_npixels_crop]();
+   if(!p_img32f_crop)
+    {
+        printf("ERROR: Fail to allocate memory for p_img32f_crop!\n");
+        if(p_img8u_crop)            {delete []p_img8u_crop;     p_img8u_crop=0;}
+        if(p_img32f_crop)           {delete []p_img32f_crop;            p_img32f_crop=0;}
+    }*/
+    //find the maximal intensity value
+    
+/*    float d_maxintensity_input=0.0;
+    for(long i = 0; i < l_npixels_crop; i++)
+    {
+        if(p_img8u_crop[i] > d_maxintensity_input)
+            {d_maxintensity_input = p_img8u_crop[i];printf("%ld\n", &p_img8u_crop[i]);}
+    }*/
+ /*   //convert and rescale
+    for(long i=0;i<l_npixels_crop;i++)
+        p_img32f_crop[i]=p_img8u_crop[i]/d_maxintensity_input*255.0;
+    printf(">>d_maxintensity=%.2f\n",d_maxintensity_input);
+    //free input image to save memory
+    //if(p_img_input)           {delete []p_img_input;      p_img_input=0;}
+    if(p_img8u_crop)            {delete []p_img8u_crop;     p_img8u_crop=0;}*/
+    
 
 //-----------------------------------------------------------------------------------------
 /*
@@ -238,12 +266,12 @@ cropfunc(in_sz, data1d, sz_img_crop, p_img8u_crop);
     return;
 }
 
-void cropfunc(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_img_crop[4], unsigned char *p_img8u_crop)
+unsigned char * cropfunc(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_img_crop[4])
 {    
     printf("1. Find the bounding box and crop image. \n");
     V3DLONG long l_boundbox_min[3], l_boundbox_max[3];//xyz
     long l_npixels_crop;
-    
+    unsigned char *p_img8u_crop = 0;
     //find bounding box
     unsigned char ***p_img8u_3d = 0;
     if(!new3dpointer(p_img8u_3d ,in_sz[0], in_sz[1], in_sz[2], data1d))
@@ -289,6 +317,7 @@ void cropfunc(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_img_crop
                 p_tmp++;
             }
     if(p_img8u_3d) {delete3dpointer(p_img8u_3d, in_sz[0], in_sz[1], in_sz[2]);}
-    saveImage("test/testdata/crop.v3draw", p_img8u_crop, sz_img_crop, V3D_UINT8);
     printf("success or not this time?\n");
+    
+return p_img8u_3d;    
  }   
