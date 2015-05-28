@@ -30,8 +30,8 @@ struct input_PARA
 };
 
 void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
-void downsample(V3DLONG* in_sz, V3DLONG c, unsigned char* data1d, V3DLONG * downsz, unsigned char* downdata1d);
-void cropfunc(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_img_crop[4], unsigned char *p_img8u_crop);
+unsigned char * downsample(V3DLONG* in_sz, V3DLONG c, unsigned char* data1d, V3DLONG * downsz);
+unsigned char * cropfunc(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_img_crop[4]);
 
 QStringList NeuroStalker::menulist() const
 {
@@ -185,19 +185,22 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     // ------- Main neuron reconstruction code
     // Crop The image
     V3DLONG sz_img_crop[4];
-    unsigned char *p_img8u_crop = 0;
-    cropfunc(in_sz, data1d, sz_img_crop, p_img8u_crop);    
+    unsigned char *p_img8u_crop = cropfunc(in_sz, data1d, sz_img_crop);    
+    saveImage("test/testdata/cropoutside.v3draw", p_img8u_crop, sz_img_crop, V3D_UINT8);
+    if (data1d) delete [] data1d;
     data1d = p_img8u_crop;
+
+    for (int i=0; i<4; i++){
+        in_sz[i] = sz_img_crop[i];
+    }
 
     // Downsample the image
     if (PARA.downsample == 1)
     {
-        unsigned char * downdata1d = NULL;
         V3DLONG downsz[4];
-        cout<<"Data size before downsample: "<<N<<","<<M<<","<<P<<endl;
+        cout<<"Data size before downsample: "<<in_sz[0]<<","<<in_sz[1]<<","<<in_sz[2]<<endl;
 
-        downsample(in_sz, c, data1d, downsz, downdata1d);
-
+        unsigned char* downdata1d = downsample(in_sz, c, data1d, downsz);
         cout<<"Data size after downsample: "<<in_sz[0]<<","<<in_sz[1]<<","<<in_sz[2]<<endl;
         cout<<"Saving downsampled image to test/testdata/downsample.v3draw"<<endl;
         saveImage("test/testdata/downsample.v3draw", downdata1d, downsz, V3D_UINT8);
@@ -259,7 +262,7 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 }
 
 
-void downsample(V3DLONG *in_sz, V3DLONG c, unsigned char* data1d, V3DLONG * downsz, unsigned char * indata1d)
+unsigned char * downsample(V3DLONG *in_sz, V3DLONG c, unsigned char* data1d, V3DLONG * downsz)
 {
     V3DLONG N, M, P;
     N = in_sz[0];
@@ -270,7 +273,7 @@ void downsample(V3DLONG *in_sz, V3DLONG c, unsigned char* data1d, V3DLONG * down
     V3DLONG pagesz = N*M*P;
     unsigned char *data1d_1ch;
     try {data1d_1ch = new unsigned char [pagesz];}
-    catch(...)  {v3d_msg("cannot allocate memory for data1d_1ch."); return;}
+    catch(...)  {v3d_msg("cannot allocate memory for data1d_1ch."); return NULL;}
 
     for(V3DLONG i = 0; i < pagesz; i++)
         data1d_1ch[i] = data1d[i+(c-1)*pagesz];
@@ -279,11 +282,11 @@ void downsample(V3DLONG *in_sz, V3DLONG c, unsigned char* data1d, V3DLONG * down
     p4dImageNew = new Image4DSimple;
 
     if(!p4dImageNew->createImage(N,M,P,1, V3D_UINT8))
-        return;
+        return NULL;
 
     memcpy(p4dImageNew->getRawData(), data1d_1ch, pagesz);
 
-    indata1d = p4dImageNew->getRawDataAtChannel(0);
+    unsigned char * indata1d = p4dImageNew->getRawDataAtChannel(0);
 
     in_sz[3] = 1;
     double dfactor_xy = 1, dfactor_z = 1;
@@ -329,7 +332,7 @@ void downsample(V3DLONG *in_sz, V3DLONG c, unsigned char* data1d, V3DLONG * down
         if (!downsampling_img_xyz( indata1d, in_sz, dfactor_xy, dfactor_z, outimg, out_sz))
         {
             cout<<"=== Downsample Failed!!"<<endl;
-            return;
+            return NULL;
         }
 
         p4dImageNew->setData(outimg, out_sz[0], out_sz[1], out_sz[2], out_sz[3], V3D_UINT8);
@@ -339,13 +342,13 @@ void downsample(V3DLONG *in_sz, V3DLONG c, unsigned char* data1d, V3DLONG * down
         downsz[1] = p4dImageNew->getYDim();
         downsz[2] = p4dImageNew->getZDim();
         downsz[3] = p4dImageNew->getCDim();
-
     }
 
+    return indata1d;
 }
 
 
-void cropfunc(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_img_crop[4], unsigned char *p_img8u_crop)
+unsigned char * cropfunc(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_img_crop[4])
 {    
     printf("1. Find the bounding box and crop image. \n");
     V3DLONG long l_boundbox_min[3], l_boundbox_max[3];//xyz
@@ -381,7 +384,7 @@ void cropfunc(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_img_crop
     sz_img_crop[3] = 1;
     l_npixels_crop = sz_img_crop[0] * sz_img_crop[1] * sz_img_crop[2];
 
-    p_img8u_crop = new(std::nothrow) unsigned char[l_npixels_crop]();
+    unsigned char *p_img8u_crop = new(std::nothrow) unsigned char[l_npixels_crop]();
     if(!p_img8u_crop)
     {
         printf("ERROR: Fail to allocate memory for p_img32f_crop!\n");
@@ -396,6 +399,7 @@ void cropfunc(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_img_crop
                 p_tmp++;
             }
     if(p_img8u_3d) {delete3dpointer(p_img8u_3d, in_sz[0], in_sz[1], in_sz[2]);}
-    saveImage("test/testdata/crop.v3draw", p_img8u_crop, sz_img_crop, V3D_UINT8);
-    printf("success or not this time?\n");
+    saveImage("test/testdata/cropinside.v3draw", p_img8u_crop, sz_img_crop, V3D_UINT8);
+
+    return p_img8u_crop;
  }   
