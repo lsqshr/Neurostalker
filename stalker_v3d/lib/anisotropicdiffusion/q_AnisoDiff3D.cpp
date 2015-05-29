@@ -479,13 +479,13 @@ bool q_AnisoDiff3D(const float *p_img32f_input,const V3DLONG sz_img_input[4],flo
 		printf(">>iter=%3d, timeconsume=%.3f s\n",iter,((float)(clock()-iterstart))/CLOCKS_PER_SEC);
 	}
 
-	//{
-	//	unsigned char *p_img_tmp=new(std::nothrow) unsigned char[l_npixels]();
-	//	for(long i=0;i<l_npixels;i++)
-	//		p_img_tmp[i]=(unsigned int)(p_img32f_output[i]);
-	//	saveImage("d:/SVN/Vaa3D_source_code/v3d_external/released_plugins/v3d_plugins/anisodiffusion/output.raw",p_img_tmp,sz_img_input,1);
-	//	delete []p_img_tmp;
-	//}
+	{
+		unsigned char *p_img_tmp=new(std::nothrow) unsigned char[l_npixels]();
+		for(long i=0;i<l_npixels;i++)
+			p_img_tmp[i]=(unsigned int)(p_img32f_output[i]);
+		saveImage("test/testdata/anisotropic.v3draw",p_img_tmp,sz_img_input,1);
+		delete []p_img_tmp;
+	}
 
 	if(p_img8u_mask) 			{delete []p_img8u_mask;		p_img8u_mask=0;}
 	return true;

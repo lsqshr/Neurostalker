@@ -91,7 +91,7 @@ bool q_eigenvectors3D(float *p_Ixx,float *p_Ixy,float *p_Ixz,float *p_Iyy,float 
 		Mat[0][0]=(double)p_Ixx[i]; Mat[0][1]=(double)p_Ixy[i]; Mat[0][2]=(double)p_Ixz[i];
 		Mat[1][0]=(double)p_Ixy[i]; Mat[1][1]=(double)p_Iyy[i]; Mat[1][2]=(double)p_Iyz[i];
 		Mat[2][0]=(double)p_Ixz[i]; Mat[2][1]=(double)p_Iyz[i]; Mat[2][2]=(double)p_Izz[i];
-		eigen_decomposition(Mat, eigvec, eigval);
+		eigen_decomposition_little(Mat, eigvec, eigval);
 
 		p_eigval3[i]=(float)eigval[2]; 
 		p_eigval2[i]=(float)eigval[1]; 
@@ -186,7 +186,7 @@ bool q_eigenvectors3D(float *p_Ixx,float *p_Ixy,float *p_Ixz,float *p_Iyy,float 
 			Mat[0][0]=(double)p_Ixx[i]; Mat[0][1]=(double)p_Ixy[i]; Mat[0][2]=(double)p_Ixz[i];
 			Mat[1][0]=(double)p_Ixy[i]; Mat[1][1]=(double)p_Iyy[i]; Mat[1][2]=(double)p_Iyz[i];
 			Mat[2][0]=(double)p_Ixz[i]; Mat[2][1]=(double)p_Iyz[i]; Mat[2][2]=(double)p_Izz[i];
-			eigen_decomposition(Mat, eigvec, eigval);
+			eigen_decomposition_little(Mat, eigvec, eigval);
 
 			p_eigval3[i]=(float)eigval[2]; 
 			p_eigval2[i]=(float)eigval[1]; 

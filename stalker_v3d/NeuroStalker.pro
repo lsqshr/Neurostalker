@@ -16,6 +16,7 @@ INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/common_lib/include
 INCLUDEPATH += lib/ITK_include
 INCLUDEPATH += lib/Filters
+INCLUDEPATH += lib/anisotropicdiffusion
 
 LIBS += -L$$ITKLIBPATH -litksys-4.5 -lITKCommon-4.5 -lITKStatistics-4.5 -lITKIOImageBase-4.5 -litkdouble-conversion-4.5
 LIBS += -L$$ITKLIBPATH -lvnl_algo -lvnl -lv3p_netlib
@@ -26,19 +27,31 @@ HEADERS += utils/vn_imgpreprocess.h
 HEADERS += lib/ImageOperation.h\
            lib/PointOperation.h\
            lib/SnakeOperation.h
+HEADERS += lib/anisotropicdiffusion/q_AnisoDiff3D.h
+HEADERS += lib/anisotropicdiffusion/q_derivatives3D.h
+HEADERS += lib/anisotropicdiffusion/EigenDecomposition3.h
+HEADERS += lib/anisotropicdiffusion/q_EigenVectors3D.h
+HEADERS += lib/anisotropicdiffusion/q_imgaussian3D.h
+
 HEADERS += $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.h
 HEADERS += $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.h
 HEADERS += $$VAA3DPATH/v3d_main/basic_c_fun/stackutil.h
 HEADERS += $$VAA3DPATH/v3d_main/basic_c_fun/mg_image_lib.h
 HEADERS += $$VAA3DPATH/v3d_main/basic_c_fun/mg_utilities.h
 
-
 SOURCES	+= NeuroStalker_plugin.cpp\
            utils/vn_imgpreprocess.cpp\
            lib/ImageOperation.cpp\
            lib/PointOperation.cpp\
            lib/SnakeOperation.cpp
+SOURCES += lib/anisotropicdiffusion/q_AnisoDiff3D.cpp
+SOURCES += lib/anisotropicdiffusion/q_derivatives3D.cpp
+SOURCES += lib/anisotropicdiffusion/EigenDecomposition3.cpp
+SOURCES += lib/anisotropicdiffusion/q_EigenVectors3D.cpp
+SOURCES += lib/anisotropicdiffusion/q_imgaussian3D.cpp
 
+
+SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/basic_4dimage_create.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/stackutil.cpp

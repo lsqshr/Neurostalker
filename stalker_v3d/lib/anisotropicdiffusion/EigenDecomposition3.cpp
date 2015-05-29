@@ -302,7 +302,7 @@ int fast_eigen3x3(double A[3][3], double V[3][3], double d[3])
     return 1;
 }
 
-void eigen_decomposition(double A[n][n], double V[n][n], double d[n]) {
+void eigen_decomposition_little(double A[n][n], double V[n][n], double d[n]) {
     double e[n];
     double da[3];
     double dt, dat;
@@ -318,7 +318,7 @@ void eigen_decomposition(double A[n][n], double V[n][n], double d[n]) {
     tred2(V, d, e);
     tql2(V, d, e);
     
-    /* Sort the eigen values and vectors by abs eigen value */
+    // Sort the eigen values and vectors by abs eigen value 
     da[0]=absd(d[0]); da[1]=absd(d[1]); da[2]=absd(d[2]);
     if((da[0]>=da[1])&&(da[0]>da[2]))
     {

@@ -9,10 +9,12 @@
 #include "v3d_message.h"
 #include "basic_surf_objs.h"
 #include "utils/vn_imgpreprocess.h"
+#include "stackutil.h"
 
 #include "NeuroStalker_plugin.h"
 #include "lib/ImageOperation.h"
 #include "stackutil.h"
+#include "q_AnisoDiff3D.h"
 //#include "../../v3d_main/basic_c_fun/basic_memory.cpp"//note: should not include .h file, since they are template functions
 
 ImageOperation *IM;
@@ -25,44 +27,47 @@ struct input_PARA
 {
     QString inimg_file;
     V3DLONG channel;
+    int preprocessing; // 1 : downsample the image within 256*256*256; 0: keep the original image
 };
 
 void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
+unsigned char * downsample(V3DLONG* in_sz, V3DLONG c, unsigned char* data1d, V3DLONG * downsz);
 unsigned char * cropfunc(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_img_crop[4]);
+
 QStringList NeuroStalker::menulist() const
 {
-	return QStringList() 
-		<<tr("tracing_menu")
-		<<tr("about");
+    return QStringList() 
+        <<tr("tracing_menu")
+        <<tr("about");
 }
 
 QStringList NeuroStalker::funclist() const
 {
-	return QStringList()
-		<<tr("tracing_func")
-		<<tr("help");
+    return QStringList()
+        <<tr("tracing_func")
+        <<tr("help");
 }
 
 void NeuroStalker::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (menu_name == tr("tracing_menu"))
-	{
+    if (menu_name == tr("tracing_menu"))
+    {
         bool bmenu = true;
         input_PARA PARA;
         reconstruction_func(callback,parent,PARA,bmenu);
 
-	}
-	else
-	{
-		v3d_msg(tr("A learning-based tracing algorithm. "
-			"Developed by Siqi Liu, Donghao Zhang, 2015-4-25"));
-	}
+    }
+    else
+    {
+        v3d_msg(tr("A learning-based tracing algorithm. "
+            "Developed by Siqi Liu, Donghao Zhang, 2015-4-25"));
+    }
 }
 
 bool NeuroStalker::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
-	if (func_name == tr("tracing_func"))
-	{
+    if (func_name == tr("tracing_func"))
+    {
         bool bmenu = false;
         input_PARA PARA;
 
@@ -80,32 +85,35 @@ bool NeuroStalker::dofunc(const QString & func_name, const V3DPluginArgList & in
             PARA.inimg_file = infiles[0];
         int k=0;
         PARA.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
+        PARA.preprocessing = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
         reconstruction_func(callback,parent,PARA,bmenu);
-	}
+    }
     else if (func_name == tr("help"))
     {
 
         ////HERE IS WHERE THE DEVELOPERS SHOULD UPDATE THE USAGE OF THE PLUGIN
 
-		printf("**** Usage of NeuroStalker tracing **** \n");
-		printf("vaa3d -x NeuroStalker -f tracing_func -i <inimg_file> -p <channel> <other parameters>\n");
+        printf("**** Usage of NeuroStalker tracing **** \n");
+        printf("vaa3d -x NeuroStalker -f tracing_func -i <inimg_file> -p <channel> <preprocessing>\n");
         printf("inimg_file       The input image\n");
         printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
+        printf("preprocessing    The preprocessing flag - 1: crop; 2: crop only; 3: crop and downsampling; \n");
 
         printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
 
-	}
-	else return false;
+    }
+    else return false;
 
-	return true;
+    return true;
 }
 
-unsigned char * reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu)
+void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu)
 {
     cout<<"Welcome to NeuroStalker!!"<<endl;
     unsigned char* data1d = 0;
     V3DLONG N,M,P,sc,c;
     V3DLONG in_sz[4];
+
     if(bmenu)
     {
         v3dhandle curwin = callback.currentImageWindow();
@@ -176,43 +184,90 @@ unsigned char * reconstruction_func(V3DPluginCallback2 &callback, QWidget *paren
         c = PARA.channel;
     }
 
-    // Main neuron reconstruction code
-//-----------------------------------------------------------------------------------------
-    V3DLONG sz_img_crop[4];
-    unsigned char *p_img8u_crop = 0;
-p_img8u_crop = cropfunc(in_sz, data1d, sz_img_crop);
-saveImage("test/testdata/crop.v3draw", p_img8u_crop, sz_img_crop, V3D_UINT8);
-    //convert image data type to float
-/*    long l_npixels_crop;
-    printf("2. Convert image data to float and scale to [0~255]. \n");
+    // ------- Main neuron reconstruction code
+    // Crop The image
+    if (PARA.preprocessing & 1)
+    {
+        cout<<"=============== Cropping the image ==============="<<endl;
+        V3DLONG sz_img_crop[4];
+        unsigned char *p_img8u_crop = cropfunc(in_sz, data1d, sz_img_crop);    
+        cout<<"Saving cropped image to downsample.v3draw"<<endl;
+        saveImage("test/testdata/cropoutside.v3draw", p_img8u_crop, sz_img_crop, V3D_UINT8);
+        if (data1d) delete [] data1d;
+        data1d = p_img8u_crop;
+
+        for (int i=0; i<4; i++){
+            in_sz[i] = sz_img_crop[i];
+        }
+        cout<<"=============== Image Cropped ==============="<<endl;
+    }
+
+    // Downsample the image
+    if (PARA.preprocessing & 2)
+    {
+        cout<<"=============== Downsampling the image..."<<endl;
+        V3DLONG downsz[4];
+        cout<<"Data size before downsample: "<<in_sz[0]<<","<<in_sz[1]<<","<<in_sz[2]<<endl;
+
+        unsigned char* downdata1d = downsample(in_sz, c, data1d, downsz);
+        cout<<"Data size after downsample: "<<in_sz[0]<<","<<in_sz[1]<<","<<in_sz[2]<<endl;
+        cout<<"Saving downsampled image to downsample.v3draw"<<endl;
+        saveImage("test/testdata/downsample.v3draw", downdata1d, downsz, V3D_UINT8);
+        if (data1d) delete [] data1d;
+        data1d = downdata1d;
+
+        for (int i=0; i<4; i++){
+            in_sz[i] = downsz[i];
+        }
+        cout<<"=============== Image Downsampled..."<<endl;
+    }
+
+    //---------------------------------------------------------------
+        printf("2. Convert image data to float and scale to [0~255]. \n");
+        long l_npixels_crop;
+        l_npixels_crop=in_sz[0]*in_sz[1]*in_sz[2];
     float *p_img32f_crop=0;
+    {
     p_img32f_crop=new(std::nothrow) float[l_npixels_crop]();
-   if(!p_img32f_crop)
+    if(!p_img32f_crop)
     {
         printf("ERROR: Fail to allocate memory for p_img32f_crop!\n");
-        if(p_img8u_crop)            {delete []p_img8u_crop;     p_img8u_crop=0;}
+        if(data1d)            {delete []data1d;     data1d=0;}
         if(p_img32f_crop)           {delete []p_img32f_crop;            p_img32f_crop=0;}
-    }*/
+    }
     //find the maximal intensity value
-    
-/*    float d_maxintensity_input=0.0;
-    for(long i = 0; i < l_npixels_crop; i++)
-    {
-        if(p_img8u_crop[i] > d_maxintensity_input)
-            {d_maxintensity_input = p_img8u_crop[i];printf("%ld\n", &p_img8u_crop[i]);}
-    }*/
- /*   //convert and rescale
+    float d_maxintensity_input=0.0;
     for(long i=0;i<l_npixels_crop;i++)
-        p_img32f_crop[i]=p_img8u_crop[i]/d_maxintensity_input*255.0;
+        if(data1d[i]>d_maxintensity_input)
+            d_maxintensity_input=data1d[i];
+    //convert and rescale
+    for(long i=0;i<l_npixels_crop;i++)
+        p_img32f_crop[i]=data1d[i]/d_maxintensity_input*255.0;
     printf(">>d_maxintensity=%.2f\n",d_maxintensity_input);
     //free input image to save memory
     //if(p_img_input)           {delete []p_img_input;      p_img_input=0;}
-    if(p_img8u_crop)            {delete []p_img8u_crop;     p_img8u_crop=0;}*/
+    if(data1d)            {delete []data1d;     data1d=0;}
+    }
+    //---------------------------------------------------------------
+
+    //do anisotropic diffusion
+    printf("3. Do anisotropic diffusion... \n");
+    float *p_img32f_crop_output=0;
+    if(!q_AnisoDiff3D(p_img32f_crop,in_sz,p_img32f_crop_output))
+    {
+        printf("ERROR: q_AnisoDiff3D() return false!\n");
+        if(data1d)            {delete []data1d;     data1d=0;}
+        if(p_img32f_crop)               {delete []p_img32f_crop;        p_img32f_crop=0;}
+        if(p_img32f_crop_output)        {delete []p_img32f_crop_output; p_img32f_crop_output=0;}
+    }
+    if(p_img32f_crop)               {delete []p_img32f_crop;        p_img32f_crop=0;}
+    printf("succeed or not?\n");
+/*    for(long i=0;i<l_npixels_crop;i++)
+        data1d[i]=p_img32f_crop_output[i];
+    saveImage("test/testdata/anisotropic.v3draw", data1d, in_sz, V3D_UINT8);*/
+    //-----------------------------------------------------------------------------------------
     
 
-//-----------------------------------------------------------------------------------------
-/*
-    data1d = p_img8u_crop;
     // Using the Image Operation found in vaa3d_tools/hackathon/zhi/snake_tracing/TracingCore/ in for some simple Image Processing
     IM = new ImageOperation;
 
@@ -221,18 +276,11 @@ saveImage("test/testdata/crop.v3draw", p_img8u_crop, sz_img_crop, V3D_UINT8);
 
     for(int i = 0; i < 4; i++)
     {
-        in_sz_int[i] = (int)sz_img_crop[i];
+        in_sz_int[i] = (int)in_sz[i];
     }
 
-    cout<<"in_sz_int:\t"<<endl; 
-    std::copy(in_sz_int,
-       in_sz_int + sizeof(in_sz_int) / sizeof(in_sz_int[0]),
-       ostream_iterator<int>(cout, "\n")); 
-    cout<<"in_sz:\t"<<endl; 
-    std::copy(in_sz,
-       in_sz + sizeof(in_sz) / sizeof(in_sz[0]),
-       ostream_iterator<V3DLONG>(cout, "\n")); 
     
+    /*
     IM->Imcreate(data1d, in_sz_int);
     // Preprocessing
     std::cout<<"=== Compute Gradient Vector Flow..."<<std::endl;
@@ -248,11 +296,12 @@ saveImage("test/testdata/crop.v3draw", p_img8u_crop, sz_img_crop, V3D_UINT8);
     // Adaptive Tracing here, may replace with graph cut
     IM->ImComputeInitBackgroundModel(IM->v_threshold);
     IM->ImComputeInitForegroundModel();
+    */
     
     //Output
     NeuronTree nt;
-	QString swc_name = PARA.inimg_file + "_NeuroStalker.swc";
-	nt.name = "NeuroStalker";
+    QString swc_name = PARA.inimg_file + "_NeuroStalker.swc";
+    nt.name = "NeuroStalker";
     writeSWC_file(swc_name.toStdString().c_str(), nt);
 
     if(!bmenu)
@@ -262,18 +311,102 @@ saveImage("test/testdata/crop.v3draw", p_img8u_crop, sz_img_crop, V3D_UINT8);
     }
 
     v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(swc_name.toStdString().c_str()),bmenu);
-*/            
     return;
 }
+
+
+unsigned char * downsample(V3DLONG *in_sz, V3DLONG c, unsigned char* data1d, V3DLONG * downsz)
+{
+    V3DLONG N, M, P;
+    N = in_sz[0];
+    M = in_sz[1];
+    P = in_sz[2];
+
+    // --- Downsample the image
+    V3DLONG pagesz = N*M*P;
+    unsigned char *data1d_1ch;
+    try {data1d_1ch = new unsigned char [pagesz];}
+    catch(...)  {v3d_msg("cannot allocate memory for data1d_1ch."); return NULL;}
+
+    for(V3DLONG i = 0; i < pagesz; i++)
+        data1d_1ch[i] = data1d[i+(c-1)*pagesz];
+
+    Image4DSimple * p4dImageNew = 0;
+    p4dImageNew = new Image4DSimple;
+
+    if(!p4dImageNew->createImage(N,M,P,1, V3D_UINT8))
+        return NULL;
+
+    memcpy(p4dImageNew->getRawData(), data1d_1ch, pagesz);
+
+    unsigned char * indata1d = p4dImageNew->getRawDataAtChannel(0);
+
+    in_sz[3] = 1;
+    double dfactor_xy = 1, dfactor_z = 1;
+
+    if (in_sz[0]<=256 && in_sz[1]<=256 && in_sz[2]<=256)
+    {
+        dfactor_z = dfactor_xy = 1;
+    }
+    else if (in_sz[0] >= 2*in_sz[2] || in_sz[1] >= 2*in_sz[2])
+    {
+        if (in_sz[2]<=256)
+        {
+            double MM = in_sz[0];
+            if (MM<in_sz[1]) MM=in_sz[1];
+            dfactor_xy = MM / 256.0;
+            dfactor_z = 1;
+        }
+        else
+        {
+            double MM = in_sz[0];
+            if (MM<in_sz[1]) MM=in_sz[1];
+            if (MM<in_sz[2]) MM=in_sz[2];
+            dfactor_xy = dfactor_z = MM / 256.0;
+        }
+    }
+    else
+    {
+        double MM = in_sz[0];
+        if (MM<in_sz[1]) MM=in_sz[1];
+        if (MM<in_sz[2]) MM=in_sz[2];
+        dfactor_xy = dfactor_z = MM / 256.0;
+    }
+
+    printf("dfactor_xy=%5.3f\n", dfactor_xy);
+    printf("dfactor_z=%5.3f\n", dfactor_z);
+
+    if (dfactor_z>1 || dfactor_xy>1)
+    {
+        v3d_msg("enter ds code", 0);
+
+        V3DLONG out_sz[4];
+        unsigned char * outimg=0;
+        if (!downsampling_img_xyz( indata1d, in_sz, dfactor_xy, dfactor_z, outimg, out_sz))
+        {
+            cout<<"=== Downsample Failed!!"<<endl;
+            return NULL;
+        }
+
+        p4dImageNew->setData(outimg, out_sz[0], out_sz[1], out_sz[2], out_sz[3], V3D_UINT8);
+
+        indata1d = p4dImageNew->getRawDataAtChannel(0);
+        downsz[0] = p4dImageNew->getXDim();
+        downsz[1] = p4dImageNew->getYDim();
+        downsz[2] = p4dImageNew->getZDim();
+        downsz[3] = p4dImageNew->getCDim();
+    }
+
+    return indata1d;
+}
+
 
 unsigned char * cropfunc(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_img_crop[4])
 {    
     printf("1. Find the bounding box and crop image. \n");
-    V3DLONG long l_boundbox_min[3], l_boundbox_max[3];//xyz
-    long l_npixels_crop;
-    unsigned char *p_img8u_crop = 0;
-    //find bounding box
-    unsigned char ***p_img8u_3d = 0;
+    V3DLONG long l_boundbox_min[3], l_boundbox_max[3]; //xyz
+    long l_npixels_crop;    
+    unsigned char ***p_img8u_3d = 0; //find bounding box
     if(!new3dpointer(p_img8u_3d ,in_sz[0], in_sz[1], in_sz[2], data1d))
     {
         printf("ERROR: Fail to allocate memory for the 4d pointer of image.\n");
@@ -302,7 +435,7 @@ unsigned char * cropfunc(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG 
     sz_img_crop[3] = 1;
     l_npixels_crop = sz_img_crop[0] * sz_img_crop[1] * sz_img_crop[2];
 
-    p_img8u_crop = new(std::nothrow) unsigned char[l_npixels_crop]();
+    unsigned char *p_img8u_crop = new(std::nothrow) unsigned char[l_npixels_crop]();
     if(!p_img8u_crop)
     {
         printf("ERROR: Fail to allocate memory for p_img32f_crop!\n");
@@ -317,7 +450,5 @@ unsigned char * cropfunc(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG 
                 p_tmp++;
             }
     if(p_img8u_3d) {delete3dpointer(p_img8u_3d, in_sz[0], in_sz[1], in_sz[2]);}
-    printf("success or not this time?\n");
-    
-return p_img8u_3d;    
- }   
+    return p_img8u_crop;
+}
