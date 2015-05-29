@@ -1,1 +1,0 @@
-This test uses reads in a xml file produced by mattree2opencv() in matlab and load it as a RTree object. It uses 5 example subjects to make the prediction and check the error between the estimates and the groundtruth data

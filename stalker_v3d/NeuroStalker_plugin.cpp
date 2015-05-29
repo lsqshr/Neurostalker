@@ -63,7 +63,12 @@ void NeuroStalker::domenu(const QString &menu_name, V3DPluginCallback2 &callback
     }
 }
 
-bool NeuroStalker::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
+
+bool NeuroStalker::dofunc(const QString & func_name, 
+                          const V3DPluginArgList & input,
+                          V3DPluginArgList & output, 
+                          V3DPluginCallback2 & callback,  
+                          QWidget * parent)
 {
     if (func_name == tr("tracing_func"))
     {
@@ -106,7 +111,10 @@ bool NeuroStalker::dofunc(const QString & func_name, const V3DPluginArgList & in
     return true;
 }
 
-void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu)
+void reconstruction_func(V3DPluginCallback2 &callback, 
+                         QWidget *parent, 
+                         input_PARA &PARA, 
+                         bool bmenu)
 {
     cout<<"Welcome to NeuroStalker!!"<<endl;
     unsigned char* data1d = 0;
@@ -227,9 +235,8 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     }
 
     
-    /*
-    IM->Imcreate(data1d, in_sz_int);
     // Preprocessing
+    IM->Imcreate(data1d, in_sz_int);
     std::cout<<"=== Compute Gradient Vector Flow..."<<std::endl;
     IM->computeGVF(1000, 5, 1);
     std::cout<<"=== Compute Vesselness (CPU)..."<<std::endl;
@@ -243,7 +250,6 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
     // Adaptive Tracing here, may replace with graph cut
     IM->ImComputeInitBackgroundModel(IM->v_threshold);
     IM->ImComputeInitForegroundModel();
-    */
     
     //Output
     NeuronTree nt;
@@ -262,7 +268,10 @@ void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PA
 }
 
 
-unsigned char * downsample(V3DLONG *in_sz, V3DLONG c, unsigned char* data1d, V3DLONG * downsz)
+unsigned char * downsample(V3DLONG *in_sz,
+                           V3DLONG c, 
+                           unsigned char* data1d, 
+                           V3DLONG * downsz)
 {
     V3DLONG N, M, P;
     N = in_sz[0];
