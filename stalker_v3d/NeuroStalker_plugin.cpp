@@ -101,7 +101,7 @@ bool NeuroStalker::dofunc(const QString & func_name,
         printf("vaa3d -x NeuroStalker -f tracing_func -i <inimg_file> -p <channel> <preprocessing>\n");
         printf("inimg_file       The input image\n");
         printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
-        printf("preprocessing    The preprocessing flag - 1: crop; 2: crop only; 3: crop and downsampling; \n");
+        printf("preprocessing    The preprocessing flag - 1: Crop Only; 2: Downsample; 3: Downsample and crop; \n");
 
         printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
 
