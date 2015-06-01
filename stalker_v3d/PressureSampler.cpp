@@ -56,3 +56,8 @@ void PressureSampler::GenSph(){
     for (int i = 0; i < v.size() * nth; i++)
         this->basephi[i] = acos(2 * transv[i] - 1);
 }
+
+
+void PressureSampler::FindVoxel2Sample(float x, float y, float z, float th, float phi, vectype * outx, vectype* outy, vectype* outz){
+
+}

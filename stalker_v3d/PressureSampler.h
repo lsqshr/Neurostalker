@@ -1,7 +1,8 @@
 #ifndef __VN_IMGPREPROCESS__
 #define __VN_IMGPREPROCESS__
 #include <vector>
-typedef vectype std::vector<double>;
+
+typedef std::vector<double> vectype;
 
 class PressureSampler
 {
