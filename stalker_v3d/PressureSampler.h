@@ -1,5 +1,7 @@
 #ifndef __VN_IMGPREPROCESS__
 #define __VN_IMGPREPROCESS__
+#include <vector>
+typedef vectype std::vector<double>;
 
 class PressureSampler
 {
@@ -31,7 +33,16 @@ private:
     float * lpressure; // The pressure sampled at each direction
     float * SampleVoxels(int * lx, int * ly, int * lz, int sz);
 	void GenSph();
-	void FindVoxel2Sample(float x, float y, float z, float th, float phi);
+
+	void FindVoxel2Sample(float x, float y, float z, float th, float phi, vectype * a, vectype*, vectype*);
+    
+    a.push_back();
+    std::vector<int>::iterator it = fifth.begin()
+    it++;
+    *it;
+    a.size()
+    a.begin()
+    a.end()
 };
 
 #endif
