@@ -22,10 +22,12 @@ LIBS += -L$$ITKLIBPATH -lvnl_algo -lvnl -lv3p_netlib
 LIBS += -L$$VAA3DPATH/v3d_main/jba/c++ -lv3dnewmat
 
 HEADERS	+= NeuroStalker_plugin.h
-HEADERS += utils/vn_imgpreprocess.h
+HEADERS += utils/vn_imgpreprocess.h\
+           utils/PressureSampler.h
 HEADERS += lib/ImageOperation.h\
            lib/PointOperation.h\
            lib/SnakeOperation.h
+
 HEADERS += $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.h
 HEADERS += $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.h
 HEADERS += $$VAA3DPATH/v3d_main/basic_c_fun/stackutil.h
@@ -34,6 +36,7 @@ HEADERS += $$VAA3DPATH/v3d_main/basic_c_fun/mg_utilities.h
 
 SOURCES	+= NeuroStalker_plugin.cpp\
            utils/vn_imgpreprocess.cpp\
+           utils/PressureSampler.cpp\
            lib/ImageOperation.cpp\
            lib/PointOperation.cpp\
            lib/SnakeOperation.cpp
