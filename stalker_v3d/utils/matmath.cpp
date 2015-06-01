@@ -75,8 +75,25 @@ vectype transpose(const vectype invec, const int N, const int M) {
 }
 
 
-void sph2cart(vectype thvec, vectype phivec, vectype r, vectype * xvec, vectype * yvec, vectype * zvec ){
+void sph2cart(vectype thvec, vectype phivec, vectype rvec, vectype * xvec, vectype * yvec, vectype * zvec ){
+	assert(thvec.size() == phivec.size() && phivec.size() == rvec.size());
+	assert(thvec.size() == xvec->size() && thvec.size() == yvec->size() && thvec.size() == zvec->size());
 	vectype::iterator xitr, yitr, zitr, thitr, phiitr, ritr;
+
+	for (xitr = xvec->begin(), 
+		 yitr = yvec->begin(), 
+		 zitr = zvec->begin(), 
+		 thitr = thvec.begin(),
+		 phiitr = phivec.begin(),
+		 ritr = rvec.begin();
+		 thitr != thvec.end();
+		 xitr++, yitr++, zitr++,
+		 thitr++, phiitr++, ritr++)
+	{
+	    *xitr = *ritr * cos(*thitr)	* sin(*phiitr);
+	    *yitr = *ritr * sin(*thitr)	* sin(*phiitr);
+	    *zitr = *ritr * cos(*phiitr);
+	}
 }
 
 
@@ -99,7 +116,9 @@ void cart2sph(vectype xvec, vectype yvec, vectype zvec, vectype* thvec, vectype*
 		 phiitr = phivec->begin(),
 		 ritr = rvec->begin();
 		 xitr != xvec.end();
-		 xitr++, yitr++, thitr++){
+		 xitr++, yitr++, zitr++,
+		 thitr++, phiitr++, ritr++)
+	{
 	    if (*xitr == 0)	
 	    {
 	    	if (*yitr > 0) *thitr = M_PI;
