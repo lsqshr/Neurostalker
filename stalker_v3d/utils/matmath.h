@@ -2,12 +2,17 @@
 
 typedef std::vector<double> vectype;
 
+// Generate a values in linear space between a and b
 vectype linspace(const double a, const double b, const int n);
 
-//void sph2cart(float * lth, float * lphi, lx, ly, lz, int sz);
-
-//void cart2sph(float * lx, float * ly, float * lz, int sz);
-
+// Repeat a 1d-vector to a 2D matrix
 vectype repmat1d(vectype, const int, const int);
 
+// 2D matrix transpose
 vectype transpose(vectype, const int, const int);
+
+// Spherical coordinates to Cartisian
+void sph2cart(vectype thvec, vectype phivec, vectype r, vectype * xvec, vectype * yvec, vectype * zvec );
+
+// Cartisian coordinates to spherical
+void cart2sph(vectype xvec, vectype yvec, vectype zvec, vectype* thvec, vectype* phivec, vectype* r );
