@@ -46,6 +46,21 @@ void PressureSampler::GenSph(){
     u = linspace(0, 1, nth);
     vectype v; 
     v = linspace(0, 1, nphi);
-    
+
+    double * repu = new double[u.size() * nphi];
+    repmat1d(u, nphi, 2, repu);
+
+    double * repv = new double[v.size() * nth];
+    repmat1d(v, nth, 2, repv);
+    double * transv = new double[v.size() * nth];
+    transpose(repv, transv, v.size(), nth);// Transpose repv matrix
+
+    double * th = new double[u.size() * nphi];
+    for (int i = 0; i < u.size() * nphi; i++)
+        th[i] = 2 * M_PI * repu[i];
+
+    double * phi = new double[v.size() * nth];
+    for (int i = 0; i < v.size() * nth; i++)
+        phi[i] = acos(2 * transv[i] - 1);
 
 }

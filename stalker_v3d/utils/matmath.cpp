@@ -13,6 +13,7 @@ vectype linspace(double a, double b, int n) {
     return array;
 }
 
+
 void repmat1d(vectype m, int repeat, int dim, double *outm){
 	double* invec = new double[m.size()];
 	int out_szrow, out_szcol;
@@ -51,3 +52,13 @@ void repmat1d(vectype m, int repeat, int dim, double *outm){
 
     delete [] invec;
 }
+
+
+void transpose(float *src, float *dst, const int N, const int M) {
+    for(int n = 0; n<N*M; n++) {
+        int i = n/N;
+        int j = n%N;
+        dst[n] = src[M*j + i];
+    }
+}
+
