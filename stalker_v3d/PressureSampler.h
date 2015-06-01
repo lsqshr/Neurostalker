@@ -30,7 +30,7 @@ private:
 	float * basephi; // The theta values of the base vectors
     float * lpressure; // The pressure sampled at each direction
     float * SampleVoxels(int * lx, int * ly, int * lz, int sz);
-	void GenSph();
+	void GenSph(); // Generate the base spherical directions
 	void FindVoxel2Sample(float x, float y, float z, float th, float phi);
 };
 

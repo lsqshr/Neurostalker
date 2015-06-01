@@ -42,23 +42,17 @@ void PressureSampler::GenSph(){
     //itk::Matrix<double, nphi, nth> uM;
     //itk::Matrix<double, nth, nphi> vM;
 
-    vectype u; 
-    u = linspace(0, 1, nth);
-    vectype v; 
-    v = linspace(0, 1, nphi);
+    vectype u = linspace(0, 1, nth);
+    vectype v = linspace(0, 1, nphi);
 
-    double * repu = new double[this->ndir];
-    repmat1d(u, nphi, 2, repu);
+    vectype repu = repmat1d(u, nphi, 2);
 
-    double * repv = new double[this->ndir];
-    repmat1d(v, nth, 2, repv);
-    double * transv = new double[this->ndir];
-    transpose(repv, transv, v.size(), nth);// Transpose repv matrix
+    vectype repv = repmat1d(v, nth, 2);
+    vectype transv = transpose(repv, v.size(), nth);// Transpose repv matrix
 
     for (int i = 0; i < u.size() * nphi; i++)
         this->baseth[i] = 2 * M_PI * repu[i];
 
     for (int i = 0; i < v.size() * nth; i++)
         this->basephi[i] = acos(2 * transv[i] - 1);
-
 }
