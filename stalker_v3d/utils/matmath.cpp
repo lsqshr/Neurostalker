@@ -1,7 +1,7 @@
 // Some C++ Implementations for the matlab classic calls
 
 
-vector<double> linspace(double a, double b, int n) {
+vectype linspace(double a, double b, int n) {
 // Equals to linspace in matlab
     vector<double> array;
     double step = (b-a) / (n-1);
@@ -13,7 +13,7 @@ vector<double> linspace(double a, double b, int n) {
     return array;
 }
 
-void repmat1d(vector<double> m, int repeat, int dim, double *outm){
+void repmat1d(vectype m, int repeat, int dim, double *outm){
 	double* invec = new double[m.size()];
 	int out_szrow, out_szcol;
 

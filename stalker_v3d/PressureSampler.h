@@ -1,10 +1,6 @@
 #ifndef __VN_IMGPREPROCESS__
 #define __VN_IMGPREPROCESS__
 
-#include <vector>
-#include <itkMatrix.h>
-using std:vector;
-
 class PressureSampler
 {
 public:
@@ -37,13 +33,5 @@ private:
 	void GenSph();
 	void FindVoxel2Sample(float x, float y, float z, float th, float phi);
 };
-
-vector<double> linspace(double a, double b, int n);
-
-
-
-void sph2cart(float * lth, float * lphi, int sz);
-
-void cart2sph(float * lx, float * ly, float * lz, int sz);
 
 #endif

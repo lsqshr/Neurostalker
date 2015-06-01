@@ -1,4 +1,10 @@
 #include "PressureSampler.h"
+#include "utils/matmath.h"
+#include <vector>
+#include <math.h>
+
+using namespace std;
+typedef std::vector<double> vectype;
 
 PressureSampler::PressureSampler(int ndir, 
                                  int density,
@@ -27,36 +33,19 @@ PressureSampler::~PressureSampler(){
 }
 
 
-PressureSampler::GenSph(){
+void PressureSampler::GenSph(){
 // Uniformly pick directions on a unit sphere
 // Ref: http://mathworld.wolfram.com/SpherePointPicking.html
 
-    int nphi = (int) pow(((double)this->ndir / 2.0), 0.5)
+    int nphi = (int) pow(((double)this->ndir / 2.0), 0.5);
     int nth = (int) 2 * nphi;
-    itk::Matrix<double, nphi, nth> uM;
-    itk::Matrix<double, nth, nphi> vM;
+    //itk::Matrix<double, nphi, nth> uM;
+    //itk::Matrix<double, nth, nphi> vM;
 
-    vector<double> u = linspace(0, 1, nth);
-    vector<double> v = linspace(0, 1, nphi);
-
-    // Strech u vertically to nphi rows
-    for (int i = 0; i < nphi; i ++)
-    {
-        for (int j = 0; j < nth; j++)
-        {
-            uM(i, j) = u[j];
-        }
-    }
-
-    // Strech v vertically to nth rows
-    for (int i = 0; i < nth; i ++)
-    {
-        for (int j = 0; j < nphi; j++)
-        {
-            vM(i, j) = u[j];
-        }
-    }
-
+    vectype u; 
+    u = linspace(0, 1, nth);
+    vectype v; 
+    v = linspace(0, 1, nphi);
     
 
 }
