@@ -1,64 +1,75 @@
 // Some C++ Implementations for the matlab classic calls
+#include "matmath.h"
+#include "assert.h"
 
+using namespace std;
 
-vectype linspace(double a, double b, int n) {
+vectype linspace(const double a, const double b, const int n) {
 // Equals to linspace in matlab
-    vector<double> array;
+    vectype outvec (n);
     double step = (b-a) / (n-1);
-
-    while(a <= b) {
-        array.push_back(a);
-        a += step;           // could recode to better handle rounding errors
+    double t = a;
+    vectype::iterator outitr = outvec.begin();
+    while(t <= b && outitr != outvec.end()) {
+        *outitr = t;
+        outitr++;
+        t += step;           // could recode to better handle rounding errors
     }
-    return array;
+    return outvec;
 }
 
 
-void repmat1d(vectype m, int repeat, int dim, double *outm){
-	double* invec = new double[m.size()];
+vectype repmat1d(vectype invec, int repeat, int dim){
+	assert(invec.size() != 0);
+	const int nvar = repeat * invec.size();
+	vectype outvec (nvar);
+    vectype::iterator outitr = outvec.begin();
 	int out_szrow, out_szcol;
 
-	for (std::vector<double>::iterator it = myvector.begin(), int i = 0; it != myvector.end(); ++it, ++i)
-	    1dvec[i] = *it;
-    
-	swith (dim){
+	switch (dim){
 	    case 1:
+	        {
 	        out_szrow = repeat;
-	        out_szcol = m.size();
-			int loc = 0;
-			// Assume the caller has allocated the memory for outm
+	        out_szcol = invec.size();
+			// Assume the caller has allocated the memory for outarray
 			for (int col = 0; col < out_szcol; col++)
-			    for(int row = 0; row < out_szrow; row++)
+			    for(int row = 0; row < out_szrow; row++, outitr++)
 			    {
-		            int loc = col *  out_szrow + row;
-		            outm[loc] = invec[col];
+		            *outitr = invec[col];
 			    }
-	    }break;
+		    break;
+			}
 	    case 2:
-	    {
-	        out_szrow = m.size();
+	        {
+	        out_szrow = invec.size();
 	        out_szcol = repeat;
-			int loc = 0;
-			// Assume the caller has allocated the memory for outm
+			// Assume the caller has allocated the memory for outarray
 			for (int col = 0; col < out_szcol; col++)
-			    for(int row = 0; row < out_szrow; row++)
+			    for(int row = 0; row < out_szrow; row++, outitr++)
 			    {
-		            int loc = col *  out_szrow + row;
-		            outm[loc] = invec[row];
+		            *outitr = invec[row];
 			    }
-	    }break;
+		    break;
+		    }
 	    default: throw 1; break;
 	}
 
-    delete [] invec;
+	return outvec;
 }
 
 
-void transpose(float *src, float *dst, const int N, const int M) {
-    for(int n = 0; n<N*M; n++) {
-        int i = n/N;
-        int j = n%N;
-        dst[n] = src[M*j + i];
+vectype transpose(const vectype invec, const int N, const int M) {
+    vectype outvec(invec.size());
+    vectype::iterator outitr = outvec.begin();
+    int i,j;
+
+	for (int n=0; n<M*N; n++, outitr++)
+	{
+        i = n/N;
+        j = n%N;
+        *outitr = invec[M*j + i];
     }
+
+    return outvec;
 }
 

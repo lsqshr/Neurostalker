@@ -31,3 +31,4 @@ stalker_matlab/lib/*
 /stalker_matlab/scripts/train-nn.pbs
 *output.txt
 stalker_v3d/test/*
+*.v3draw

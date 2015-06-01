@@ -26,6 +26,8 @@ HEADERS	+= NeuroStalker_plugin.h\
 HEADERS += utils/vn_imgpreprocess.h\
            utils/matmath.h
 
+HEADERS += test/unittest.h
+
 HEADERS += lib/ImageOperation.h\
            lib/PointOperation.h\
            lib/SnakeOperation.h
@@ -39,10 +41,12 @@ HEADERS += $$VAA3DPATH/v3d_main/basic_c_fun/mg_utilities.h
 SOURCES	+= NeuroStalker_plugin.cpp\
            PressureSampler.cpp\
            utils/vn_imgpreprocess.cpp\
-           utils/matmath.h\
+           utils/matmath.cpp\
            lib/ImageOperation.cpp\
            lib/PointOperation.cpp\
-           lib/SnakeOperation.cpp
+           lib/SnakeOperation.cpp\
+           test/unittest.cpp
+
 SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/basic_4dimage_create.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp

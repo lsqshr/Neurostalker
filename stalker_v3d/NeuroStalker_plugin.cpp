@@ -13,7 +13,7 @@
 
 #include "NeuroStalker_plugin.h"
 #include "lib/ImageOperation.h"
-#include "stackutil.h"
+#include "test/unittest.h"
 //#include "../../v3d_main/basic_c_fun/basic_memory.cpp"//note: should not include .h file, since they are template functions
 
 ImageOperation *IM;
@@ -26,7 +26,8 @@ struct input_PARA
 {
     QString inimg_file;
     V3DLONG channel;
-    int preprocessing; // 1 : downsample the image within 256*256*256; 0: keep the original image
+    int preprocessing; // 2 : downsample the image within 256*256*256; 1: Crop the image; 0: keep the original image
+    int unittest; // 2 : Run Unit-Test; 1: Run Tracing; 0: Run Nothing
 };
 
 void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
@@ -90,6 +91,7 @@ bool NeuroStalker::dofunc(const QString & func_name,
         int k=0;
         PARA.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
         PARA.preprocessing = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
+        PARA.unittest = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
         reconstruction_func(callback,parent,PARA,bmenu);
     }
     else if (func_name == tr("help"))
@@ -98,10 +100,11 @@ bool NeuroStalker::dofunc(const QString & func_name,
         ////HERE IS WHERE THE DEVELOPERS SHOULD UPDATE THE USAGE OF THE PLUGIN
 
         printf("**** Usage of NeuroStalker tracing **** \n");
-        printf("vaa3d -x NeuroStalker -f tracing_func -i <inimg_file> -p <channel> <preprocessing>\n");
+        printf("vaa3d -x NeuroStalker -f tracing_func -i <inimg_file> -p <channel> <preprocessing> <run unit-tests>\n");
         printf("inimg_file       The input image\n");
         printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
         printf("preprocessing    The preprocessing flag - 1: Crop Only; 2: Downsample; 3: Downsample and crop; \n");
+        printf("run unit-tests   - 1: Run Tracing Only; 2: Run unit-tests only; 3: Run Both Unit Tests and Tracing; \n");
 
         printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
 
@@ -190,6 +193,14 @@ void reconstruction_func(V3DPluginCallback2 &callback,
         sc = in_sz[3];
         c = PARA.channel;
     }
+
+    // ------- Run Unit-Tests
+    if (PARA.unittest & 2){
+        cout<<"+++++ Running Unit-Tests +++++"<<endl;
+        TestMatMath();
+    }
+
+    if (!(PARA.unittest & 1)) return;
 
     // ------- Main neuron reconstruction code
     // Crop The image

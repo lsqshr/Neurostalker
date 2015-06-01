@@ -32,17 +32,10 @@ private:
 	float * basephi; // The theta values of the base vectors
     float * lpressure; // The pressure sampled at each direction
     float * SampleVoxels(int * lx, int * ly, int * lz, int sz);
-	void GenSph();
 
-	void FindVoxel2Sample(float x, float y, float z, float th, float phi, vectype * a, vectype*, vectype*);
-    
-    a.push_back();
-    std::vector<int>::iterator it = fifth.begin()
-    it++;
-    *it;
-    a.size()
-    a.begin()
-    a.end()
+	void GenSph(); // Generate the base spherical directions
+    void FindVoxel2Sample(float x, float y, float z, float th, float phi, vectype * outx, vectype* outy, vectype* outz);
+
 };
 
 #endif

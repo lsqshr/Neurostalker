@@ -8,6 +8,6 @@ vectype linspace(const double a, const double b, const int n);
 
 //void cart2sph(float * lx, float * ly, float * lz, int sz);
 
-void repmat1d(vectype m, const int repeat, const int dim, double *outm);
+vectype repmat1d(vectype, const int, const int);
 
-void transpose(double * src, double *dst, const int N, const int M);
+vectype transpose(vectype, const int, const int);
