@@ -16,7 +16,7 @@ public:
     	             float radius = 0);
     ~PressureSampler();
 	void RandRotateSph();
-	void RandSample(int x, int y, int z);
+	void RandSample(double x, double y, double z); // Randomly sample the pressure at specific postion (x,y,z)
 	float *  GetBaseTh();
 	float *  GetBasePhi();
 	float *  GetPeakTh();
@@ -27,7 +27,7 @@ private:
 	unsigned char * OriginalImg;
 	unsigned char * BinaryImg;
 	float * GVF;
-    float radius;	
+    float radius;
 	int ndir; // Number of directions
     int density; // The density of the sampled points on each sample plane
 	float * baseth; // The theta values of the base vectors
@@ -37,7 +37,6 @@ private:
 
 	void GenSph(); // Generate the base spherical directions
     void FindVoxel2Sample(float x, float y, float z, float th, float phi, vectype * outx, vectype* outy, vectype* outz, int pointrange);
-
 };
 
 #endif
