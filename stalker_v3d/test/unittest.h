@@ -3,3 +3,5 @@
 #define EPSILON std::numeric_limits<double>::epsilon()
 
 void TestMatMath();
+
+void TestPressureSampler();

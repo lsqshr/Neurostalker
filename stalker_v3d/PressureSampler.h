@@ -21,6 +21,7 @@ public:
 	float *  GetBasePhi();
 	float *  GetPeakTh();
 	float *  GetPeakPhi();
+	friend void TestPressureSampler();
 
 private:
 	unsigned char * OriginalImg;
@@ -28,14 +29,14 @@ private:
 	float * GVF;
     float radius;	
 	int ndir; // Number of directions
-    float density; // The density of the sampled points on each sample plane
+    int density; // The density of the sampled points on each sample plane
 	float * baseth; // The theta values of the base vectors
 	float * basephi; // The theta values of the base vectors
     float * lpressure; // The pressure sampled at each direction
     float * SampleVoxels(int * lx, int * ly, int * lz, int sz);
 
 	void GenSph(); // Generate the base spherical directions
-    void FindVoxel2Sample(float x, float y, float z, float th, float phi, vectype * outx, vectype* outy, vectype* outz);
+    void FindVoxel2Sample(float x, float y, float z, float th, float phi, vectype * outx, vectype* outy, vectype* outz, int pointrange);
 
 };
 

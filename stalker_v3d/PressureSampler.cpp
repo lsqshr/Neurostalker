@@ -2,6 +2,8 @@
 #include "utils/matmath.h"
 #include <vector>
 #include <math.h>
+#include <stdlib.h>     /* srand, rand */
+#include <iostream>
 
 using namespace std;
 typedef std::vector<double> vectype;
@@ -58,6 +60,23 @@ void PressureSampler::GenSph(){
 }
 
 
-void PressureSampler::FindVoxel2Sample(float x, float y, float z, float th, float phi, vectype * outx, vectype* outy, vectype* outz){
-
+void PressureSampler::FindVoxel2Sample(float x, float y, float z, float th, float phi, vectype * outx, vectype* outy, vectype* outz, int pointrange)
+{
+    float rl; float random; float random_r; float t;
+    for (int n=pointrange; n>0; n--) 
+    {  
+        //random ranges from 0 to 1
+        random = ((float) rand()) / (float) RAND_MAX;
+        random_r = ((float) rand()) / (float) RAND_MAX;
+    
+        //assign theta phi value to the normal vector
+        t = 2 * M_PI * random;  rl = this->radius * random_r;
+        (*outx)[n] = rl * cos(t) * (-sin(phi)) + rl * sin(t) * cos(th) * cos(phi) +  x;
+        (*outy)[n] = rl * cos(t) * cos(phi) + rl * sin(t) * cos(th) * sin(phi) +  y;
+        (*outz)[n] = rl * sin(t) * (-sin(th)) + z;
+        cout<<(*outx)[n]<<" "<<(*outy)[n]<<" "<<(*outz)[n]<<endl;
+    }
+    return; 
 }
+
+

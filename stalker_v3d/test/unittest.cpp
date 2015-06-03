@@ -1,9 +1,13 @@
 #include <cmath>
 #include <iostream>
 #include "unittest.h"
+#include <cstdlib>
+#include <time.h>       /* time */
+#include <stdio.h>      /* printf, scanf, puts, NULL */
 #include <vector>
 #include "assert.h"
 #include "utils/matmath.h"
+#include "PressureSampler.h"
 
 using namespace std;
 typedef vector<double> vectype ;
@@ -104,6 +108,21 @@ void TestMatMath(){
     TestTranspose();
 }
 
-void TestPressureSampler(){
-	
+
+void TestPressureSampler()
+{
+    cout<<"==== Test Case : FindVoxel2Sample"<<endl;
+    PressureSampler p(60, 100, NULL, NULL, NULL, 10);
+
+    /* initialize random seed: */
+    srand (time(NULL));
+    vectype  outx(p.density);
+    vectype  outy(p.density);
+    vectype  outz(p.density);
+
+    float x, y, z;
+    x = 3; y = 4; z = 5;  
+    float phi = 0.8; float theta = 0.6; float radius = 5;
+    p.FindVoxel2Sample(x, y, z, theta, phi, &outx, &outy, &outz, p.density);
+
 }
