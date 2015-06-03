@@ -1,4 +1,6 @@
 #include <cmath>
+#include <cstdlib>
+#include <ctime>
 #include <iostream>
 #include "unittest.h"
 #include <vector>
@@ -24,6 +26,7 @@ int array_equal(double* v1, double* v2, int sz){
 
 
 int vector_equal(vectype v1, vectype v2){
+	assert(v1.size() == v2.size());
     vectype::iterator itr1, itr2;
 	for ( itr1 = v1.begin(), 
 		  itr2 = v2.begin();
@@ -98,10 +101,77 @@ void TestTranspose(){
 }
 
 
+void TestSph2CartThenCart2Sph(){
+	cout<<"== Test Case : Testing Sph2Cart Then Cart2Sph"<<endl;
+	// Make random x, y, z; Convert them to Sph and convert them back
+	int ntest = 100;
+	srand(time(0));
+	vectype th(ntest), phi(ntest), r(ntest);
+	vectype outth(ntest), outphi(ntest), outr(ntest);
+	vectype x(ntest), y(ntest), z(ntest);
+    vectype::iterator thitr, phiitr, ritr;
+    for (thitr = th.begin(), phiitr = phi.begin(), ritr = r.begin();
+    	 thitr != th.end();
+    	 thitr++, phiitr++, ritr++
+    	)
+    {
+    	*thitr = rand()/double(RAND_MAX) * 2.0 * M_PI + 0.0;
+    	*phiitr = rand()/double(RAND_MAX) * M_PI + 0.0;
+        *ritr = rand()/double(RAND_MAX)*100.0 + 0.0;
+    }
+
+    sph2cart(th, phi, r, &x, &y, &z);
+    cart2sph(x, y, z, &outth, &outphi, &outr);
+
+    assert(th.size() == outth.size());
+    for (int i=0; i<th.size(); i++) 
+    {
+    	if (!approx_equal(th[i], outth[i]))
+	    	cout<<th[i]<<","<<outth[i]<<endl;
+    }
+
+    assert(vector_equal(th, outth));
+    assert(vector_equal(phi, outphi));
+    assert(vector_equal(r, outr));
+	cout<<"== Test Case Passed"<<endl;
+
+}
+
+
+void TestCart2SphThenCart2Sph(){
+	cout<<"== Test Case : Testing Cart2Sph Then Sph2Cart"<<endl;
+	int ntest = 100;
+	srand(time(0));
+	vectype x(ntest), y(ntest), z(ntest);
+	vectype th(ntest), phi(ntest), r(ntest);
+	vectype outx(ntest), outy(ntest), outz(ntest);
+	vectype::iterator xitr, yitr, zitr;
+	for (xitr = x.begin(), yitr = y.begin(), zitr = z.begin();
+		 xitr != x.end();
+		 xitr++, yitr++, zitr++)
+	{
+    	*xitr = rand()/double(RAND_MAX) * 10000.0 + 0.0;
+    	*yitr = rand()/double(RAND_MAX) * 10000.0 + 0.0;
+        *zitr = rand()/double(RAND_MAX) * 10000.0 + 0.0;
+	}
+
+	cart2sph(x, y, z, &th, &phi, &r);
+	sph2cart(th, phi, r, &outx, &outy, &outz);
+
+	assert(vector_equal(x, outx));
+	assert(vector_equal(y, outy));
+	assert(vector_equal(z, outz));
+	cout<<"== Test Case Passed"<<endl;
+
+}
+
+
 void TestMatMath(){
     TestLinspace();
     TestRepmat();
     TestTranspose();
+    TestSph2CartThenCart2Sph();
+    TestCart2SphThenCart2Sph();
 }
 
 void TestPressureSampler(){

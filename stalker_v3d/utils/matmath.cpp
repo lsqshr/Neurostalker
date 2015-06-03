@@ -1,4 +1,5 @@
 // Some C++ Implementations for the matlab classic calls
+#include <iostream>
 #include "matmath.h"
 #include "assert.h"
 #include <cmath>
@@ -130,9 +131,14 @@ void cart2sph(vectype xvec, vectype yvec, vectype zvec, vectype* thvec, vectype*
 	        *thitr = atan(abs(*yitr / *xitr));
 	    }
         
-        // Constrain th within [0, 2*pi]
-    	double newth = remainder(*thitr, (2.0 * M_PI));
-        *thitr = newth < 0 ? (2*M_PI + newth) : newth;
+        // Put th to the right domain (atan only outputs [0, PI/2])
+        if (*xitr < 0.0 && *yitr > 0.0)
+            *thitr = M_PI - *thitr; // --  QII
+        else if (*xitr < 0.0 && *yitr < 0.0)
+            *thitr += M_PI; // --  QIII
+        else if (*xitr > 0.0 && *yitr < 0.0)  // -- QIV
+        	*thitr = 2.0 * M_PI - *thitr;
+
 
         *ritr = pow(pow(*xitr, 2) + pow(*yitr, 2) + pow(*zitr, 2), 0.5);
         
