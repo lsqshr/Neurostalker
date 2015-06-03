@@ -63,7 +63,7 @@ void PressureSampler::GenSph(){
 void PressureSampler::FindVoxel2Sample(float x, float y, float z, float th, float phi, vectype * outx, vectype* outy, vectype* outz, int pointrange)
 {
     float rl; float random; float random_r; float t;
-    bool current_judge = true; 
+
     for (int n=pointrange; n>0; n--) 
     {  
         //random ranges from 0 to 1
@@ -75,12 +75,13 @@ void PressureSampler::FindVoxel2Sample(float x, float y, float z, float th, floa
         (*outx)[n] = rl * cos(t) * (-sin(phi)) + rl * sin(t) * cos(th) * cos(phi) +  x;
         (*outy)[n] = rl * cos(t) * cos(phi) + rl * sin(t) * cos(th) * sin(phi) +  y;
         (*outz)[n] = rl * sin(t) * (-sin(th)) + z;
-        float center_distance = ((*outx)[n] - x) * ((*outx)[n] - x) + ((*outy)[n] - y) * ((*outy)[n] - y)\
-         + ((*outz)[n] - z) * ((*outz)[n] - z);
-        current_judge = ((center_distance <=  ((this->radius) * (this->radius)))) && current_judge;  
-        cout<<boolalpha<<"judge flag is :"<<current_judge<<endl; 
+
+
+        //cout<<d<<endl;  
         //cout<<(*outx)[n]<<" "<<(*outy)[n]<<" "<<(*outz)[n]<<"center distance"<<center_distance<<endl;
     }
+
+    //cout<<boolalpha<<"judge flag is :"<<current_judge<<endl;
     return; 
 }
 

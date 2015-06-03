@@ -181,7 +181,7 @@ void TestMatMath(){
 
 void TestPressureSampler()
 {
-    cout<<"==== Test Case : FindVoxel2Sample"<<endl;
+    cout<<"== Test Case : Testing FindVoxel2Sample"<<endl;
     PressureSampler p(60, 100, NULL, NULL, NULL, 10);
 
     /* initialize random seed: */
@@ -194,5 +194,15 @@ void TestPressureSampler()
     x = 3; y = 4; z = 5;  
     float phi = 0.8; float theta = 0.6; float radius = 5;
     p.FindVoxel2Sample(x, y, z, theta, phi, &outx, &outy, &outz, p.density);
-
+    bool current_judge = true;
+    float dirx = cos(phi) * sin(theta), diry = sin(phi) * sin(theta), dirz = cos(theta);
+    float firstd = dirx * (outx)[1] + diry * (outy)[1] + dirz * (outz)[1];
+    for (int n=p.density; n>0; n--) 
+    {  
+	    float d = dirx * (outx)[n] + diry * (outy)[n] + dirz * (outz)[n];
+	    float center_distance = ((outx)[n] - x) * ((outx)[n] - x) + ((outy)[n] - y) * ((outy)[n] - y)\
+	                            + ((outz)[n] - z) * ((outz)[n] - z);
+	    current_judge = ((center_distance <=  ((p.radius) * (p.radius)))) && current_judge && (abs(d - firstd)<=0.0001); 
+	 }   
+    if (current_judge){cout<<"== Test case Passed"<<endl;}
 }
