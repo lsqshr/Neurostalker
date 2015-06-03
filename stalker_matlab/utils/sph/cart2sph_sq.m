@@ -15,7 +15,7 @@ r = sqrt(x.^2 + y.^2 + z.^2);
 phi = acos(z ./ r);
 
 % QII
-th(intersect(x < 0, y > 0)) = th(intersect(x < 0, y > 0)) + pi/2;
+th(intersect(x < 0, y > 0)) = pi - th(intersect(x < 0, y > 0));
 % QIII
 th(intersect(x < 0, y < 0)) = th(intersect(x < 0, y < 0)) + pi;
 % QIV
