@@ -1,5 +1,8 @@
 #ifndef __VN_IMGPREPROCESS__
 #define __VN_IMGPREPROCESS__
+#include <vector>
+
+typedef std::vector<double> vectype;
 
 class PressureSampler
 {
@@ -18,7 +21,7 @@ public:
 	float *  GetBasePhi();
 	float *  GetPeakTh();
 	float *  GetPeakPhi();
-	friend void test(); // For Unit-Testing
+	friend void TestPressureSampler();
 
 private:
 	unsigned char * OriginalImg;
@@ -26,13 +29,14 @@ private:
 	float * GVF;
     float radius;
 	int ndir; // Number of directions
-    float density; // The density of the sampled points on each sample plane
+    int density; // The density of the sampled points on each sample plane
 	float * baseth; // The theta values of the base vectors
 	float * basephi; // The theta values of the base vectors
     float * lpressure; // The pressure sampled at each direction
     float * SampleVoxels(int * lx, int * ly, int * lz, int sz);
+
 	void GenSph(); // Generate the base spherical directions
-	void FindVoxel2Sample(int x, int y, int z, double th, double phi);
+    void FindVoxel2Sample(float x, float y, float z, float th, float phi, vectype * outx, vectype* outy, vectype* outz, int pointrange);
 };
 
 #endif

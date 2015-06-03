@@ -198,6 +198,7 @@ void reconstruction_func(V3DPluginCallback2 &callback,
     if (PARA.unittest & 2){
         cout<<"+++++ Running Unit-Tests +++++"<<endl;
         TestMatMath();
+        TestPressureSampler();
     }
 
     if (!(PARA.unittest & 1)) return;
