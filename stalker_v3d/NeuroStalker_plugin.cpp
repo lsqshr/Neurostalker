@@ -194,14 +194,6 @@ void reconstruction_func(V3DPluginCallback2 &callback,
         c = PARA.channel;
     }
 
-    // ------- Run Unit-Tests
-    if (PARA.unittest & 2){
-        cout<<"+++++ Running Unit-Tests +++++"<<endl;
-        TestMatMath();
-        TestPressureSampler();
-    }
-
-    if (!(PARA.unittest & 1)) return;
 
     // ------- Main neuron reconstruction code
     // Crop The image
@@ -262,7 +254,18 @@ void reconstruction_func(V3DPluginCallback2 &callback,
     // Adaptive Tracing here, may replace with graph cut
     IM->ImComputeInitBackgroundModel(IM->v_threshold);
     IM->ImComputeInitForegroundModel();
-    
+
+    // ------- Run Unit-Tests
+    if (PARA.unittest & 2){
+        cout<<"+++++ Running Unit-Tests +++++"<<endl;
+        TestMatMath();
+        TestPressureSampler();
+    }
+
+    if (PARA.unittest & 1) {
+        // TODO: Run the real tracing
+    }
+
     //Output
     NeuronTree nt;
     QString swc_name = PARA.inimg_file + "_NeuroStalker.swc";
