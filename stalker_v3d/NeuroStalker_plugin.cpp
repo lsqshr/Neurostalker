@@ -21,7 +21,6 @@ ImageOperation *IM;
 Q_EXPORT_PLUGIN2(NeuroStalker, NeuroStalker);
 
 using namespace std;
-
 struct input_PARA
 {
     QString inimg_file;
@@ -33,6 +32,8 @@ struct input_PARA
 void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
 unsigned char * downsample(V3DLONG* in_sz, V3DLONG c, unsigned char* data1d, V3DLONG * downsz);
 unsigned char * cropfunc(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_img_crop[4]);
+int app_radius(unsigned char* inimg1d, V3DLONG * sz,  double thresh, int location_x, int location_y, int location_z);
+void TestRadius(unsigned char * inimg1d, V3DLONG * sz);
 
 QStringList NeuroStalker::menulist() const
 {
@@ -194,11 +195,14 @@ void reconstruction_func(V3DPluginCallback2 &callback,
         c = PARA.channel;
     }
 
+
+
     // ------- Run Unit-Tests
     if (PARA.unittest & 2){
         cout<<"+++++ Running Unit-Tests +++++"<<endl;
         TestMatMath();
         TestPressureSampler();
+        TestRadius(data1d, in_sz);
     }
 
     if (!(PARA.unittest & 1)) return;
@@ -234,6 +238,8 @@ void reconstruction_func(V3DPluginCallback2 &callback,
         saveImage("downsample.v3draw", downdata1d, downsz, V3D_UINT8);
         cout<<"=============== Image Downsampled..."<<endl;
     }
+
+
 
     // Using the Image Operation found in vaa3d_tools/hackathon/zhi/snake_tracing/TracingCore/ in for some simple Image Processing
     IM = new ImageOperation;
@@ -424,3 +430,72 @@ unsigned char * cropfunc(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG 
 
     return p_img8u_crop;
  }   
+
+int app_radius(unsigned char * inimg1d, V3DLONG * sz,  double thresh, int location_x, int location_y, int location_z)
+{
+    int max_r = MAX(MAX(sz[0]/2.0, sz[1]/2.0), sz[2]/2.0);
+    int r;
+    double tol_num, bak_num;
+    int mx = location_x + 0.5;
+    int my = location_y+ 0.5;
+    int mz = location_z + 0.5;
+    //cout<<"mx = "<<mx<<" my = "<<my<<" mz = "<<mz<<endl;
+    V3DLONG x[2], y[2], z[2];
+
+    tol_num = bak_num = 0.0;
+    V3DLONG sz01 = sz[0] * sz[1];
+    for(r = 1; r <= max_r; r++)
+    {
+        double r1 = r - 0.5;
+        double r2 = r + 0.5;
+        double r1_r1 = r1 * r1;
+        double r2_r2 = r2 * r2;
+        double z_min = 0, z_max = r2;
+        for(int dz = z_min ; dz < z_max; dz++)
+        {
+            double dz_dz = dz * dz;
+            double y_min = 0;
+            double y_max = sqrt(r2_r2 - dz_dz);
+            for(int dy = y_min; dy < y_max; dy++)
+            {
+                double dy_dy = dy * dy;
+                double x_min = r1_r1 - dz_dz - dy_dy;
+                x_min = x_min > 0 ? sqrt(x_min)+1 : 0;
+                double x_max = sqrt(r2_r2 - dz_dz - dy_dy);
+                for(int dx = x_min; dx < x_max; dx++)
+                {
+                    x[0] = mx - dx, x[1] = mx + dx;
+                    y[0] = my - dy, y[1] = my + dy;
+                    z[0] = mz - dz, z[1] = mz + dz;
+                    for(char b = 0; b < 8; b++)
+                    {
+                        char ii = b & 0x01, jj = (b >> 1) & 0x01, kk = (b >> 2) & 0x01;
+                        if(x[ii]<0 || x[ii] >= sz[0] || y[jj]<0 || y[jj] >= sz[1] || z[kk]<0 || z[kk] >= sz[2]) return r;
+                        else
+                        {
+                            tol_num++;
+                            long pos = z[kk]*sz01 + y[jj] * sz[0] + x[ii];
+                            if(inimg1d[pos] < thresh){bak_num++;}
+                            if((bak_num / tol_num) > 0.0001) return r;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return r;
+}
+
+void TestRadius(unsigned char * inimg1d, V3DLONG * sz)
+    {
+    //==========================================radius estimation begin226.719 173.996 44.2629
+    cout<<"== Test Case : Testing radius estimation"<<endl;
+    int location_x = 35, location_y = 15, location_z = 20;
+    double thresh = 0.01;
+    int testr = app_radius(inimg1d, sz, thresh, location_x, location_y , location_z);
+    //cout<<"test data1d value"<<data1d[90]<<endl;
+    //cout<<"test radius value: "<<testr<<endl;
+    if (testr==3){cout<<"== Test case Passed"<<endl;}
+    //printf("%s", data1d[90]);
+    //==========================================radius estimation end
+    }
