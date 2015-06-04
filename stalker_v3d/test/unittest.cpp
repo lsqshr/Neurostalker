@@ -179,10 +179,10 @@ void TestMatMath(){
 }
 
 
-void TestPressureSampler()
+void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF)
 {
     cout<<"==== Test Case : FindVoxel2Sample"<<endl;
-    PressureSampler p(60, 100, NULL, NULL, NULL, 10);
+    PressureSampler p(60, 100, OriginalImage, GVF, 10);
 
     /* initialize random seed: */
     srand (time(NULL));
@@ -195,4 +195,10 @@ void TestPressureSampler()
     float phi = 0.8; float theta = 0.6; float radius = 5;
     p.FindVoxel2Sample(x, y, z, theta, phi, &outx, &outy, &outz, p.density);
 
+    
+    cout<<"==== Test Case : GenSph"<<endl;
+    // TODO: need a correct criteria to test this base 
+    p.GenSph();
+
 }
+

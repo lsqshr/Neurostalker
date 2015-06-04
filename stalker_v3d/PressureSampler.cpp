@@ -10,28 +10,23 @@ typedef std::vector<double> vectype;
 
 PressureSampler::PressureSampler(int ndir, 
                                  int density,
-                                 unsigned char * OriginalImg,
-                                 unsigned char * BinaryImg,
-                                 float * GVF,
+                                 ImagePointer OriginalImg,
+                                 GradientImagePointer GVF,
                                  float radius): 
-                                                   ndir(ndir),
-                                                   density(density), 
-                                                   OriginalImg(OriginalImg), 
-                                                   BinaryImg(BinaryImg), 
-                                                   GVF(GVF), 
-                                                   radius(radius)
+                                               ndir(ndir),
+                                               density(density), 
+                                               OriginalImg(OriginalImg), 
+                                               GVF(GVF), 
+                                               radius(radius)
 {
-    this->baseth = new float[ndir];
-    this->basephi = new float[ndir];
-    this->lpressure = new float[ndir*density];
+    this->baseth.insert(this->baseth.begin(), ndir);
+    this->basephi.insert(this->basephi.begin(), ndir);
+    this->lpressure.insert(this->lpressure.begin(), (int) ndir*density);
     this->GenSph();
 }
 
 
 PressureSampler::~PressureSampler(){
-   if(this->baseth) delete baseth;
-   if(this->basephi) delete basephi;
-   if(this->lpressure) delete lpressure;
 }
 
 
@@ -53,10 +48,10 @@ void PressureSampler::GenSph(){
     vectype transv = transpose(repv, v.size(), nth);// Transpose repv matrix
 
     for (int i = 0; i < u.size() * nphi; i++)
-        this->baseth[i] = 2 * M_PI * repu[i];
+        this->baseth[i] = 2.0 * M_PI * repu[i];
 
     for (int i = 0; i < v.size() * nth; i++)
-        this->basephi[i] = acos(2 * transv[i] - 1);
+        this->basephi[i] = acos(2.0 * transv[i] - 1);
 }
 
 
