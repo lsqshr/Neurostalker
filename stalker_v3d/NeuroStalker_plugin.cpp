@@ -226,7 +226,7 @@ void reconstruction_func(V3DPluginCallback2 &callback,
         unsigned char* downdata1d = downsample(in_sz, c, data1d, downsz);
         cout<<"Data size after downsample: "<<in_sz[0]<<","<<in_sz[1]<<","<<in_sz[2]<<endl;
         cout<<"Saving downsampled image to test/testdata/downsample.v3draw"<<endl;
-        saveImage("downsample.v3draw", downdata1d, downsz, V3D_UINT8);
+        saveImage("test/testdata/downsample.v3draw", downdata1d, downsz, V3D_UINT8);
         cout<<"=============== Image Downsampled..."<<endl;
     }
 
@@ -258,7 +258,17 @@ void reconstruction_func(V3DPluginCallback2 &callback,
     IM->ImComputeInitBackgroundModel(IM->v_threshold);
     IM->ImComputeInitForegroundModel();
 
-    DeriveForegroundLabelImage(IM->I, ForegroundThreshold);
+    // Get the Binary Image
+    LabelImagePointer binaryimg = DeriveForegroundLabelImage(IM->I, ForegroundThreshold);
+    // Save the binary img to visualise the segmentation
+    unsigned short int * binaryimgbuffer =  binaryimg->GetBufferPointer();
+    unsigned char * binaryimg2uchar = new unsigned char [in_sz[0]*in_sz[1]*in_sz[2]];
+    for (int i = 0; i < in_sz[0]*in_sz[1]*in_sz[2]; i++)
+    {
+        binaryimg2uchar[i] = (unsigned char) ((double)(binaryimgbuffer[i]) * 255.0);
+    }
+    saveImage("test/testdata/binaryimage.v3draw", binaryimg2uchar, in_sz, V3D_UINT8);
+
 
     // ------- Run Unit-Tests
     if (PARA.unittest & 2){
@@ -443,24 +453,41 @@ unsigned char * crop(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_i
 
 
 LabelImagePointer DeriveForegroundLabelImage(const ImagePointer I, const int threshold)
-{   typedef itk::ImageLinearConstIteratorWithIndex<ImageType> IterType;
-    IterType itr(I, I->GetRequestedRegion());
-    itr.SetDirection(2);
-    itr.GoToBegin();
+{   itk::ImageLinearConstIteratorWithIndex<ImageType> originitr(I, I->GetRequestedRegion());
+    originitr.SetDirection(2);
+    originitr.GoToBegin();
+    ImageType::SizeType originsize = I->GetLargestPossibleRegion().GetSize();
 
     LabelImagePointer pBinaryImage = LabelImageType::New();
     LabelImageType::SizeType size;
-    //size[0] = I->
+    size[0] = originsize[0];
+    size[1] = originsize[1];
+    size[2] = originsize[2];
+    LabelImageType::IndexType idx;
+    idx.Fill(0);
+    LabelImageType::RegionType region;
+    region.SetSize( size );
+    region.SetIndex(idx);
+    pBinaryImage->SetRegions(region);
+    pBinaryImage->Allocate();
+    pBinaryImage->FillBuffer(0);
+    itk::ImageLinearIteratorWithIndex<LabelImageType> 
+                        binaryitr(pBinaryImage, pBinaryImage->GetRequestedRegion());
+    binaryitr.SetDirection(2);
+    binaryitr.GoToBegin();
 
-    cout<<"====Background Pixels"<<endl;
-    while( !itr.IsAtEnd() )
+    while( !originitr.IsAtEnd() && !binaryitr.IsAtEnd())
     {
-        while(!itr.IsAtEndOfLine()){
-            ++itr;
+        while(!originitr.IsAtEndOfLine()){
+            if (originitr.Get() > threshold){
+                binaryitr.Set(1);
+            }
+            ++originitr;
+            ++binaryitr;
         }
-        itr.NextLine();
+        originitr.NextLine();
+        binaryitr.NextLine();
     }
     
-    //TODO:
     return pBinaryImage;
 }
