@@ -12,7 +12,7 @@
 #include "PressureSampler.h"
 
 using namespace std;
-typedef vector<double> vectype ;
+typedef vector<float> vectype;
 
 
 int approx_equal(double x, double y)

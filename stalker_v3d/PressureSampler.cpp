@@ -6,7 +6,7 @@
 #include <iostream>
 
 using namespace std;
-typedef std::vector<double> vectype;
+typedef std::vector<float> vectype;
 
 PressureSampler::PressureSampler(int ndir, 
                                  int density,
@@ -116,7 +116,8 @@ void PressureSampler::SampleVoxels(const vector<float> lx, const vector<float> l
 
     assert(lx.size() == ly.size() && ly.size() == lz.size());
     vector<float> distance(lx.size());
-//    vector<float> l = eucdistance2center(this->x, this->y, this->z, lx, ly, lz);
+
+    vectype l = eucdistance2center(this->x, this->y, this->z, lx, ly, lz);
 }
 
 

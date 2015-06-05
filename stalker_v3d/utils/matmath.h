@@ -1,6 +1,6 @@
 #include <vector>
 
-typedef std::vector<double> vectype;
+typedef std::vector<float> vectype;
 
 // Generate a values in linear space between a and b
 vectype linspace(const double a, const double b, const int n);
@@ -18,3 +18,5 @@ void sph2cart(vectype thvec, vectype phivec, vectype r, vectype * xvec, vectype 
 void cart2sph(vectype xvec, vectype yvec, vectype zvec, vectype* thvec, vectype* phivec, vectype* r );
 
 void savepts2csv(vectype a, vectype b, vectype c, const char* filename); // Save a list of points to a text file
+
+vectype eucdistance2center(float x, float y, float z, vectype lx, vectype ly, vectype lz);

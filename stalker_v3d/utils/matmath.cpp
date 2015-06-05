@@ -153,14 +153,29 @@ void savepts2csv(vectype a, vectype b, vectype c, const char* filename){
 // Save a list of points to a text file
 // Each point occupies a line
 // Since three coordinates are saved, this function works both for Cartisian and Spherical 
-   ofstream f;
-   f.open(filename);
-   assert(a.size() == b.size() && b.size() == c.size());
+	ofstream f;
+	f.open(filename);
+	assert(a.size() == b.size() && b.size() == c.size());
 
-   for (int i = 0; i < a.size(); i++)
-   {
+	for (int i = 0; i < a.size(); i++)
+	{
 	   f<<a[i]<<","<<b[i]<<","<<c[i]<<endl;
-   }
+	}
 
-   f.close();
+	f.close();
+}
+
+
+vectype eucdistance2center(float x, float y, float z, vectype lx, vectype ly, vectype lz)
+{
+	assert(lx.size() == ly.size() && ly.size() == lz.size());
+
+    vectype vd(lx.size());
+    
+    for (int i = 0; i < lx.size(); i++)	
+    {
+        vd[i] = pow( pow(lx[i] - x, 2) + pow(ly[i] - y, 2) + pow(lz[i] - z, 2), 0.5);
+    }
+
+    return vd;
 }
