@@ -4,6 +4,7 @@
 #include "lib/ImageOperation.h"
 
 typedef std::vector<double> vectype;
+using namespace std;
 
 class PressureSampler
 {
@@ -22,21 +23,25 @@ public:
 	vectype GetBasePhi();
 	vectype GetPeakTh();
 	vectype GetPeakPhi();
+	void UpdatePosition(float x, float y, float z);
 	friend void TestPressureSampler(ImagePointer, GradientImagePointer);
 
 private:
 	ImagePointer OriginalImg;
 	GradientImagePointer GVF;
     float radius;
+    float x, y, z;// position
 	int ndir; // Number of directions
     int density; // The density of the sampled points on each sample plane
 	vectype baseth; // The theta values of the base vectors
 	vectype basephi; // The theta values of the base vectors
     vectype lpressure; // The pressure sampled at each direction
-    void SampleVoxels(int * lx, int * ly, int * lz, int sz); // Sample the distortion energy at each direction
-    std::vector<float> GetGradientAtIndex(int x, int y, int z);
+    void SampleVoxels(vector<float>, vector<float>, vector<float>); // Sample the distortion energy at each direction
+    vector<GradientPixelType> GetGradientAtIndex(vector<int> x, vector<int> y, vector<int> z);
 	void GenSph(); // Generate the base spherical directions
-    void FindVoxel2Sample(float x, float y, float z, float th, float phi, vectype * outx, vectype* outy, vectype* outz, int pointrange);
+    void FindVoxel2Sample(float th,
+                          float phi, vectype * outx, vectype* outy,
+                          vectype* outz, int pointrange);
 };
 
 #endif

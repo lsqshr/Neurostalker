@@ -66,7 +66,7 @@ void PressureSampler::SetNDir(int ndir){
 }
 
 
-void PressureSampler::FindVoxel2Sample(float x, float y, float z, float th, float phi, vectype * outx, vectype* outy, vectype* outz, int pointrange)
+void PressureSampler::FindVoxel2Sample(float th, float phi, vectype * outx, vectype* outy, vectype* outz, int pointrange)
 {
     float rl; float random; float random_r; float t;
     for (int n=pointrange; n>0; n--) 
@@ -77,30 +77,50 @@ void PressureSampler::FindVoxel2Sample(float x, float y, float z, float th, floa
     
         //assign theta phi value to the normal vector
         t = 2 * M_PI * random;  rl = this->radius * random_r;
-        (*outx)[n] = rl * cos(t) * (-sin(phi)) + rl * sin(t) * cos(th) * cos(phi) +  x;
-        (*outy)[n] = rl * cos(t) * cos(phi) + rl * sin(t) * cos(th) * sin(phi) +  y;
-        (*outz)[n] = rl * sin(t) * (-sin(th)) + z;
+        (*outx)[n] = rl * cos(t) * (-sin(phi)) + rl * sin(t) * cos(th) * cos(phi) +  this->x;
+        (*outy)[n] = rl * cos(t) * cos(phi) + rl * sin(t) * cos(th) * sin(phi) +  this->y;
+        (*outz)[n] = rl * sin(t) * (-sin(th)) + this->z;
     }
     return; 
 }
 
 
-std::vector<float> PressureSampler::GetGradientAtIndex(int x, int y, int z)
+vector<GradientPixelType> PressureSampler::GetGradientAtIndex(vector<int> lx, vector<int> ly, vector<int> lz)
 {
-    GradientImageType::IndexType idx;
-    typedef itk::VectorLinearInterpolateImageFunction<
-    GradientImageType, float >  GradientInterpolatorType;
-    GradientInterpolatorType::Pointer interpolator = GradientInterpolatorType::New();
-    interpolator->SetInputImage(this->GVF);
 
-    idx[0] = x;
-    idx[1] = y;
-    idx[2] = z;
-    GradientPixelType gpixel = interpolator->EvaluateAtIndex(idx);
+    vector<GradientPixelType> lvg;
+    for (int i = 0; i < lx.size(); i++)
+    {
+        GradientImageType::IndexType idx;
+        typedef itk::VectorLinearInterpolateImageFunction<GradientImageType, float >
+            GradientInterpolatorType;
+        GradientInterpolatorType::Pointer interpolator = GradientInterpolatorType::New();
+        interpolator->SetInputImage(this->GVF);
+        idx[0] = lx[i];
+        idx[1] = ly[i];
+        idx[2] = lz[i];
+        GradientPixelType gpixel = interpolator->EvaluateAtIndex(idx);
+        lvg.push_back(gpixel);
+    }
 
-    std::vector<float> vg;
-    vg.push_back(gpixel[0]);
-    vg.push_back(gpixel[1]);
-    vg.push_back(gpixel[2]);
-    return vg;
+    return lvg;
+}
+
+
+void PressureSampler::SampleVoxels(const vector<float> lx, const vector<float> ly, const vector<float> lz)
+{
+// Sample the distortion energy at each direction
+// E = 1/N * sum_i{l_i * f_i}
+// where N is the total number of voxels, l_i is the distance between the sampling position and the center of the plane;
+// f_i is the orthogonal resultant force on the plane
+
+    assert(lx.size() == ly.size() && ly.size() == lz.size());
+    vector<float> distance(lx.size());
+//    vector<float> l = eucdistance2center(this->x, this->y, this->z, lx, ly, lz);
+}
+
+
+void PressureSampler::UpdatePosition(float x, float y, float z)
+{
+    this->x = x; this->y = y; this->z = z;
 }

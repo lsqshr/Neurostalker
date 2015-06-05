@@ -138,7 +138,6 @@ void TestSph2CartThenCart2Sph(){
     assert(vector_equal(phi, outphi));
     assert(vector_equal(r, outr));
 	cout<<"== Test Case Passed"<<endl;
-
 }
 
 
@@ -191,9 +190,10 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF)
     vectype outz(p.density);
 
     float x, y, z;
-    x = 3; y = 4; z = 5;  
+    x = 3.0; y = 4.0; z = 5.0;
     float phi = 0.8; float theta = 0.6; float radius = 5;
-    p.FindVoxel2Sample(x, y, z, theta, phi, &outx, &outy, &outz, p.density);
+    p.UpdatePosition(x, y, z);
+    p.FindVoxel2Sample(theta, phi, &outx, &outy, &outz, p.density);
 	cout<<"== Test Case Passed"<<endl;
 
     cout<<"==== Test Case : GenSph"<<endl;
@@ -226,13 +226,15 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF)
     cout<<"==== Test Case : GetGradientAtIndex"<<endl;
     GradientImageType::SizeType sz = p.GVF->GetLargestPossibleRegion().GetSize();
     cout<<"GVG Size: "<<sz[0]<<","<<sz[1]<<","<<sz[2]<<endl;
-    for (int x=0;x<sz[0];x++)
-        for (int y=0;y<sz[1];y++)
-        	for (int z=0; z<sz[2];z++)
-        	{
-			    std::vector<float> v = p.GetGradientAtIndex(x, y, z);
-			    //cout<<v[0]<<","<<v[1]<<","<<v[2]<<endl;
-        	}
+    vector<int> lx, ly, lz;
 
+    for(int i=0;i<100;i++)
+    {
+	    lx.push_back(rand() % sz[0]);
+	    ly.push_back(rand() % sz[1]);
+	    lz.push_back(rand() % sz[2]);
+    }
+
+    vector<GradientPixelType> lvg = p.GetGradientAtIndex(lx, ly, lz);
 	cout<<"== Test Case Passed"<<endl;
 }
