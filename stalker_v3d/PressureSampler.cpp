@@ -37,13 +37,9 @@ void PressureSampler::GenSph(){
 
     this->baseth.clear();
     this->basephi.clear();
-    cout<<"size after clear:"<<this->basephi.size()<<endl;
-
     int nphi = (int) floor(pow(((double) this->ndir / 2.0), 0.5));
-    cout<<"old ndir:"<<this->ndir<<endl;
     int nth = (int) 2 * nphi;
     this->ndir = nphi * nth; // Refine the ndir according to the spherical distribution
-    cout<<"new ndir:"<<this->ndir<<endl;
 
     vectype u = linspace(0, 1, nth);
     vectype v = linspace(0, 1, nphi);
@@ -92,12 +88,19 @@ void PressureSampler::FindVoxel2Sample(float x, float y, float z, float th, floa
 std::vector<float> PressureSampler::GetGradientAtIndex(int x, int y, int z)
 {
     GradientImageType::IndexType idx;
+    typedef itk::VectorLinearInterpolateImageFunction<
+    GradientImageType, float >  GradientInterpolatorType;
+    GradientInterpolatorType::Pointer interpolator = GradientInterpolatorType::New();
+    interpolator->SetInputImage(this->GVF);
+
     idx[0] = x;
     idx[1] = y;
     idx[2] = z;
-    GradientPixelType pixel = this->OriginalImg->GetPixel(idx);
-    float * lg = pixel.GetDataPointer();
-    std::vector<float> vg(lg, lg+3);
-    //delete [] lg;
+    GradientPixelType gpixel = interpolator->EvaluateAtIndex(idx);
+
+    std::vector<float> vg;
+    vg.push_back(gpixel[0]);
+    vg.push_back(gpixel[1]);
+    vg.push_back(gpixel[2]);
     return vg;
 }

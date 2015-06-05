@@ -224,8 +224,15 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF)
 	cout<<"== Test Case Passed"<<endl;
 
     cout<<"==== Test Case : GetGradientAtIndex"<<endl;
-    std::vector<float> v = p.GetGradientAtIndex(76,78,28);
-    cout<<v[0]<<","<<v[1]<<","<<v[2]<<endl;
+    GradientImageType::SizeType sz = p.GVF->GetLargestPossibleRegion().GetSize();
+    cout<<"GVG Size: "<<sz[0]<<","<<sz[1]<<","<<sz[2]<<endl;
+    for (int x=0;x<sz[0];x++)
+        for (int y=0;y<sz[1];y++)
+        	for (int z=0; z<sz[2];z++)
+        	{
+			    std::vector<float> v = p.GetGradientAtIndex(x, y, z);
+			    //cout<<v[0]<<","<<v[1]<<","<<v[2]<<endl;
+        	}
+
 	cout<<"== Test Case Passed"<<endl;
 }
-

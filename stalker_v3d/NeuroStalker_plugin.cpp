@@ -260,6 +260,7 @@ void reconstruction_func(V3DPluginCallback2 &callback,
 
     // Get the Binary Image
     LabelImagePointer binaryimg = DeriveForegroundLabelImage(IM->I, ForegroundThreshold);
+
     // Save the binary img to visualise the segmentation
     unsigned short int * binaryimgbuffer =  binaryimg->GetBufferPointer();
     unsigned char * binaryimg2uchar = new unsigned char [in_sz[0]*in_sz[1]*in_sz[2]];
@@ -268,7 +269,6 @@ void reconstruction_func(V3DPluginCallback2 &callback,
         binaryimg2uchar[i] = (unsigned char) ((double)(binaryimgbuffer[i]) * 255.0);
     }
     saveImage("test/testdata/binaryimage.v3draw", binaryimg2uchar, in_sz, V3D_UINT8);
-
 
     // ------- Run Unit-Tests
     if (PARA.unittest & 2){
