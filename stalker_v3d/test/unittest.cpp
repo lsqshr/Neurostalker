@@ -10,6 +10,8 @@
 #include "assert.h"
 #include "utils/matmath.h"
 #include "PressureSampler.h"
+#include "stackutil.h"
+
 
 using namespace std;
 typedef vector<double> vectype ;
@@ -169,6 +171,20 @@ void TestCart2SphThenCart2Sph(){
 
 }
 
+void TestRadius(unsigned char * inimg1d, V3DLONG * sz)
+{
+    //==========================================radius estimation begin226.719 173.996 44.2629
+    cout<<"== Test Case : Testing radius estimation"<<endl;
+    int location_x = 35, location_y = 15, location_z = 20;
+    double thresh = 0.01;
+    int testr = appradius(inimg1d, sz, thresh, location_x, location_y , location_z);
+    //cout<<"test data1d value"<<data1d[90]<<endl;
+    //cout<<"test radius value: "<<testr<<endl;
+    if (testr==3){cout<<"== Test case Passed"<<endl;}
+    //printf("%s", data1d[90]);
+    //==========================================radius estimation end
+}
+
 
 void TestMatMath(){
     TestLinspace();
@@ -179,12 +195,12 @@ void TestMatMath(){
 }
 
 
-void TestPressureSampler()
+void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF)
 {
-    cout<<"== Test Case : Testing FindVoxel2Sample"<<endl;
-    PressureSampler p(60, 100, NULL, NULL, NULL, 10);
 
-    /* initialize random seed: */
+    cout<<"== Test Case : FindVoxel2Sample"<<endl;
+    PressureSampler p(60, 100, OriginalImage, GVF, 10);
+     // initialize random seed: 
     srand (time(NULL));
     vectype  outx(p.density);
     vectype  outy(p.density);
@@ -206,3 +222,4 @@ void TestPressureSampler()
 	 }   
     if (current_judge){cout<<"== Test case Passed"<<endl;}
 }
+

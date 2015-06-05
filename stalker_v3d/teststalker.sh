@@ -6,3 +6,4 @@ qmake;
 make -j4;
 
 $vaa3d -x NeuroStalker -f tracing_func -i test/testdata/test.little-soma.v3draw -p 1 3 3 | tee runlog.txt
+

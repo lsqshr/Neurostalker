@@ -21,6 +21,8 @@ ImageOperation *IM;
 Q_EXPORT_PLUGIN2(NeuroStalker, NeuroStalker);
 
 using namespace std;
+const int ForegroundThreshold = 30; // The threshold used in APP2
+
 struct input_PARA
 {
     QString inimg_file;
@@ -29,11 +31,11 @@ struct input_PARA
     int unittest; // 2 : Run Unit-Test; 1: Run Tracing; 0: Run Nothing
 };
 
+
 void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
 unsigned char * downsample(V3DLONG* in_sz, V3DLONG c, unsigned char* data1d, V3DLONG * downsz);
-unsigned char * cropfunc(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_img_crop[4]);
-int app_radius(unsigned char* inimg1d, V3DLONG * sz,  double thresh, int location_x, int location_y, int location_z);
-void TestRadius(unsigned char * inimg1d, V3DLONG * sz);
+unsigned char * crop(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_img_crop[4]);
+LabelImagePointer DeriveForegroundLabelImage(const ImagePointer I, const int threshold);
 
 QStringList NeuroStalker::menulist() const
 {
@@ -106,7 +108,6 @@ bool NeuroStalker::dofunc(const QString & func_name,
         printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
         printf("preprocessing    The preprocessing flag - 1: Crop Only; 2: Downsample; 3: Downsample and crop; \n");
         printf("run unit-tests   - 1: Run Tracing Only; 2: Run unit-tests only; 3: Run Both Unit Tests and Tracing; \n");
-
         printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
 
     }
@@ -194,26 +195,18 @@ void reconstruction_func(V3DPluginCallback2 &callback,
         sc = in_sz[3];
         c = PARA.channel;
     }
-
-
-
-    // ------- Run Unit-Tests
-    if (PARA.unittest & 2){
+        if (PARA.unittest & 2)
+    {
         cout<<"+++++ Running Unit-Tests +++++"<<endl;
-        TestMatMath();
-        TestPressureSampler();
         TestRadius(data1d, in_sz);
     }
-
-    if (!(PARA.unittest & 1)) return;
-
     // ------- Main neuron reconstruction code
     // Crop The image
     if (PARA.preprocessing & 1)
     {
         cout<<"=============== Cropping the image ==============="<<endl;
         V3DLONG sz_img_crop[4];
-        unsigned char *p_img8u_crop = cropfunc(in_sz, data1d, sz_img_crop);    
+        unsigned char *p_img8u_crop = crop(in_sz, data1d, sz_img_crop);    
         cout<<"Saving cropped image to downsample.v3draw"<<endl;
         saveImage("test/testdata/cropoutside.v3draw", p_img8u_crop, sz_img_crop, V3D_UINT8);
         if (data1d) delete [] data1d;
@@ -265,10 +258,24 @@ void reconstruction_func(V3DPluginCallback2 &callback,
     IM->SeedAdjustment(10);
     std::cout<<"=== Preprocessing Finished..."<<std::endl;
 
-    // Adaptive Tracing here, may replace with graph cut
+    // Adaptive thresholding here, may replace with graph cut
     IM->ImComputeInitBackgroundModel(IM->v_threshold);
     IM->ImComputeInitForegroundModel();
+
+    DeriveForegroundLabelImage(IM->I, ForegroundThreshold);
+
+    // ------- Run Unit-Tests
+    if (PARA.unittest & 2){
+        cout<<"+++++ Running Unit-Tests +++++"<<endl;
+        TestMatMath();
+        TestPressureSampler(IM->I, IM->IGVF);
     
+    }
+
+    if (PARA.unittest & 1) {
+        // TODO: Run the real tracing
+    }
+
     //Output
     NeuronTree nt;
     QString swc_name = PARA.inimg_file + "_NeuroStalker.swc";
@@ -375,7 +382,7 @@ unsigned char * downsample(V3DLONG *in_sz,
 }
 
 
-unsigned char * cropfunc(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_img_crop[4])
+unsigned char * crop(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_img_crop[4])
 {    
     printf("1. Find the bounding box and crop image. \n");
     V3DLONG long l_boundbox_min[3], l_boundbox_max[3];//xyz
@@ -383,14 +390,17 @@ unsigned char * cropfunc(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG 
     
     //find bounding box
     unsigned char ***p_img8u_3d = 0;
+
     if(!new3dpointer(p_img8u_3d ,in_sz[0], in_sz[1], in_sz[2], data1d))
     {
         printf("ERROR: Fail to allocate memory for the 4d pointer of image.\n");
         if(p_img8u_3d) {delete3dpointer(p_img8u_3d, in_sz[0], in_sz[1], in_sz[2]);}
     }
+
     printf("boundingbox x dimension: %d,y dimension: %d,z dimension: %d.\n", in_sz[0], in_sz[1], in_sz[2]);
     l_boundbox_min[0] = in_sz[0];  l_boundbox_min[1] = in_sz[1];  l_boundbox_min[2] = in_sz[2];
     l_boundbox_max[0] = 0;                l_boundbox_max[1] = 0;                l_boundbox_max[2] = 0;
+
     for(long X=0;X<in_sz[0];X++)
         for(long Y=0;Y<in_sz[1];Y++)
             for(long Z=0;Z<in_sz[2];Z++)
@@ -412,12 +422,15 @@ unsigned char * cropfunc(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG 
     l_npixels_crop = sz_img_crop[0] * sz_img_crop[1] * sz_img_crop[2];
 
     unsigned char *p_img8u_crop = new(std::nothrow) unsigned char[l_npixels_crop]();
+
     if(!p_img8u_crop)
     {
         printf("ERROR: Fail to allocate memory for p_img32f_crop!\n");
         if(p_img8u_3d)              {delete3dpointer(p_img8u_3d, in_sz[0], in_sz[1], in_sz[2]);}
     }
+
     unsigned char *p_tmp = p_img8u_crop;
+
     for(long Z = 0;Z < sz_img_crop[2];Z++)
         for(long Y = 0;Y < sz_img_crop[1];Y++)
             for(long X = 0;X < sz_img_crop[0];X++)
@@ -425,77 +438,38 @@ unsigned char * cropfunc(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG 
                 *p_tmp = p_img8u_3d[Z+l_boundbox_min[2]][Y+l_boundbox_min[1]][X+l_boundbox_min[0]];
                 p_tmp++;
             }
+
     if(p_img8u_3d) {delete3dpointer(p_img8u_3d, in_sz[0], in_sz[1], in_sz[2]);}
+
     saveImage("test/testdata/cropinside.v3draw", p_img8u_crop, sz_img_crop, V3D_UINT8);
 
     return p_img8u_crop;
  }   
 
-int app_radius(unsigned char * inimg1d, V3DLONG * sz,  double thresh, int location_x, int location_y, int location_z)
-{
-    int max_r = MAX(MAX(sz[0]/2.0, sz[1]/2.0), sz[2]/2.0);
-    int r;
-    double tol_num, bak_num;
-    int mx = location_x + 0.5;
-    int my = location_y+ 0.5;
-    int mz = location_z + 0.5;
-    //cout<<"mx = "<<mx<<" my = "<<my<<" mz = "<<mz<<endl;
-    V3DLONG x[2], y[2], z[2];
 
-    tol_num = bak_num = 0.0;
-    V3DLONG sz01 = sz[0] * sz[1];
-    for(r = 1; r <= max_r; r++)
+
+
+
+
+LabelImagePointer DeriveForegroundLabelImage(const ImagePointer I, const int threshold)
+{   typedef itk::ImageLinearConstIteratorWithIndex<ImageType> IterType;
+    IterType itr(I, I->GetRequestedRegion());
+    itr.SetDirection(2);
+    itr.GoToBegin();
+
+    LabelImagePointer pBinaryImage = LabelImageType::New();
+    LabelImageType::SizeType size;
+    //size[0] = I->
+
+    cout<<"====Background Pixels"<<endl;
+    while( !itr.IsAtEnd() )
     {
-        double r1 = r - 0.5;
-        double r2 = r + 0.5;
-        double r1_r1 = r1 * r1;
-        double r2_r2 = r2 * r2;
-        double z_min = 0, z_max = r2;
-        for(int dz = z_min ; dz < z_max; dz++)
-        {
-            double dz_dz = dz * dz;
-            double y_min = 0;
-            double y_max = sqrt(r2_r2 - dz_dz);
-            for(int dy = y_min; dy < y_max; dy++)
-            {
-                double dy_dy = dy * dy;
-                double x_min = r1_r1 - dz_dz - dy_dy;
-                x_min = x_min > 0 ? sqrt(x_min)+1 : 0;
-                double x_max = sqrt(r2_r2 - dz_dz - dy_dy);
-                for(int dx = x_min; dx < x_max; dx++)
-                {
-                    x[0] = mx - dx, x[1] = mx + dx;
-                    y[0] = my - dy, y[1] = my + dy;
-                    z[0] = mz - dz, z[1] = mz + dz;
-                    for(char b = 0; b < 8; b++)
-                    {
-                        char ii = b & 0x01, jj = (b >> 1) & 0x01, kk = (b >> 2) & 0x01;
-                        if(x[ii]<0 || x[ii] >= sz[0] || y[jj]<0 || y[jj] >= sz[1] || z[kk]<0 || z[kk] >= sz[2]) return r;
-                        else
-                        {
-                            tol_num++;
-                            long pos = z[kk]*sz01 + y[jj] * sz[0] + x[ii];
-                            if(inimg1d[pos] < thresh){bak_num++;}
-                            if((bak_num / tol_num) > 0.0001) return r;
-                        }
-                    }
-                }
-            }
+        while(!itr.IsAtEndOfLine()){
+            ++itr;
         }
+        itr.NextLine();
     }
-    return r;
+    
+    //TODO:
+    return pBinaryImage;
 }
-
-void TestRadius(unsigned char * inimg1d, V3DLONG * sz)
-    {
-    //==========================================radius estimation begin226.719 173.996 44.2629
-    cout<<"== Test Case : Testing radius estimation"<<endl;
-    int location_x = 35, location_y = 15, location_z = 20;
-    double thresh = 0.01;
-    int testr = app_radius(inimg1d, sz, thresh, location_x, location_y , location_z);
-    //cout<<"test data1d value"<<data1d[90]<<endl;
-    //cout<<"test radius value: "<<testr<<endl;
-    if (testr==3){cout<<"== Test case Passed"<<endl;}
-    //printf("%s", data1d[90]);
-    //==========================================radius estimation end
-    }

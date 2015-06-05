@@ -1,4 +1,5 @@
 #include <vector>
+#include "stackutil.h"
 
 typedef std::vector<double> vectype;
 
@@ -16,3 +17,6 @@ void sph2cart(vectype thvec, vectype phivec, vectype r, vectype * xvec, vectype 
 
 // Cartisian coordinates to spherical
 void cart2sph(vectype xvec, vectype yvec, vectype zvec, vectype* thvec, vectype* phivec, vectype* r );
+
+// find the radius of the seed
+int appradius(unsigned char * inimg1d, V3DLONG * sz,  double thresh, int location_x, int location_y, int location_z);
