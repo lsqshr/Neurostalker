@@ -5,4 +5,4 @@ vaa3d=../../../../v3d_external/bin/vaa3d;
 qmake;
 make -j4;
 
-$vaa3d -x NeuroStalker -f tracing_func -i test/testdata/test.little-soma.v3draw -p 1 3 0 | tee runlog.txt;
+$vaa3d -x NeuroStalker -f tracing_func -i test/testdata/test.little-soma.v3draw -p 1 3 2 | tee runlog.txt;

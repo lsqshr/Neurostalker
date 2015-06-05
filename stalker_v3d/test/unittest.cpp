@@ -181,24 +181,51 @@ void TestMatMath(){
 
 void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF)
 {
-    cout<<"==== Test Case : FindVoxel2Sample"<<endl;
+
     PressureSampler p(60, 100, OriginalImage, GVF, 10);
 
-    /* initialize random seed: */
+    cout<<"==== Test Case : FindVoxel2Sample"<<endl;
     srand (time(NULL));
-    vectype  outx(p.density);
-    vectype  outy(p.density);
-    vectype  outz(p.density);
+    vectype outx(p.density);
+    vectype outy(p.density);
+    vectype outz(p.density);
 
     float x, y, z;
     x = 3; y = 4; z = 5;  
     float phi = 0.8; float theta = 0.6; float radius = 5;
     p.FindVoxel2Sample(x, y, z, theta, phi, &outx, &outy, &outz, p.density);
+	cout<<"== Test Case Passed"<<endl;
 
-    
     cout<<"==== Test Case : GenSph"<<endl;
-    // TODO: need a correct criteria to test this base 
-    p.GenSph();
+    // -- Save spheres with multiple sampling rate for visual check
+    // Pls drag the csv files generated in test/testdata/*sph.csv in matlab to check 
+    // whether the points were flatly distributed in a unit sphere
+    int ndir = 100;
+    p.SetNDir(ndir);
+    vectype rvec100(p.ndir, 1);
+    cout<<"baseth:"<<p.baseth.size()<<"\tbasephi: "<<
+        p.basephi.size()<<"\trvecsize:"<<rvec100.size()<<endl;
+    assert(p.baseth.size() == p.basephi.size());
+    assert(p.baseth.size() < ndir);
+    vectype x100(p.ndir), y100(p.ndir), z100(p.ndir);
+    sph2cart(p.baseth, p.basephi, rvec100, &x100, &y100, &z100);
+    savepts2csv(x100, y100, z100, "test/testdata/100sph.csv");
 
+    ndir = 10000;
+    p.SetNDir(ndir);
+	vectype rvec10000(p.ndir, 1);
+    cout<<"baseth:"<<p.baseth.size()<<"\tbasephi: "<<
+        p.basephi.size()<<"\trvecsize:"<<rvec10000.size()<<endl;
+    assert(p.baseth.size() == p.basephi.size());
+    assert(p.baseth.size() < ndir);
+    vectype x10000(p.ndir), y10000(p.ndir), z10000(p.ndir);
+    sph2cart(p.baseth, p.basephi, rvec10000, &x10000, &y10000, &z10000);
+    savepts2csv(x10000, y10000, z10000, "test/testdata/10000sph.csv");
+	cout<<"== Test Case Passed"<<endl;
+
+    cout<<"==== Test Case : GetGradientAtIndex"<<endl;
+    std::vector<float> v = p.GetGradientAtIndex(76,78,28);
+    cout<<v[0]<<","<<v[1]<<","<<v[2]<<endl;
+	cout<<"== Test Case Passed"<<endl;
 }
 

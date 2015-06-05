@@ -16,3 +16,5 @@ void sph2cart(vectype thvec, vectype phivec, vectype r, vectype * xvec, vectype 
 
 // Cartisian coordinates to spherical
 void cart2sph(vectype xvec, vectype yvec, vectype zvec, vectype* thvec, vectype* phivec, vectype* r );
+
+void savepts2csv(vectype a, vectype b, vectype c, const char* filename); // Save a list of points to a text file

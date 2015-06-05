@@ -275,6 +275,7 @@ void reconstruction_func(V3DPluginCallback2 &callback,
         cout<<"+++++ Running Unit-Tests +++++"<<endl;
         TestMatMath();
         TestPressureSampler(IM->I, IM->IGVF);
+        cout<<"Testing Finished"<<endl;
     }
 
     if (PARA.unittest & 1) {

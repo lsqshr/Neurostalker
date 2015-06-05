@@ -1,5 +1,6 @@
 // Some C++ Implementations for the matlab classic calls
 #include <iostream>
+#include <fstream>
 #include "matmath.h"
 #include "assert.h"
 #include <cmath>
@@ -145,4 +146,21 @@ void cart2sph(vectype xvec, vectype yvec, vectype zvec, vectype* thvec, vectype*
         *phiitr = acos(*zitr / *ritr);
 	}
 
+}
+
+
+void savepts2csv(vectype a, vectype b, vectype c, const char* filename){
+// Save a list of points to a text file
+// Each point occupies a line
+// Since three coordinates are saved, this function works both for Cartisian and Spherical 
+   ofstream f;
+   f.open(filename);
+   assert(a.size() == b.size() && b.size() == c.size());
+
+   for (int i = 0; i < a.size(); i++)
+   {
+	   f<<a[i]<<","<<b[i]<<","<<c[i]<<endl;
+   }
+
+   f.close();
 }

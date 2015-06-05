@@ -10,13 +10,14 @@ class PressureSampler
 public:
 
     PressureSampler(int ndir, 
-    	             int density,
-    	             ImagePointer OriginalImg,
-    	             GradientImagePointer GVF,
-    	             float radius = 0);
+    	            int density,
+    	            ImagePointer OriginalImg,
+    	            GradientImagePointer GVF,
+    	            float radius = 0);
     ~PressureSampler();
 	void RandRotateSph();
 	void RandSample(double x, double y, double z); // Randomly sample the pressure at specific postion (x,y,z)
+	void SetNDir(int ndir);
 	vectype GetBaseTh();
 	vectype GetBasePhi();
 	vectype GetPeakTh();

@@ -19,10 +19,11 @@ PressureSampler::PressureSampler(int ndir,
                                                GVF(GVF), 
                                                radius(radius)
 {
-    this->baseth.insert(this->baseth.begin(), ndir);
-    this->basephi.insert(this->basephi.begin(), ndir);
-    this->lpressure.insert(this->lpressure.begin(), (int) ndir*density);
-    this->GenSph();
+
+    //this->baseth.insert(this->baseth.begin(), this->ndir);
+    //this->basephi.insert(this->basephi.begin(), this->ndir);
+    this->lpressure.insert(this->lpressure.begin(), (int) this->ndir*density);
+    //this->GenSph();
 }
 
 
@@ -34,24 +35,38 @@ void PressureSampler::GenSph(){
 // Uniformly pick directions on a unit sphere
 // Ref: http://mathworld.wolfram.com/SpherePointPicking.html
 
-    int nphi = (int) pow(((double)this->ndir / 2.0), 0.5);
+    this->baseth.clear();
+    this->basephi.clear();
+    cout<<"size after clear:"<<this->basephi.size()<<endl;
+
+    int nphi = (int) floor(pow(((double) this->ndir / 2.0), 0.5));
+    cout<<"old ndir:"<<this->ndir<<endl;
     int nth = (int) 2 * nphi;
-    //itk::Matrix<double, nphi, nth> uM;
-    //itk::Matrix<double, nth, nphi> vM;
+    this->ndir = nphi * nth; // Refine the ndir according to the spherical distribution
+    cout<<"new ndir:"<<this->ndir<<endl;
 
     vectype u = linspace(0, 1, nth);
     vectype v = linspace(0, 1, nphi);
 
     vectype repu = repmat1d(u, nphi, 2);
-
     vectype repv = repmat1d(v, nth, 2);
-    vectype transv = transpose(repv, v.size(), nth);// Transpose repv matrix
+    vectype transv = transpose(repv, nphi, nth);// Transpose repv matrix
 
-    for (int i = 0; i < u.size() * nphi; i++)
-        this->baseth[i] = 2.0 * M_PI * repu[i];
+    for (int i = 0; i < this->ndir; i++)
+    {
+        this->baseth.push_back(2.0 * M_PI * repu[i]);
+    }
 
-    for (int i = 0; i < v.size() * nth; i++)
-        this->basephi[i] = acos(2.0 * transv[i] - 1);
+    for (int i = 0; i < this->ndir; i++)
+    {
+        this->basephi.push_back(acos(2.0 * transv[i] - 1));
+    }
+}
+
+
+void PressureSampler::SetNDir(int ndir){
+    this->ndir = ndir;
+    this->GenSph();
 }
 
 
@@ -69,9 +84,20 @@ void PressureSampler::FindVoxel2Sample(float x, float y, float z, float th, floa
         (*outx)[n] = rl * cos(t) * (-sin(phi)) + rl * sin(t) * cos(th) * cos(phi) +  x;
         (*outy)[n] = rl * cos(t) * cos(phi) + rl * sin(t) * cos(th) * sin(phi) +  y;
         (*outz)[n] = rl * sin(t) * (-sin(th)) + z;
-        cout<<(*outx)[n]<<" "<<(*outy)[n]<<" "<<(*outz)[n]<<endl;
     }
     return; 
 }
 
 
+std::vector<float> PressureSampler::GetGradientAtIndex(int x, int y, int z)
+{
+    GradientImageType::IndexType idx;
+    idx[0] = x;
+    idx[1] = y;
+    idx[2] = z;
+    GradientPixelType pixel = this->OriginalImg->GetPixel(idx);
+    float * lg = pixel.GetDataPointer();
+    std::vector<float> vg(lg, lg+3);
+    //delete [] lg;
+    return vg;
+}
