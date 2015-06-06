@@ -189,6 +189,19 @@ void TestEucDistance2Center(){
 }
 
 
+void TestRadius(unsigned char * inimg1d, V3DLONG * sz)
+{
+    //=========radius estimation begin226.719 173.996 44.2629
+    cout<<"== Test Case : Testing radius estimation"<<endl;
+    int location_x = 35, location_y = 15, location_z = 20;
+    double thresh = 0.01;
+    int testr = appradius(inimg1d, sz, thresh, location_x, location_y , location_z);
+    assert(testr==3);
+	cout<<"== Test case Passed"<<endl;
+    //=========radius estimation end
+}
+
+
 void TestMatMath(){
     TestLinspace();
     TestRepmat();
