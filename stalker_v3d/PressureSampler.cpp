@@ -19,11 +19,7 @@ PressureSampler::PressureSampler(int ndir,
                                                GVF(GVF), 
                                                radius(radius)
 {
-
-    //this->baseth.insert(this->baseth.begin(), this->ndir);
-    //this->basephi.insert(this->basephi.begin(), this->ndir);
-    this->lpressure.insert(this->lpressure.begin(), (int) this->ndir*density);
-    //this->GenSph();
+    this->SetNDir(ndir);
 }
 
 
@@ -69,6 +65,7 @@ void PressureSampler::SetNDir(int ndir){
 void PressureSampler::FindVoxel2Sample(float th, float phi, vectype * outx, vectype* outy, vectype* outz, int pointrange)
 {
     float rl; float random; float random_r; float t;
+
     for (int n=pointrange; n>0; n--) 
     {  
         //random ranges from 0 to 1
@@ -77,10 +74,22 @@ void PressureSampler::FindVoxel2Sample(float th, float phi, vectype * outx, vect
     
         //assign theta phi value to the normal vector
         t = 2 * M_PI * random;  rl = this->radius * random_r;
+<<<<<<< HEAD
         (*outx)[n] = rl * cos(t) * (-sin(phi)) + rl * sin(t) * cos(th) * cos(phi) +  this->x;
         (*outy)[n] = rl * cos(t) * cos(phi) + rl * sin(t) * cos(th) * sin(phi) +  this->y;
         (*outz)[n] = rl * sin(t) * (-sin(th)) + this->z;
+=======
+        (*outx)[n] = rl * cos(t) * (-sin(phi)) + rl * sin(t) * cos(th) * cos(phi) +  x;
+        (*outy)[n] = rl * cos(t) * cos(phi) + rl * sin(t) * cos(th) * sin(phi) +  y;
+        (*outz)[n] = rl * sin(t) * (-sin(th)) + z;
+
+
+        //cout<<d<<endl;  
+        //cout<<(*outx)[n]<<" "<<(*outy)[n]<<" "<<(*outz)[n]<<"center distance"<<center_distance<<endl;
+>>>>>>> origin/voxelsample
     }
+
+    //cout<<boolalpha<<"judge flag is :"<<current_judge<<endl;
     return; 
 }
 

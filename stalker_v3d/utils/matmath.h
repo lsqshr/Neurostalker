@@ -1,4 +1,5 @@
 #include <vector>
+#include "stackutil.h"
 
 typedef std::vector<float> vectype;
 
@@ -20,3 +21,5 @@ void cart2sph(vectype xvec, vectype yvec, vectype zvec, vectype* thvec, vectype*
 void savepts2csv(vectype a, vectype b, vectype c, const char* filename); // Save a list of points to a text file
 
 vectype eucdistance2center(float x, float y, float z, vectype lx, vectype ly, vectype lz);
+// find the radius of the seed
+int appradius(unsigned char * inimg1d, V3DLONG * sz,  double thresh, int location_x, int location_y, int location_z);

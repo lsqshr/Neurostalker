@@ -108,7 +108,6 @@ bool NeuroStalker::dofunc(const QString & func_name,
         printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
         printf("preprocessing    The preprocessing flag - 1: Crop Only; 2: Downsample; 3: Downsample and crop; \n");
         printf("run unit-tests   - 1: Run Tracing Only; 2: Run unit-tests only; 3: Run Both Unit Tests and Tracing; \n");
-
         printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
 
     }
@@ -196,8 +195,11 @@ void reconstruction_func(V3DPluginCallback2 &callback,
         sc = in_sz[3];
         c = PARA.channel;
     }
-
-
+        if (PARA.unittest & 2)
+    {
+        cout<<"+++++ Running Unit-Tests +++++"<<endl;
+        TestRadius(data1d, in_sz);
+    }
     // ------- Main neuron reconstruction code
     // Crop The image
     if (PARA.preprocessing & 1)
@@ -229,6 +231,8 @@ void reconstruction_func(V3DPluginCallback2 &callback,
         saveImage("test/testdata/downsample.v3draw", downdata1d, downsz, V3D_UINT8);
         cout<<"=============== Image Downsampled..."<<endl;
     }
+
+
 
     // Using the Image Operation found in vaa3d_tools/hackathon/zhi/snake_tracing/TracingCore/ in for some simple Image Processing
     IM = new ImageOperation;
@@ -450,7 +454,11 @@ unsigned char * crop(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_i
     saveImage("test/testdata/cropinside.v3draw", p_img8u_crop, sz_img_crop, V3D_UINT8);
 
     return p_img8u_crop;
-}   
+ }   
+
+
+
+
 
 
 LabelImagePointer DeriveForegroundLabelImage(const ImagePointer I, const int threshold)
@@ -492,5 +500,3 @@ LabelImagePointer DeriveForegroundLabelImage(const ImagePointer I, const int thr
     
     return pBinaryImage;
 }
-
-
