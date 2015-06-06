@@ -156,11 +156,9 @@ void TestCart2SphThenCart2Sph(){
 	cart2sph(x, y, z, &th, &phi, &r);
 	sph2cart(th, phi, r, &outx, &outy, &outz);
 
-	cout<<"Before Assert"<<endl;
 	assert(vector_equal(x, outx));
 	assert(vector_equal(y, outy));
 	assert(vector_equal(z, outz));
-	cout<<"== Test Case Passed"<<endl;
 }
 
 void TestEucDistance2Center(){
@@ -231,7 +229,6 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF)
     int ndir = 100;
     p.SetNDir(ndir);
     vectype rvec100(p.ndir, 1);
-    cout<<"baseth:"<<p.baseth.size()<<"\tbasephi: "<<
         p.basephi.size()<<"\trvecsize:"<<rvec100.size()<<endl;
     assert(p.baseth.size() == p.basephi.size());
     assert(p.baseth.size() < ndir);
@@ -242,7 +239,6 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF)
     ndir = 10000;
     p.SetNDir(ndir);
 	vectype rvec10000(p.ndir, 1);
-    cout<<"baseth:"<<p.baseth.size()<<"\tbasephi: "<<
         p.basephi.size()<<"\trvecsize:"<<rvec10000.size()<<endl;
     assert(p.baseth.size() == p.basephi.size());
     assert(p.baseth.size() < ndir);
@@ -265,4 +261,19 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF)
 
     vector<GradientPixelType> lvg = p.GetGradientAtIndex(lx, ly, lz);
 	cout<<"== Test Case Passed"<<endl;
+
+    cout<<"==== Test Case : RandRotateSph"<<endl;
+    p.RandRotateSph();
+    assert(p.baseth.size() == p.ndir);
+    assert(p.basephi.size() == p.ndir);
+    sph2cart(p.baseth, p.basephi, rvec10000, &x10000, &y10000, &z10000);
+    savepts2csv(x10000, y10000, z10000, "test/testdata/RandRotated1.csv");
+    p.RandRotateSph();
+    sph2cart(p.baseth, p.basephi, rvec10000, &x10000, &y10000, &z10000);
+    savepts2csv(x10000, y10000, z10000, "test/testdata/RandRotated2.csv");
+    p.RandRotateSph();
+    sph2cart(p.baseth, p.basephi, rvec10000, &x10000, &y10000, &z10000);
+    savepts2csv(x10000, y10000, z10000, "test/testdata/RandRotated3.csv");
+    cout<<"== Test Case Passed"<<endl;
+
 }

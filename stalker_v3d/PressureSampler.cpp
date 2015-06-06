@@ -79,7 +79,6 @@ void PressureSampler::FindVoxel2Sample(float th, float phi, vectype * outx, vect
         (*outz)[n] = rl * sin(t) * (-sin(th)) + this->z;
     }
 
-    //cout<<boolalpha<<"judge flag is :"<<current_judge<<endl;
     return; 
 }
 
@@ -123,4 +122,18 @@ void PressureSampler::SampleVoxels(const vector<float> lx, const vector<float> l
 void PressureSampler::UpdatePosition(float x, float y, float z)
 {
     this->x = x; this->y = y; this->z = z;
+}
+
+
+void PressureSampler::RandRotateSph()
+{
+    assert(this->baseth.size() == this->basephi.size());
+    float dth = ((float) rand()) / (float) RAND_MAX * 2 * M_PI;
+    float dphi = ((float) rand()) / (float) RAND_MAX * M_PI;
+
+    for (int i=0;i<this->baseth.size();i++)
+    {
+        this->baseth[i] += dth;
+        this->basephi[i] += dphi;
+    }
 }
