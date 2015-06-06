@@ -129,7 +129,7 @@ void PressureSampler::RandRotateSph()
 {
     assert(this->baseth.size() == this->basephi.size());
     float dth = ((float) rand()) / (float) RAND_MAX * 2 * M_PI;
-    float dphi = ((float) rand()) / (float) RAND_MAX * M_PI;
+    float dphi = ((float) rand()) / (float) RAND_MAX * 2 * M_PI;
 
     for (int i=0;i<this->baseth.size();i++)
     {

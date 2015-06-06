@@ -229,7 +229,6 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF)
     int ndir = 100;
     p.SetNDir(ndir);
     vectype rvec100(p.ndir, 1);
-        p.basephi.size()<<"\trvecsize:"<<rvec100.size()<<endl;
     assert(p.baseth.size() == p.basephi.size());
     assert(p.baseth.size() < ndir);
     vectype x100(p.ndir), y100(p.ndir), z100(p.ndir);
@@ -239,7 +238,6 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF)
     ndir = 10000;
     p.SetNDir(ndir);
 	vectype rvec10000(p.ndir, 1);
-        p.basephi.size()<<"\trvecsize:"<<rvec10000.size()<<endl;
     assert(p.baseth.size() == p.basephi.size());
     assert(p.baseth.size() < ndir);
     vectype x10000(p.ndir), y10000(p.ndir), z10000(p.ndir);
