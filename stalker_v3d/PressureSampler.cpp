@@ -74,19 +74,9 @@ void PressureSampler::FindVoxel2Sample(float th, float phi, vectype * outx, vect
     
         //assign theta phi value to the normal vector
         t = 2 * M_PI * random;  rl = this->radius * random_r;
-<<<<<<< HEAD
         (*outx)[n] = rl * cos(t) * (-sin(phi)) + rl * sin(t) * cos(th) * cos(phi) +  this->x;
         (*outy)[n] = rl * cos(t) * cos(phi) + rl * sin(t) * cos(th) * sin(phi) +  this->y;
         (*outz)[n] = rl * sin(t) * (-sin(th)) + this->z;
-=======
-        (*outx)[n] = rl * cos(t) * (-sin(phi)) + rl * sin(t) * cos(th) * cos(phi) +  x;
-        (*outy)[n] = rl * cos(t) * cos(phi) + rl * sin(t) * cos(th) * sin(phi) +  y;
-        (*outz)[n] = rl * sin(t) * (-sin(th)) + z;
-
-
-        //cout<<d<<endl;  
-        //cout<<(*outx)[n]<<" "<<(*outy)[n]<<" "<<(*outz)[n]<<"center distance"<<center_distance<<endl;
->>>>>>> origin/voxelsample
     }
 
     //cout<<boolalpha<<"judge flag is :"<<current_judge<<endl;

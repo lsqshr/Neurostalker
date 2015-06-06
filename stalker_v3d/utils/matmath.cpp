@@ -197,7 +197,6 @@ int appradius(unsigned char * inimg1d, V3DLONG * sz,  double thresh, int locatio
     int mx = location_x + 0.5;
     int my = location_y+ 0.5;
     int mz = location_z + 0.5;
-    //cout<<"mx = "<<mx<<" my = "<<my<<" mz = "<<mz<<endl;
     V3DLONG x[2], y[2], z[2];
 
     tol_num = bak_num = 0.0;

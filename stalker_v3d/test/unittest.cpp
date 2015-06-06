@@ -130,11 +130,8 @@ void TestSph2CartThenCart2Sph(){
     assert(th.size() == outth.size());
 
     assert(vector_equal(th, outth));
-    cout<<"th passed"<<endl;
     assert(vector_equal(phi, outphi));
-    cout<<"phi passed"<<endl;
     assert(vector_equal(r, outr));
-    cout<<"r passed"<<endl;
 	cout<<"== Test Case Passed"<<endl;
 }
 
@@ -161,11 +158,8 @@ void TestCart2SphThenCart2Sph(){
 
 	cout<<"Before Assert"<<endl;
 	assert(vector_equal(x, outx));
-    cout<<"x passed"<<endl;
 	assert(vector_equal(y, outy));
-	cout<<"y passed"<<endl;
 	assert(vector_equal(z, outz));
-	cout<<"z passed"<<endl;
 	cout<<"== Test Case Passed"<<endl;
 }
 
