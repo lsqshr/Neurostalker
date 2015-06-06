@@ -119,24 +119,22 @@ void TestSph2CartThenCart2Sph(){
     	 thitr++, phiitr++, ritr++
     	)
     {
-    	*thitr = rand()/double(RAND_MAX) * 2.0 * M_PI + 0.0;
-    	*phiitr = rand()/double(RAND_MAX) * M_PI + 0.0;
-        *ritr = rand()/double(RAND_MAX)*100.0 + 0.0;
+    	*thitr = rand()/float(RAND_MAX) * 2.0 * M_PI + 0.0;
+    	*phiitr = rand()/float(RAND_MAX) * M_PI + 0.0;
+        *ritr = rand()/float(RAND_MAX)*100.0 + 0.0;
     }
 
     sph2cart(th, phi, r, &x, &y, &z);
     cart2sph(x, y, z, &outth, &outphi, &outr);
 
     assert(th.size() == outth.size());
-    for (int i=0; i<th.size(); i++) 
-    {
-    	if (!approx_equal(th[i], outth[i]))
-	    	cout<<th[i]<<","<<outth[i]<<endl;
-    }
 
     assert(vector_equal(th, outth));
+    cout<<"th passed"<<endl;
     assert(vector_equal(phi, outphi));
+    cout<<"phi passed"<<endl;
     assert(vector_equal(r, outr));
+    cout<<"r passed"<<endl;
 	cout<<"== Test Case Passed"<<endl;
 }
 
@@ -153,19 +151,41 @@ void TestCart2SphThenCart2Sph(){
 		 xitr != x.end();
 		 xitr++, yitr++, zitr++)
 	{
-    	*xitr = rand()/double(RAND_MAX) * 10000.0 + 0.0;
-    	*yitr = rand()/double(RAND_MAX) * 10000.0 + 0.0;
-        *zitr = rand()/double(RAND_MAX) * 10000.0 + 0.0;
+    	*xitr = rand()/float(RAND_MAX) * 10000.0 + 0.0;
+    	*yitr = rand()/float(RAND_MAX) * 10000.0 + 0.0;
+        *zitr = rand()/float(RAND_MAX) * 10000.0 + 0.0;
 	}
 
 	cart2sph(x, y, z, &th, &phi, &r);
 	sph2cart(th, phi, r, &outx, &outy, &outz);
 
+	cout<<"Before Assert"<<endl;
 	assert(vector_equal(x, outx));
+    cout<<"x passed"<<endl;
 	assert(vector_equal(y, outy));
+	cout<<"y passed"<<endl;
 	assert(vector_equal(z, outz));
+	cout<<"z passed"<<endl;
 	cout<<"== Test Case Passed"<<endl;
+}
 
+void TestEucDistance2Center(){
+	float x, y, z;
+	x = y = z = 5.0;
+	vectype lx, ly, lz;
+	lx.push_back(2.0); // Point1
+	ly.push_back(3.0); // Point1
+	lz.push_back(1.0); // Point1
+	lx.push_back(0.8); // Point1
+	ly.push_back(2.3); // Point2
+	lz.push_back(9.6); // Point3
+
+	vectype result = eucdistance2center(x, y, z, lx, ly, lz);
+	assert(result.size() == 2);
+	vectype expect;
+	expect.push_back(pow(29, 0.5));
+	expect.push_back(pow(46.09, 0.5));
+	assert(vector_equal(result, expect));
 }
 
 
@@ -175,6 +195,7 @@ void TestMatMath(){
     TestTranspose();
     TestSph2CartThenCart2Sph();
     TestCart2SphThenCart2Sph();
+    TestEucDistance2Center();
 }
 
 

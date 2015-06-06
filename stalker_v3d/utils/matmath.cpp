@@ -166,12 +166,12 @@ void savepts2csv(vectype a, vectype b, vectype c, const char* filename){
 }
 
 
-vectype eucdistance2center(float x, float y, float z, vectype lx, vectype ly, vectype lz)
+vectype eucdistance2center(const float x, const float y, const float z, const vectype lx, const vectype ly, const vectype lz)
 {
 	assert(lx.size() == ly.size() && ly.size() == lz.size());
 
     vectype vd(lx.size());
-    
+
     for (int i = 0; i < lx.size(); i++)	
     {
         vd[i] = pow( pow(lx[i] - x, 2) + pow(ly[i] - y, 2) + pow(lz[i] - z, 2), 0.5);
