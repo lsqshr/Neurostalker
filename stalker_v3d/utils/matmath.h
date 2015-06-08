@@ -20,3 +20,7 @@ void cart2sph(vectype xvec, vectype yvec, vectype zvec, vectype* thvec, vectype*
 
 // find the radius of the seed
 int appradius(unsigned char * inimg1d, V3DLONG * sz,  double thresh, int location_x, int location_y, int location_z);
+
+// vector projecttion 
+void vecproj(vectype& u, vectype& v);
+void vecnorm(vectype& u, vectype& v);

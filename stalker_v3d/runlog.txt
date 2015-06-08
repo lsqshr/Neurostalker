@@ -23,7 +23,7 @@ machine endian=[L] data endian=[L] b_swap=0
 Just read 1157760 units, each unit has the size = 1
 Finish reading 100% 
 No swapping of data. 
-+++++ Running Unit-Tests +++++-
++++++ Running Unit-Tests +++++
 == Test Case : Testing radius estimation
 == Test case Passed
 =============== Cropping the image ===============
@@ -73,8 +73,10 @@ foreground model:255,0
 == Test Case Passed
 == Test Case : Testing Cart2Sph Then Sph2Cart
 == Test Case Passed
+== Test Case : Testing Vecproj Then Vecnorm
+== Test Case Passed
 == Test Case : FindVoxel2Sample
-== Test case Passed
+== Test Case Passed
 done with saving file: test/testdata/test.little-soma.v3draw_NeuroStalker.swc
 Now you can drag and drop the generated swc fle [test/testdata/test.little-soma.v3draw_NeuroStalker.swc] into Vaa3D.
 Starting Vaa3D version checker...

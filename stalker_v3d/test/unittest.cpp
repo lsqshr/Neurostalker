@@ -185,6 +185,24 @@ void TestRadius(unsigned char * inimg1d, V3DLONG * sz)
     //==========================================radius estimation end
 }
 
+void TestvecProj()
+{
+	cout<<"== Test Case : Testing Vecproj Then Vecnorm"<<endl;
+		//initialize two vectors 
+    vectype u(3, 0);
+    u[0] = 3; u[1] = 4; u[2] = 5;
+    vectype v(3, 0);
+    v[0] = 1; v[1] = 1; v[2] = 1;    
+    vectype a(3, 0);
+    a[0] = 3; a[1] = 4; a[2] = 5;    
+    vecnorm(u, v);
+    vecproj(a, v);
+    if ((u[0] == -1) && (u[1] == 0) && (u[2] == 1) && (a[0] == 4) && (a[1] == 4) && (a[2] == 4))
+    {
+		cout<<"== Test Case Passed"<<endl;
+	}
+}
+
 
 void TestMatMath(){
     TestLinspace();
@@ -192,6 +210,7 @@ void TestMatMath(){
     TestTranspose();
     TestSph2CartThenCart2Sph();
     TestCart2SphThenCart2Sph();
+    TestvecProj();
 }
 
 
@@ -220,6 +239,6 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF)
 	                            + ((outz)[n] - z) * ((outz)[n] - z);
 	    current_judge = ((center_distance <=  ((p.radius) * (p.radius)))) && current_judge && (abs(d - firstd)<=0.0001); 
 	 }   
-    if (current_judge){cout<<"== Test case Passed"<<endl;}
+    if (current_judge){cout<<"== Test Case Passed"<<endl;}
 }
 
