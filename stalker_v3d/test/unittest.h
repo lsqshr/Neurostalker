@@ -2,7 +2,7 @@
 #include <limits> 
 #include "lib/ImageOperation.h"
 #include "stackutil.h"
-#define EPSILON 1E-5;
+#define EPSILON 1E-2; //Since we use floats, do not be too harsh
 
 void TestMatMath();
 

@@ -1,5 +1,6 @@
 // Some C++ Implementations for the matlab classic calls
 #include <iostream>
+#include <fstream>
 #include "matmath.h"
 #include "assert.h"
 #include <cmath>
@@ -155,6 +156,39 @@ void cart2sph(vectype xvec, vectype yvec, vectype zvec, vectype* thvec, vectype*
 
 }
 
+
+void savepts2csv(vectype a, vectype b, vectype c, const char* filename){
+// Save a list of points to a text file
+// Each point occupies a line
+// Since three coordinates are saved, this function works both for Cartisian and Spherical 
+	ofstream f;
+	f.open(filename);
+	assert(a.size() == b.size() && b.size() == c.size());
+
+	for (int i = 0; i < a.size(); i++)
+	{
+	   f<<a[i]<<","<<b[i]<<","<<c[i]<<endl;
+	}
+
+	f.close();
+}
+
+
+vectype eucdistance2center(const float x, const float y, const float z, const vectype lx, const vectype ly, const vectype lz)
+{
+	assert(lx.size() == ly.size() && ly.size() == lz.size());
+
+    vectype vd(lx.size());
+
+    for (int i = 0; i < lx.size(); i++)	
+    {
+        vd[i] = pow( pow(lx[i] - x, 2) + pow(ly[i] - y, 2) + pow(lz[i] - z, 2), 0.5);
+    }
+
+    return vd;
+}
+
+
 int appradius(unsigned char * inimg1d, V3DLONG * sz,  double thresh, int location_x, int location_y, int location_z){
 
     int max_r = MAX(MAX(sz[0]/2.0, sz[1]/2.0), sz[2]/2.0);
@@ -163,7 +197,6 @@ int appradius(unsigned char * inimg1d, V3DLONG * sz,  double thresh, int locatio
     int mx = location_x + 0.5;
     int my = location_y+ 0.5;
     int mz = location_z + 0.5;
-    //cout<<"mx = "<<mx<<" my = "<<my<<" mz = "<<mz<<endl;
     V3DLONG x[2], y[2], z[2];
 
     tol_num = bak_num = 0.0;
@@ -209,6 +242,7 @@ int appradius(unsigned char * inimg1d, V3DLONG * sz,  double thresh, int locatio
     }
     return r;
 }
+
 
 void vecproj(vectype& u, vectype& v)
 {

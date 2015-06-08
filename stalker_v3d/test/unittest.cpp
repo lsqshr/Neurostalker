@@ -10,11 +10,9 @@
 #include "assert.h"
 #include "utils/matmath.h"
 #include "PressureSampler.h"
-#include "stackutil.h"
-
 
 using namespace std;
-typedef vector<double> vectype ;
+typedef vector<float> vectype;
 
 
 int approx_equal(double x, double y)
@@ -121,26 +119,20 @@ void TestSph2CartThenCart2Sph(){
     	 thitr++, phiitr++, ritr++
     	)
     {
-    	*thitr = rand()/double(RAND_MAX) * 2.0 * M_PI + 0.0;
-    	*phiitr = rand()/double(RAND_MAX) * M_PI + 0.0;
-        *ritr = rand()/double(RAND_MAX)*100.0 + 0.0;
+    	*thitr = rand()/float(RAND_MAX) * 2.0 * M_PI + 0.0;
+    	*phiitr = rand()/float(RAND_MAX) * M_PI + 0.0;
+        *ritr = rand()/float(RAND_MAX)*100.0 + 0.0;
     }
 
     sph2cart(th, phi, r, &x, &y, &z);
     cart2sph(x, y, z, &outth, &outphi, &outr);
 
     assert(th.size() == outth.size());
-    for (int i=0; i<th.size(); i++) 
-    {
-    	if (!approx_equal(th[i], outth[i]))
-	    	cout<<th[i]<<","<<outth[i]<<endl;
-    }
 
     assert(vector_equal(th, outth));
     assert(vector_equal(phi, outphi));
     assert(vector_equal(r, outr));
 	cout<<"== Test Case Passed"<<endl;
-
 }
 
 
@@ -156,9 +148,9 @@ void TestCart2SphThenCart2Sph(){
 		 xitr != x.end();
 		 xitr++, yitr++, zitr++)
 	{
-    	*xitr = rand()/double(RAND_MAX) * 10000.0 + 0.0;
-    	*yitr = rand()/double(RAND_MAX) * 10000.0 + 0.0;
-        *zitr = rand()/double(RAND_MAX) * 10000.0 + 0.0;
+    	*xitr = rand()/float(RAND_MAX) * 10000.0 + 0.0;
+    	*yitr = rand()/float(RAND_MAX) * 10000.0 + 0.0;
+        *zitr = rand()/float(RAND_MAX) * 10000.0 + 0.0;
 	}
 
 	cart2sph(x, y, z, &th, &phi, &r);
@@ -167,22 +159,38 @@ void TestCart2SphThenCart2Sph(){
 	assert(vector_equal(x, outx));
 	assert(vector_equal(y, outy));
 	assert(vector_equal(z, outz));
-	cout<<"== Test Case Passed"<<endl;
-
 }
+
+void TestEucDistance2Center(){
+	float x, y, z;
+	x = y = z = 5.0;
+	vectype lx, ly, lz;
+	lx.push_back(2.0); // Point1
+	ly.push_back(3.0); // Point1
+	lz.push_back(1.0); // Point1
+	lx.push_back(0.8); // Point1
+	ly.push_back(2.3); // Point2
+	lz.push_back(9.6); // Point3
+
+	vectype result = eucdistance2center(x, y, z, lx, ly, lz);
+	assert(result.size() == 2);
+	vectype expect;
+	expect.push_back(pow(29, 0.5));
+	expect.push_back(pow(46.09, 0.5));
+	assert(vector_equal(result, expect));
+}
+
 
 void TestRadius(unsigned char * inimg1d, V3DLONG * sz)
 {
-    //==========================================radius estimation begin226.719 173.996 44.2629
+    //=========radius estimation begin226.719 173.996 44.2629
     cout<<"== Test Case : Testing radius estimation"<<endl;
     int location_x = 35, location_y = 15, location_z = 20;
     double thresh = 0.01;
     int testr = appradius(inimg1d, sz, thresh, location_x, location_y , location_z);
-    //cout<<"test data1d value"<<data1d[90]<<endl;
-    //cout<<"test radius value: "<<testr<<endl;
-    if (testr==3){cout<<"== Test case Passed"<<endl;}
-    //printf("%s", data1d[90]);
-    //==========================================radius estimation end
+    assert(testr==3);
+	cout<<"== Test case Passed"<<endl;
+    //=========radius estimation end
 }
 
 void TestvecProj()
@@ -211,24 +219,26 @@ void TestMatMath(){
     TestSph2CartThenCart2Sph();
     TestCart2SphThenCart2Sph();
     TestvecProj();
+    TestEucDistance2Center();
 }
 
 
 void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF)
 {
 
-    cout<<"== Test Case : FindVoxel2Sample"<<endl;
     PressureSampler p(60, 100, OriginalImage, GVF, 10);
-     // initialize random seed: 
+
+    cout<<"==== Test Case : FindVoxel2Sample"<<endl;
     srand (time(NULL));
-    vectype  outx(p.density);
-    vectype  outy(p.density);
-    vectype  outz(p.density);
+    vectype outx(p.density);
+    vectype outy(p.density);
+    vectype outz(p.density);
 
     float x, y, z;
-    x = 3; y = 4; z = 5;  
+    x = 3.0; y = 4.0; z = 5.0;
     float phi = 0.8; float theta = 0.6; float radius = 5;
-    p.FindVoxel2Sample(x, y, z, theta, phi, &outx, &outy, &outz, p.density);
+    p.UpdatePosition(x, y, z);
+    p.FindVoxel2Sample(theta, phi, &outx, &outy, &outz, p.density);
     bool current_judge = true;
     float dirx = cos(phi) * sin(theta), diry = sin(phi) * sin(theta), dirz = cos(theta);
     float firstd = dirx * (outx)[1] + diry * (outy)[1] + dirz * (outz)[1];
@@ -240,5 +250,57 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF)
 	    current_judge = ((center_distance <=  ((p.radius) * (p.radius)))) && current_judge && (abs(d - firstd)<=0.0001); 
 	 }   
     if (current_judge){cout<<"== Test Case Passed"<<endl;}
-}
 
+    cout<<"==== Test Case : GenSph"<<endl;
+    // -- Save spheres with multiple sampling rate for visual check
+    // Pls drag the csv files generated in test/testdata/*sph.csv in matlab to check 
+    // whether the points were flatly distributed in a unit sphere
+    int ndir = 100;
+    p.SetNDir(ndir);
+    vectype rvec100(p.ndir, 1);
+    assert(p.baseth.size() == p.basephi.size());
+    assert(p.baseth.size() < ndir);
+    vectype x100(p.ndir), y100(p.ndir), z100(p.ndir);
+    sph2cart(p.baseth, p.basephi, rvec100, &x100, &y100, &z100);
+    savepts2csv(x100, y100, z100, "test/testdata/100sph.csv");
+
+    ndir = 10000;
+    p.SetNDir(ndir);
+	vectype rvec10000(p.ndir, 1);
+    assert(p.baseth.size() == p.basephi.size());
+    assert(p.baseth.size() < ndir);
+    vectype x10000(p.ndir), y10000(p.ndir), z10000(p.ndir);
+    sph2cart(p.baseth, p.basephi, rvec10000, &x10000, &y10000, &z10000);
+    savepts2csv(x10000, y10000, z10000, "test/testdata/10000sph.csv");
+	cout<<"== Test Case Passed"<<endl;
+
+    cout<<"==== Test Case : GetGradientAtIndex"<<endl;
+    GradientImageType::SizeType sz = p.GVF->GetLargestPossibleRegion().GetSize();
+    cout<<"GVG Size: "<<sz[0]<<","<<sz[1]<<","<<sz[2]<<endl;
+    vector<int> lx, ly, lz;
+
+    for(int i=0;i<100;i++)
+    {
+	    lx.push_back(rand() % sz[0]);
+	    ly.push_back(rand() % sz[1]);
+	    lz.push_back(rand() % sz[2]);
+    }
+
+    vector<GradientPixelType> lvg = p.GetGradientAtIndex(lx, ly, lz);
+	cout<<"== Test Case Passed"<<endl;
+
+    cout<<"==== Test Case : RandRotateSph"<<endl;
+    p.RandRotateSph();
+    assert(p.baseth.size() == p.ndir);
+    assert(p.basephi.size() == p.ndir);
+    sph2cart(p.baseth, p.basephi, rvec10000, &x10000, &y10000, &z10000);
+    savepts2csv(x10000, y10000, z10000, "test/testdata/RandRotated1.csv");
+    p.RandRotateSph();
+    sph2cart(p.baseth, p.basephi, rvec10000, &x10000, &y10000, &z10000);
+    savepts2csv(x10000, y10000, z10000, "test/testdata/RandRotated2.csv");
+    p.RandRotateSph();
+    sph2cart(p.baseth, p.basephi, rvec10000, &x10000, &y10000, &z10000);
+    savepts2csv(x10000, y10000, z10000, "test/testdata/RandRotated3.csv");
+    cout<<"== Test Case Passed"<<endl;
+
+}

@@ -6,7 +6,7 @@
 #include <iostream>
 
 using namespace std;
-typedef std::vector<double> vectype;
+typedef std::vector<float> vectype;
 
 PressureSampler::PressureSampler(int ndir, 
                                  int density,
@@ -19,10 +19,7 @@ PressureSampler::PressureSampler(int ndir,
                                                GVF(GVF), 
                                                radius(radius)
 {
-    this->baseth.insert(this->baseth.begin(), ndir);
-    this->basephi.insert(this->basephi.begin(), ndir);
-    this->lpressure.insert(this->lpressure.begin(), (int) ndir*density);
-//    this->GenSph();
+    this->SetNDir(ndir);
 }
 
 
@@ -34,28 +31,38 @@ void PressureSampler::GenSph(){
 // Uniformly pick directions on a unit sphere
 // Ref: http://mathworld.wolfram.com/SpherePointPicking.html
 
-    int nphi = (int) pow(((double)this->ndir / 2.0), 0.5);
+    this->baseth.clear();
+    this->basephi.clear();
+    int nphi = (int) floor(pow(((double) this->ndir / 2.0), 0.5));
     int nth = (int) 2 * nphi;
-    //itk::Matrix<double, nphi, nth> uM;
-    //itk::Matrix<double, nth, nphi> vM;
+    this->ndir = nphi * nth; // Refine the ndir according to the spherical distribution
 
     vectype u = linspace(0, 1, nth);
     vectype v = linspace(0, 1, nphi);
 
     vectype repu = repmat1d(u, nphi, 2);
-
     vectype repv = repmat1d(v, nth, 2);
-    vectype transv = transpose(repv, v.size(), nth);// Transpose repv matrix
+    vectype transv = transpose(repv, nphi, nth);// Transpose repv matrix
 
-    for (int i = 0; i < u.size() * nphi; i++)
-        this->baseth[i] = 2.0 * M_PI * repu[i];
+    for (int i = 0; i < this->ndir; i++)
+    {
+        this->baseth.push_back(2.0 * M_PI * repu[i]);
+    }
 
-    for (int i = 0; i < v.size() * nth; i++)
-        this->basephi[i] = acos(2.0 * transv[i] - 1);
+    for (int i = 0; i < this->ndir; i++)
+    {
+        this->basephi.push_back(acos(2.0 * transv[i] - 1));
+    }
 }
 
 
-void PressureSampler::FindVoxel2Sample(float x, float y, float z, float th, float phi, vectype * outx, vectype* outy, vectype* outz, int pointrange)
+void PressureSampler::SetNDir(int ndir){
+    this->ndir = ndir;
+    this->GenSph();
+}
+
+
+void PressureSampler::FindVoxel2Sample(float th, float phi, vectype * outx, vectype* outy, vectype* outz, int pointrange)
 {
     float rl; float random; float random_r; float t;
 
@@ -67,17 +74,66 @@ void PressureSampler::FindVoxel2Sample(float x, float y, float z, float th, floa
     
         //assign theta phi value to the normal vector
         t = 2 * M_PI * random;  rl = this->radius * random_r;
-        (*outx)[n] = rl * cos(t) * (-sin(phi)) + rl * sin(t) * cos(th) * cos(phi) +  x;
-        (*outy)[n] = rl * cos(t) * cos(phi) + rl * sin(t) * cos(th) * sin(phi) +  y;
-        (*outz)[n] = rl * sin(t) * (-sin(th)) + z;
-
-
-        //cout<<d<<endl;  
-        //cout<<(*outx)[n]<<" "<<(*outy)[n]<<" "<<(*outz)[n]<<"center distance"<<center_distance<<endl;
+        (*outx)[n] = rl * cos(t) * (-sin(phi)) + rl * sin(t) * cos(th) * cos(phi) +  this->x;
+        (*outy)[n] = rl * cos(t) * cos(phi) + rl * sin(t) * cos(th) * sin(phi) +  this->y;
+        (*outz)[n] = rl * sin(t) * (-sin(th)) + this->z;
     }
 
-    //cout<<boolalpha<<"judge flag is :"<<current_judge<<endl;
     return; 
 }
 
 
+vector<GradientPixelType> PressureSampler::GetGradientAtIndex(vector<int> lx, vector<int> ly, vector<int> lz)
+{
+
+    vector<GradientPixelType> lvg;
+    for (int i = 0; i < lx.size(); i++)
+    {
+        GradientImageType::IndexType idx;
+        typedef itk::VectorLinearInterpolateImageFunction<GradientImageType, float >
+            GradientInterpolatorType;
+        GradientInterpolatorType::Pointer interpolator = GradientInterpolatorType::New();
+        interpolator->SetInputImage(this->GVF);
+        idx[0] = lx[i];
+        idx[1] = ly[i];
+        idx[2] = lz[i];
+        GradientPixelType gpixel = interpolator->EvaluateAtIndex(idx);
+        lvg.push_back(gpixel);
+    }
+
+    return lvg;
+}
+
+
+void PressureSampler::SampleVoxels(const vector<float> lx, const vector<float> ly, const vector<float> lz)
+{
+// Sample the distortion energy at each direction
+// E = 1/N * sum_i{l_i * f_i}
+// where N is the total number of voxels, l_i is the distance between the sampling position and the center of the plane;
+// f_i is the orthogonal resultant force on the plane
+
+    assert(lx.size() == ly.size() && ly.size() == lz.size());
+    vector<float> distance(lx.size());
+
+    vectype l = eucdistance2center(this->x, this->y, this->z, lx, ly, lz);
+}
+
+
+void PressureSampler::UpdatePosition(float x, float y, float z)
+{
+    this->x = x; this->y = y; this->z = z;
+}
+
+
+void PressureSampler::RandRotateSph()
+{
+    assert(this->baseth.size() == this->basephi.size());
+    float dth = ((float) rand()) / (float) RAND_MAX * 2 * M_PI;
+    float dphi = ((float) rand()) / (float) RAND_MAX * 2 * M_PI;
+
+    for (int i=0;i<this->baseth.size();i++)
+    {
+        this->baseth[i] += dth;
+        this->basephi[i] += dphi;
+    }
+}
