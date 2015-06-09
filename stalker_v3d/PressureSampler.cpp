@@ -100,26 +100,7 @@ vector<GradientPixelType> PressureSampler::GetGradientAtIndex(vector<int> lx, ve
         GradientPixelType gpixel = interpolator->EvaluateAtIndex(idx);
         lvg.push_back(gpixel);
     }
-
-    return lvg;
-}
-
-
-void PressureSampler::SampleVoxels(const vector<float> lx, const vector<float> ly, const vector<float> lz)
-{
-// Sample the distortion energy at each direction
-// E = 1/N * sum_i{l_i * f_i}
-// where N is the total number of voxels, l_i is the distance between the sampling position and the center of the plane;
-// f_i is the orthogonal resultant force on the plane
-
-    assert(lx.size() == ly.size() && ly.size() == lz.size());
-    vector<float> distance(lx.size());
-
-    vectype l = eucdistance2center(this->x, this->y, this->z, lx, ly, lz);
-}
-
-
-void PressureSampler::UpdatePosition(float x, float y, float z)
+ return lvg; } void PressureSampler::UpdatePosition(float x, float y, float z)
 {
     this->x = x; this->y = y; this->z = z;
 }
@@ -136,4 +117,37 @@ void PressureSampler::RandRotateSph()
         this->baseth[i] += dth;
         this->basephi[i] += dphi;
     }
+}
+
+
+float PressureSampler::Moment(vectype v, vectype xvec, vectype yvec, vectype zvec){
+    // Convert float vectors to int 
+    vector<int> txvec(xvec.begin(), xvec.end());
+    vector<int> tyvec(yvec.begin(), yvec.end());
+    vector<int> tzvec(zvec.begin(), zvec.end());
+
+    vector<GradientPixelType> lvg = this->GetGradientAtIndex(txvec, tyvec, tzvec);
+
+    float testradius = this->density;
+    vectype u(3, 0);
+    float tempdis, temp_f, temp_fl;
+    u[0] = 3;
+    u[1] = 4;
+    u[2] = 5;
+
+    for(int n=this->density; n>0; n--)
+    {
+        u[0] = lvg[n][0];
+        u[1] = lvg[n][0];
+        u[2] = lvg[n][0];
+        vecnorm(u, v);
+        tempdis = (this->x - txvec[n]) * (this->x - txvec[n]) + (this->y - tyvec[n]) * (this->y - tyvec[n])
+                  + (this->z - tzvec[n]) * (this->z - tzvec[n]);
+        tempdis = pow(tempdis, 0.5);
+        temp_f = u[0] * u[0] + u[1] * u[1] + u[2] * u[2];
+        temp_f = pow(temp_f, 0.5);
+        temp_fl = temp_f * tempdis + temp_fl;
+    }
+
+    return temp_fl / this->density;
 }

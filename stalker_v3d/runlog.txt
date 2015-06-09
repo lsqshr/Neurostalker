@@ -83,10 +83,9 @@ size of [V3DLONG]=[8], [V3DLONG]=[8] [int]=[4], [short int]=[2], [double]=[8], [
 ==== Test Case : GetGradientAtIndex
 GVG Size: 122,118,50
 == Test Case Passed
+==== Test Case : Visulization of GVF
+14396
+== Test Case Passed
 ==== Test Case : RandRotateSph
 == Test Case Passed
-Testing Finished
-done with saving file: test/testdata/test.little-soma.v3draw_NeuroStalker.swc
-Now you can drag and drop the generated swc fle [test/testdata/test.little-soma.v3draw_NeuroStalker.swc] into Vaa3D.
-Starting Vaa3D version checker...
-http://home.penglab.com/proj/vaa3d/current_release/vaa3d_version.xml
+==== Test Case : Get the circle Moment

@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
+#include <fstream>//file open and close 
 #include "unittest.h"
 #include <cstdlib>
 #include <time.h>       /* time */
@@ -289,6 +290,29 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF)
     vector<GradientPixelType> lvg = p.GetGradientAtIndex(lx, ly, lz);
 	cout<<"== Test Case Passed"<<endl;
 
+	cout<<"==== Test Case : Visulization of GVF"<<endl;
+    vector<int> testx, testy, testz;
+	ofstream myfile;
+	myfile.open ("example.txt");
+
+	for(int i=0;i<sz[0];i++)
+		for (int j=0;j<sz[1];j++)
+			{
+				//myfile<<i<<" "<<j<<" "<<25<<" "<<"\n";
+				testx.push_back(i);
+				testy.push_back(j);
+				testz.push_back(25);
+			}
+	vector<GradientPixelType> testgvf = p.GetGradientAtIndex(testx, testy, testz);
+	int totalpixel = sz[0] * sz[1];// * sz[2];
+	cout<<totalpixel<<endl;
+	for(int q=0;q<totalpixel;q++)
+	{
+		myfile<<testgvf[q][0]<<" "<<testgvf[q][1]<<" "<<testgvf[q][2]<<" "<<"\n";
+	}
+	myfile.close();
+	cout<<"== Test Case Passed"<<endl;
+
     cout<<"==== Test Case : RandRotateSph"<<endl;
     p.RandRotateSph();
     assert(p.baseth.size() == p.ndir);
@@ -303,4 +327,37 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF)
     savepts2csv(x10000, y10000, z10000, "test/testdata/RandRotated3.csv");
     cout<<"== Test Case Passed"<<endl;
 
+    cout<<"==== Test Case : Get the circle Moment"<<endl;
+    vectype int_outx((p.density),0), int_outy((p.density),0), int_outz((p.density),0);
+
+    for(int n=p.density; n>0; n--)
+    {
+    	int_outx[n] = round(outx[n]);int_outy[n] = round(outy[n]);int_outz[n] = round(outz[n]);
+    }
+
+    float temp_fl = 0; 
+    float tempdis; 
+    float temp_f;
+    vectype u(3, 0);
+    u[0] = 3; 
+    u[1] = 4; 
+    u[2] = 5;
+    vectype v(3, 0);
+    v[0] = 1; 
+    v[1] = 7; 
+    v[2] = 1;
+
+    float momenttest = p.Moment(v, int_outx, int_outy, int_outz);
+    cout<<"momenttest output: "<<momenttest<<endl;	
+  /*for(int n=p.density;n>0;n--){
+		u[0] = lvg[n][0];u[1] = lvg[n][0];u[2] = lvg[n][0];
+		vecnorm(u, v);
+		tempdis = (x - int_outx[n]) * (x - int_outx[n]) + (y - int_outy[n]) * (y - int_outy[n])\
+    	+ (z - int_outz[n]) * (z - int_outz[n]);
+    	tempdis = pow(tempdis, 0.5);
+    	temp_f = u[0] * u[0] + u[1] * u[1] + u[2] * u[2];
+    	temp_f = pow(temp_f, 0.5);
+    	temp_fl = temp_f * tempdis + temp_fl;
+	}*/
+    cout<<"== Test Case Passed"<<endl;	
 }

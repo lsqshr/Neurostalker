@@ -17,7 +17,7 @@ public:
     	             float radius = 10);
     ~PressureSampler();
 	void RandRotateSph();
-	void RandSample(float x, float y, float z); // Randomly sample the pressure at specific postion (x,y,z)
+	void RandSample(); // Randomly sample the pressure at current postion
 	void SetNDir(int ndir);
 	vectype GetBaseTh();
 	vectype GetBasePhi();
@@ -36,7 +36,7 @@ private:
 	vectype baseth; // The theta values of the base vectors
 	vectype basephi; // The theta values of the base vectors
     vectype lpressure; // The pressure sampled at each direction
-    void SampleVoxels(vectype, vectype, vectype); // Sample the distortion energy at each direction
+    float Moment(vectype v, vectype x, vectype y, vectype z); // Sample the distortion energy at each direction
     vector<GradientPixelType> GetGradientAtIndex(vector<int> x, vector<int> y, vector<int> z);
 	void GenSph(); // Generate the base spherical directions
     void FindVoxel2Sample(float th,
