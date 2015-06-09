@@ -299,6 +299,7 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF)
 	cout<<"== Test Case Passed"<<endl;
 
     cout<<"==== Test Case : RandRotateSph"<<endl;
+    p.SetNDir(100);
     p.RandRotateSph();
     assert(p.baseth.size() == p.ndir);
     assert(p.basephi.size() == p.ndir);
