@@ -3,9 +3,18 @@
 #include <vector>
 #include "lib/ImageOperation.h"
 
-typedef std::vector<float> vectype;
 using namespace std;
+typedef vector<float> vectype;
+typedef map<float*, float> pressuremaptype;
 
+
+// For caching the direction neighbours on the sphere
+struct neighbours{
+       int idx; 
+       vector<int> neighbouridx;
+    };
+
+    
 class PressureSampler
 {
 public:
@@ -33,15 +42,22 @@ private:
     float x, y, z;// position
 	int ndir; // Number of directions
     int density; // The density of the sampled points on each sample plane
-	vectype baseth; // The theta values of the base vectors
-	vectype basephi; // The theta values of the base vectors
+	vectype baseth, originbaseth; // The theta values of the base vectors
+	vectype basephi, originbasephi; // The theta values of the base vectors
+	vectype peakth; // The theta values of the peaks
+	vectype peakphi; // The theta values of the peaks
     vectype lpressure; // The pressure sampled at each direction
+    pressuremaptype pressuremap;
     void SampleVoxels(vectype, vectype, vectype); // Sample the distortion energy at each direction
     vector<GradientPixelType> GetGradientAtIndex(vector<int> x, vector<int> y, vector<int> z);
 	void GenSph(); // Generate the base spherical directions
+	vector<int> FindPeaks(); // Return the indices of the peak directions 
     void FindVoxel2Sample(float th,
                           float phi, vectype * outx, vectype* outy,
                           vectype* outz, int pointrange);
+    const int FindDirIdx(float th, float phi);
+    vector<int> FindSphNeighbours(int i);
+    vector<neighbours> dirneighbours;
 };
 
 #endif

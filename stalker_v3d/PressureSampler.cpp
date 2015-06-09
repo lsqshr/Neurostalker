@@ -1,12 +1,23 @@
 #include "PressureSampler.h"
 #include "utils/matmath.h"
 #include <vector>
+#include <algorithm> // sort
 #include <math.h>
 #include <stdlib.h>     /* srand, rand */
 #include <iostream>
 
 using namespace std;
 typedef std::vector<float> vectype;
+
+struct idxentrypair{ // For sort and obtain the indices
+    int idx;
+    float value;
+
+    bool operator < (const idxentrypair& pair) const 
+    {
+        return value < pair.value;
+    }
+};
 
 PressureSampler::PressureSampler(int ndir, 
                                  int density,
@@ -53,12 +64,175 @@ void PressureSampler::GenSph(){
     {
         this->basephi.push_back(acos(2.0 * transv[i] - 1));
     }
+
+    // Cache neighbours for speed 
+
+    this->dirneighbours.clear();
+    this->dirneighbours.resize(this->ndir);
+
+    // -- Sort all th according to phi for neighbour finding
+    vector<idxentrypair> phipairs(this->ndir);
+    for (int i=0; i<this->ndir; i++)
+    {
+        phipairs[i].idx = i;
+        phipairs[i].value = this->basephi[i];
+    }
+
+    // Lambda sort needs std c++11, however some of the ITK libraries do not support c++11
+    //std::sort(sortidx.begin(), sortidx.end(), [&phi2sort](const int& a, const int& b){return phi2sort[a] < phi2sort[b];}); 
+    std::sort(phipairs.begin(), phipairs.end()); 
+
+    vectype tth(this->ndir);
+    vectype tphi(this->ndir);
+
+    // Permute both th and phi
+    for (int i=0; i<ndir; i++)
+    {
+        tth[i] = this->baseth[phipairs[i].idx];
+        tphi[i] = this->basephi[phipairs[i].idx];
+    }
+
+    // Sort th with the same phi value
+    int thctr = 1;
+    vectype::iterator thitr = tth.begin();
+    int thstartidx = 0;
+
+    for (int i=1; i<this->ndir; i++)
+    {
+        if (tphi[i] == tphi[i-1] && i !=this->ndir - 1)
+        { 
+            thctr++;
+            continue; 
+        }
+        else
+        {
+            if (i == this->ndir - 1) thctr++;
+            sort(thitr, thitr + thctr);
+            thstartidx = i - thctr + 1;
+            // head and tail
+            thitr += thctr;
+            thctr = 1;
+        }
+    }
+
+    // Loop through all directions horizontally
+    // Add only the left and right neighbours to itself
+    for (int i=1; i<this->ndir; i++)
+    {
+        if (tphi[i] == tphi[i-1] && i !=this->ndir - 1)
+        { 
+            thctr++;
+            this->dirneighbours[phipairs[i].idx].neighbouridx.push_back(phipairs[i-1].idx);
+            this->dirneighbours[phipairs[i-1].idx].neighbouridx.push_back(phipairs[i].idx);
+            continue; 
+        }
+        else
+        {
+            if (i == this->ndir - 1) thctr++;
+            thstartidx = i - thctr + 1;
+            // head and tail
+            this->dirneighbours[phipairs[i].idx].neighbouridx.push_back(phipairs[thstartidx].idx);
+            this->dirneighbours[phipairs[thstartidx].idx].neighbouridx.push_back(phipairs[i].idx);
+            thitr += thctr;
+            thctr = 1;
+        }
+    }
+
+    // -- Sort all phi according to th for neighbour finding -- reversed for previous section
+    vector<idxentrypair> thpairs(this->ndir);
+    for (int i=0; i<this->ndir; i++)
+    {
+        thpairs[i].idx = i;
+        thpairs[i].value = this->baseth[i];
+    }
+
+    std::sort(thpairs.begin(), thpairs.end()); 
+
+    // Permute both th and phi
+    for (int i=0; i<ndir; i++)
+    {
+        tth[i] = this->baseth[thpairs[i].idx];
+        tphi[i] = this->basephi[thpairs[i].idx];
+    }
+
+    // Sort th with the same phi value
+    int phictr = 1;
+    int phistartidx = 1;
+    vectype::iterator phiitr = tphi.begin();
+
+    for (int i=1; i<this->ndir; i++)
+    {
+        if (tth[i] == tth[i-1] && i !=this->ndir - 1)
+        { 
+            phictr++;
+            continue; 
+        }
+        else
+        {
+            if (i == this->ndir - 1) phictr++;
+            sort(phiitr, phiitr + phictr);
+            phistartidx = i - phictr + 1;
+            // head and tail
+            thitr += thctr;
+            thctr = 1;
+        }
+    }
+
+    // Loop through all directions vertically, add neighbours
+    for (int i=1; i<this->ndir; i++)
+    {
+        if (tth[i] == tth[i-1] && i !=this->ndir - 1)
+        { 
+            phictr++;
+            // Add the left&right neighbours of its upper neighbour to itself
+            if (this->dirneighbours[thpairs[i-1].idx].neighbouridx.size() >=2) 
+            {
+                this->dirneighbours[thpairs[i].idx].neighbouridx.push_back(
+                                                                    this->dirneighbours[thpairs[i-1].idx].neighbouridx[0]
+                                                                    );
+                this->dirneighbours[thpairs[i].idx].neighbouridx.push_back(
+                                                                    this->dirneighbours[thpairs[i-1].idx].neighbouridx[1]
+                                                                    );
+            }
+
+            this->dirneighbours[thpairs[i].idx].neighbouridx.push_back(thpairs[i-1].idx);// Add its upper neighbour
+            this->dirneighbours[thpairs[i-1].idx].neighbouridx.push_back(thpairs[i].idx); // Add itself to its upper neighbour
+
+            // Add its left and right neighbours to its upper neighbour
+            if (this->dirneighbours[thpairs[i].idx].neighbouridx.size() >=2) 
+            {
+                this->dirneighbours[thpairs[i-1].idx].neighbouridx.push_back(
+                                                                    this->dirneighbours[thpairs[i].idx].neighbouridx[0]
+                                                                    );
+                this->dirneighbours[thpairs[i-1].idx].neighbouridx.push_back(
+                                                                    this->dirneighbours[thpairs[i].idx].neighbouridx[1]
+                                                                    );
+            }
+
+            continue; 
+        }
+        else
+        {
+            if (i == this->ndir - 1) phictr++;
+            phistartidx = i - phictr + 1;
+            // head and tail
+            this->dirneighbours[thpairs[i].idx].neighbouridx.push_back(phistartidx);
+            this->dirneighbours[thpairs[thstartidx].idx].neighbouridx.push_back(i);
+            thitr += thctr;
+            thctr = 1;
+        }
+    }
+
+    this->originbaseth = this->baseth;
+    this->originbasephi = this->basephi;
 }
 
 
 void PressureSampler::SetNDir(int ndir){
     this->ndir = ndir;
     this->GenSph();
+    this->lpressure.clear();
+    this->lpressure.resize(ndir);
 }
 
 
@@ -131,9 +305,75 @@ void PressureSampler::RandRotateSph()
     float dth = ((float) rand()) / (float) RAND_MAX * 2 * M_PI;
     float dphi = ((float) rand()) / (float) RAND_MAX * 2 * M_PI;
 
-    for (int i=0;i<this->baseth.size();i++)
+    for (int i=0; i<this->baseth.size(); i++)
     {
-        this->baseth[i] += dth;
-        this->basephi[i] += dphi;
+        this->baseth[i] = fmod(this->originbaseth[i] + dth, (float)(2*M_PI));
+        this->basephi[i] = fmod(this->originbasephi[i] + dphi, (float)(M_PI));
     }
 }
+
+
+vector<int> PressureSampler::FindPeaks()
+{
+    // The base sph before Findpeaks
+    for (int i=0; i<this->ndir; i++)
+    {
+        cout<<i<<": "<<this->baseth[i]<<"\t"<<this->basephi[i]<<endl;
+    }
+
+    float r = 0;
+    vector<int> peaks;
+    
+    for (int i=0; i<this->baseth.size(); i++)
+    {
+        r = lpressure[i];
+        vector<int> neighbouridx = this->FindSphNeighbours(i);
+
+        // DEBUG:
+        cout<<"For "<<this->baseth[i]<<" "<<this->basephi[i]<<endl;
+        cout<<neighbouridx.size()<<" neighbors found..."<<endl;        
+        for(int j=0; j<neighbouridx.size(); j++)
+        {
+            cout<<"neighbour "<<j<<": "<<this->baseth[neighbouridx[j]]<<","<<this->basephi[neighbouridx[j]]<<"\t";
+        }
+        cout<<endl;
+
+        bool minimal = true;
+        // A direction is a local minimal if there is no neighbor 
+        // direction has a smaller pressure sampled
+        for (int j=0; j<neighbouridx.size(); j++) 
+        {
+            if (lpressure[neighbouridx[i]] < r) 
+            {
+                minimal = false;
+                break;
+            }
+            cout<<"checking minimal at "<<i<<endl;
+        }
+
+        if (minimal == true)
+        {
+            cout<<"Found minimal at "<<i<<endl;
+            peaks.push_back(i);
+        }
+        else
+        {
+            cout<<i<<" is not a minimal"<<endl;
+        }
+    }
+    return peaks;
+}
+
+
+vector<int> PressureSampler::FindSphNeighbours(int i)
+{
+    return this->dirneighbours[i].neighbouridx; // return the neighbours of the ith dir
+}
+
+
+const int PressureSampler::FindDirIdx(float th, float phi){
+    // baseth were presorted according to basephi; Find the start of the phi list and finding th would be faster
+    int phiidx = find(this->basephi.begin(), this->basephi.end(), phi) - this->basephi.begin();
+    int thidx = find(this->baseth.begin() + phiidx, this->baseth.end(), th) - this->baseth.begin();
+    return (thidx == this->ndir)? -1 : thidx; // If thidx==this->ndir it means not found
+}   

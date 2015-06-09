@@ -119,9 +119,9 @@ void TestSph2CartThenCart2Sph(){
     	 thitr++, phiitr++, ritr++
     	)
     {
-    	*thitr = rand()/float(RAND_MAX) * 2.0 * M_PI + 0.0;
-    	*phiitr = rand()/float(RAND_MAX) * M_PI + 0.0;
-        *ritr = rand()/float(RAND_MAX)*100.0 + 0.0;
+    	*thitr = rand()/float(RAND_MAX) * 2.0 * M_PI;
+    	*phiitr = rand()/float(RAND_MAX) * M_PI;
+        *ritr = rand()/float(RAND_MAX)*100.0;
     }
 
     sph2cart(th, phi, r, &x, &y, &z);
@@ -159,9 +159,11 @@ void TestCart2SphThenCart2Sph(){
 	assert(vector_equal(x, outx));
 	assert(vector_equal(y, outy));
 	assert(vector_equal(z, outz));
+    cout<<"== Test Case Passed"<<endl;
 }
 
 void TestEucDistance2Center(){
+    cout<<"== Test Case : Testing EucDistance2Center"<<endl;
 	float x, y, z;
 	x = y = z = 5.0;
 	vectype lx, ly, lz;
@@ -178,6 +180,7 @@ void TestEucDistance2Center(){
 	expect.push_back(pow(29, 0.5));
 	expect.push_back(pow(46.09, 0.5));
 	assert(vector_equal(result, expect));
+    cout<<"== Test Case Passed"<<endl;
 }
 
 
@@ -207,7 +210,8 @@ void TestMatMath(){
 void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF)
 {
 
-    PressureSampler p(60, 100, OriginalImage, GVF, 10);
+    int ndir = 100;
+    PressureSampler p(ndir, 100, OriginalImage, GVF, 10);
 
     cout<<"==== Test Case : FindVoxel2Sample"<<endl;
     srand (time(NULL));
@@ -226,7 +230,6 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF)
     // -- Save spheres with multiple sampling rate for visual check
     // Pls drag the csv files generated in test/testdata/*sph.csv in matlab to check 
     // whether the points were flatly distributed in a unit sphere
-    int ndir = 100;
     p.SetNDir(ndir);
     vectype rvec100(p.ndir, 1);
     assert(p.baseth.size() == p.basephi.size());
@@ -235,14 +238,23 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF)
     sph2cart(p.baseth, p.basephi, rvec100, &x100, &y100, &z100);
     savepts2csv(x100, y100, z100, "test/testdata/100sph.csv");
 
-    ndir = 10000;
-    p.SetNDir(ndir);
-	vectype rvec10000(p.ndir, 1);
-    assert(p.baseth.size() == p.basephi.size());
-    assert(p.baseth.size() < ndir);
-    vectype x10000(p.ndir), y10000(p.ndir), z10000(p.ndir);
-    sph2cart(p.baseth, p.basephi, rvec10000, &x10000, &y10000, &z10000);
-    savepts2csv(x10000, y10000, z10000, "test/testdata/10000sph.csv");
+    // Test Neighbours
+    p.SetNDir(20);
+    cout<<"sph10"<<endl;
+    for (int i=0;i<p.ndir;i++) cout<<i<<": "<<p.baseth[i]<<" "<<p.basephi[i]<<endl;
+    set<int> outneighbourset(p.dirneighbours[0].neighbouridx.begin(), p.dirneighbours[0].neighbouridx.end());
+    set<int> expectset;
+    expectset.insert(11);
+    expectset.insert(1);
+    expectset.insert(12);
+    expectset.insert(5);
+    expectset.insert(13);
+
+    cout<<"out neighbour set:";
+    for (set<int>::iterator itr=outneighbourset.begin(); itr!=outneighbourset.end(); itr++) cout<<*itr<<",";
+    cout<<endl;
+    
+    assert(expectset==outneighbourset);
 	cout<<"== Test Case Passed"<<endl;
 
     cout<<"==== Test Case : GetGradientAtIndex"<<endl;
@@ -264,14 +276,50 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF)
     p.RandRotateSph();
     assert(p.baseth.size() == p.ndir);
     assert(p.basephi.size() == p.ndir);
-    sph2cart(p.baseth, p.basephi, rvec10000, &x10000, &y10000, &z10000);
-    savepts2csv(x10000, y10000, z10000, "test/testdata/RandRotated1.csv");
+    sph2cart(p.baseth, p.basephi, rvec100, &x100, &y100, &z100);
+    savepts2csv(x100, y100, z100, "test/testdata/RandRotated1.csv");
     p.RandRotateSph();
-    sph2cart(p.baseth, p.basephi, rvec10000, &x10000, &y10000, &z10000);
-    savepts2csv(x10000, y10000, z10000, "test/testdata/RandRotated2.csv");
+    sph2cart(p.baseth, p.basephi, rvec100, &x100, &y100, &z100);
+    savepts2csv(x100, y100, z100, "test/testdata/RandRotated2.csv");
     p.RandRotateSph();
-    sph2cart(p.baseth, p.basephi, rvec10000, &x10000, &y10000, &z10000);
-    savepts2csv(x10000, y10000, z10000, "test/testdata/RandRotated3.csv");
+    sph2cart(p.baseth, p.basephi, rvec100, &x100, &y100, &z100);
+    savepts2csv(x100, y100, z100, "test/testdata/RandRotated3.csv");
+    cout<<"== Test Case Passed"<<endl;
+
+    cout<<"==== Test Case : FindPeaks"<<endl;
+    p.SetNDir(100);
+    p.RandRotateSph();
+
+    // Assign Random numbers between 0.1 - 1.1 to all directions 
+    for (int i=0; i<p.lpressure.size(); i++)
+    {
+        p.lpressure[i] = rand()/float(RAND_MAX) + 0.1;
+    }
+
+    p.lpressure[22] = 0;
+    p.lpressure[33] = 0;
+    p.lpressure[44] = 0;
+    p.lpressure[55] = 0;
+    vector<int> peakvec = p.FindPeaks();
+    cout<<"After FindPeaks"<<endl;
+    set<int> expectidx, outputidx;
+    expectidx.insert(22);
+    expectidx.insert(33);
+    expectidx.insert(44);
+    expectidx.insert(55);
+    for (int i=0; i<peakvec.size(); i++)
+    {
+    	outputidx.insert(peakvec[i]);
+    }
+
+    cout<<"outputidx:";
+    for (set<int>::iterator itr=outputidx.begin(); itr!=outputidx.end(); ++itr) cout<<*itr<<",";
+    cout<<endl;
+    cout<<"expectidx:";
+    for (set<int>::iterator itr=expectidx.begin(); itr!=expectidx.end(); ++itr) cout<<*itr<<",";
+    cout<<endl;
+    assert(expectidx == outputidx);
+
     cout<<"== Test Case Passed"<<endl;
 
 }
