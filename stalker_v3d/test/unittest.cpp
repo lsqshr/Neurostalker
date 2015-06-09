@@ -314,26 +314,20 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF)
     cout<<"== Test Case Passed"<<endl;
 
     cout<<"==== Test Case : FindPeaks"<<endl;
-    p.SetNDir(100);
+    p.SetNDir(20);
     p.RandRotateSph();
 
     // Assign Random numbers between 0.1 - 1.1 to all directions 
-    for (int i=0; i<p.lpressure.size(); i++)
-    {
-        p.lpressure[i] = rand()/float(RAND_MAX) + 0.1;
-    }
+    p.lpressure.clear();
+    float fpressure [] = {0.0, 0.2, 0.3, 0.4, 0.4, 0.5, 0.5, 0.3, 0.3, 0.4, 0.3, 0.2, 0.2, 0.2, 0.0, 0.4, 0.4, 0.1 };
+    p.lpressure.assign(fpressure, fpressure + 18);
 
-    p.lpressure[22] = 0;
-    p.lpressure[33] = 0;
-    p.lpressure[44] = 0;
-    p.lpressure[55] = 0;
     vector<int> peakvec = p.FindPeaks();
     cout<<"After FindPeaks"<<endl;
     set<int> expectidx, outputidx;
-    expectidx.insert(22);
-    expectidx.insert(33);
-    expectidx.insert(44);
-    expectidx.insert(55);
+    expectidx.insert(17);
+    expectidx.insert(14);
+    expectidx.insert(0);
     for (int i=0; i<peakvec.size(); i++)
     {
     	outputidx.insert(peakvec[i]);

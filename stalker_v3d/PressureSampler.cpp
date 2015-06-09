@@ -367,12 +367,14 @@ vector<int> PressureSampler::FindPeaks()
         // direction has a smaller pressure sampled
         for (int j=0; j<neighbouridx.size(); j++) 
         {
-            if (lpressure[neighbouridx[i]] < r) 
+            if (lpressure[neighbouridx[j]] < r) 
             {
                 minimal = false;
                 break;
             }
             cout<<"checking minimal at "<<i<<endl;
+            cout<<"neighbour pressure: "<<lpressure[neighbouridx[j]]<<endl;
+            cout<<"self pressure: "<<r<<endl;
         }
 
         if (minimal == true)
