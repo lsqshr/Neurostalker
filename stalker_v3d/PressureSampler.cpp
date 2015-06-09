@@ -71,11 +71,13 @@ void PressureSampler::GenSph(){
     this->dirneighbours.resize(this->ndir);
 
     // -- Sort all th according to phi for neighbour finding
-    vector<idxentrypair> phipairs(this->ndir);
+    vector<idxentrypair> phipairs(this->ndir), thpairs(this->ndir);
     for (int i=0; i<this->ndir; i++)
     {
         phipairs[i].idx = i;
         phipairs[i].value = this->basephi[i];
+        thpairs[i].idx = i;
+        thpairs[i].value = this->baseth[i];
     }
 
     // Lambda sort needs std c++11, however some of the ITK libraries do not support c++11
@@ -85,67 +87,74 @@ void PressureSampler::GenSph(){
     vectype tth(this->ndir);
     vectype tphi(this->ndir);
 
+    vector<idxentrypair> t_thpairs(this->ndir); // For permuting th idx
     // Permute both th and phi
     for (int i=0; i<ndir; i++)
     {
         tth[i] = this->baseth[phipairs[i].idx];
         tphi[i] = this->basephi[phipairs[i].idx];
+        t_thpairs[i] = thpairs[phipairs[i].idx];
     }
+    thpairs = t_thpairs;
 
     // Sort th with the same phi value
     int thctr = 1;
-    vectype::iterator thitr = tth.begin();
+    vector<idxentrypair>::iterator thitr = thpairs.begin();
     int thstartidx = 0;
 
     for (int i=1; i<this->ndir; i++)
     {
-        if (tphi[i] == tphi[i-1] && i !=this->ndir - 1)
+        if (tphi[i] == tphi[i-1])
         { 
             thctr++;
-            continue; 
+            if (i!=this->ndir-1)
+                continue;
         }
-        else
-        {
-            if (i == this->ndir - 1) thctr++;
-            sort(thitr, thitr + thctr);
-            thstartidx = i - thctr + 1;
-            // head and tail
-            thitr += thctr;
-            thctr = 1;
-        }
+        sort(thitr, thitr + thctr);
+        // head and tail
+        thitr += thctr;
+        thctr = 1;
     }
+
+    cout<<"before sorted"<<endl;
+    for (int i=0; i<this->ndir; i++) cout<<i<<" - th: "<<this->baseth[i]<<" "<<this->basephi[i]<<endl;
+
+    cout<<"sorted"<<endl;
+    for (int i=0; i<this->ndir; i++) cout<<thpairs[i].idx<<" - th: "<<thpairs[i].value<<" "<<tphi[i]<<endl;
 
     // Loop through all directions horizontally
     // Add only the left and right neighbours to itself
+    // The head and the tail are considered as neighbours as well
     for (int i=1; i<this->ndir; i++)
     {
-        if (tphi[i] == tphi[i-1] && i !=this->ndir - 1)
+        cout<<"At:"<<thpairs[i].idx<<endl;
+        if (tphi[i] == tphi[i-1])
         { 
             thctr++;
-            this->dirneighbours[phipairs[i].idx].neighbouridx.push_back(phipairs[i-1].idx);
-            this->dirneighbours[phipairs[i-1].idx].neighbouridx.push_back(phipairs[i].idx);
-            continue; 
+            cout<<"Adding "<<thpairs[i-1].idx<<" as "<<thpairs[i].idx<<"'s neighbour"<<endl;
+            this->dirneighbours[thpairs[i].idx].neighbouridx.push_back(thpairs[i-1].idx);
+            cout<<"Adding "<<thpairs[i].idx<<" as "<<thpairs[i-1].idx<<"'s neighbour"<<endl;
+            this->dirneighbours[thpairs[i-1].idx].neighbouridx.push_back(thpairs[i].idx);
+            if (i!=this->ndir-1)
+                continue;
         }
-        else
-        {
-            if (i == this->ndir - 1) thctr++;
-            thstartidx = i - thctr + 1;
-            // head and tail
-            this->dirneighbours[phipairs[i].idx].neighbouridx.push_back(phipairs[thstartidx].idx);
-            this->dirneighbours[phipairs[thstartidx].idx].neighbouridx.push_back(phipairs[i].idx);
-            thitr += thctr;
-            thctr = 1;
-        }
+
+        cout<<"break"<<endl;
+
+        int curidx = -1;
+        if (i == this->ndir - 1) {curidx = i; thstartidx = i - thctr + 1;}
+        else {curidx = i - 1; thstartidx = i - thctr;}
+
+        // head and tail
+        cout<<"Adding "<<thpairs[thstartidx].idx<<" as "<<thpairs[curidx].idx<<"'s neighbour"<<endl;
+        this->dirneighbours[thpairs[curidx].idx].neighbouridx.push_back(thpairs[thstartidx].idx);
+        cout<<"Adding "<<thpairs[curidx].idx<<" as "<<thpairs[thstartidx].idx<<"'s neighbour"<<endl;
+        this->dirneighbours[thpairs[thstartidx].idx].neighbouridx.push_back(thpairs[curidx].idx);
+        thitr += thctr;
+        thctr = 1;
     }
 
     // -- Sort all phi according to th for neighbour finding -- reversed for previous section
-    vector<idxentrypair> thpairs(this->ndir);
-    for (int i=0; i<this->ndir; i++)
-    {
-        thpairs[i].idx = i;
-        thpairs[i].value = this->baseth[i];
-    }
-
     std::sort(thpairs.begin(), thpairs.end()); 
 
     // Permute both th and phi
@@ -153,74 +162,89 @@ void PressureSampler::GenSph(){
     {
         tth[i] = this->baseth[thpairs[i].idx];
         tphi[i] = this->basephi[thpairs[i].idx];
+        phipairs[i].idx = thpairs[i].idx;
+        phipairs[i].value = tphi[i];
     }
 
-    // Sort th with the same phi value
+    // Sort phi with the same th value
     int phictr = 1;
-    int phistartidx = 1;
-    vectype::iterator phiitr = tphi.begin();
+    vector<idxentrypair>::iterator phiitr = phipairs.begin();
+    int phistartidx = 0;
 
     for (int i=1; i<this->ndir; i++)
     {
-        if (tth[i] == tth[i-1] && i !=this->ndir - 1)
+        if (tth[i] == tth[i-1])
         { 
             phictr++;
-            continue; 
+            if (i != this->ndir-1)
+                continue;
         }
-        else
-        {
-            if (i == this->ndir - 1) phictr++;
-            sort(phiitr, phiitr + phictr);
-            phistartidx = i - phictr + 1;
-            // head and tail
-            thitr += thctr;
-            thctr = 1;
-        }
+
+        cout<<"sort "<<(*phiitr).idx<<" to "<<(*(phiitr+3)).idx<<endl;
+        sort(phiitr, phiitr + phictr);
+        // head and tail
+        phiitr += phictr;
+        phictr = 1;
     }
+
+    cout<<"before sorted"<<endl;
+    for (int i=0; i<this->ndir; i++) cout<<thpairs[i].idx<<" - th: "<<tth[i]<<" "<<tphi[i]<<endl;
+
+    cout<<"sorted"<<endl;
+    for (int i=0; i<this->ndir; i++) cout<<phipairs[i].idx<<" - th: "<<tth[i]<<" "<<phipairs[i].value<<endl;
 
     // Loop through all directions vertically, add neighbours
     for (int i=1; i<this->ndir; i++)
     {
-        if (tth[i] == tth[i-1] && i !=this->ndir - 1)
+        cout<<"At:"<<phipairs[i].idx<<endl;
+        if (tth[i] == tth[i-1])
         { 
             phictr++;
             // Add the left&right neighbours of its upper neighbour to itself
-            if (this->dirneighbours[thpairs[i-1].idx].neighbouridx.size() >=2) 
+            if (this->dirneighbours[phipairs[i-1].idx].neighbouridx.size() >=2) 
             {
-                this->dirneighbours[thpairs[i].idx].neighbouridx.push_back(
-                                                                    this->dirneighbours[thpairs[i-1].idx].neighbouridx[0]
+                cout<<"Adding "<<phipairs[i-1].idx<<"'s left "<<this->dirneighbours[phipairs[i-1].idx].neighbouridx[0]<< "as "<<phipairs[i].idx<<"'s neighbour"<<endl;
+                this->dirneighbours[phipairs[i].idx].neighbouridx.push_back(
+                                                                    this->dirneighbours[phipairs[i-1].idx].neighbouridx[0]
                                                                     );
-                this->dirneighbours[thpairs[i].idx].neighbouridx.push_back(
-                                                                    this->dirneighbours[thpairs[i-1].idx].neighbouridx[1]
+                cout<<"Adding "<<phipairs[i-1].idx<<"'s right "<<this->dirneighbours[phipairs[i-1].idx].neighbouridx[1]<< "as "<<phipairs[i].idx<<"'s neighbour"<<endl;
+                this->dirneighbours[phipairs[i].idx].neighbouridx.push_back(
+                                                                    this->dirneighbours[phipairs[i-1].idx].neighbouridx[1]
                                                                     );
             }
-
-            this->dirneighbours[thpairs[i].idx].neighbouridx.push_back(thpairs[i-1].idx);// Add its upper neighbour
-            this->dirneighbours[thpairs[i-1].idx].neighbouridx.push_back(thpairs[i].idx); // Add itself to its upper neighbour
 
             // Add its left and right neighbours to its upper neighbour
-            if (this->dirneighbours[thpairs[i].idx].neighbouridx.size() >=2) 
+            if (this->dirneighbours[phipairs[i].idx].neighbouridx.size() >=2) 
             {
-                this->dirneighbours[thpairs[i-1].idx].neighbouridx.push_back(
-                                                                    this->dirneighbours[thpairs[i].idx].neighbouridx[0]
+                cout<<"Adding "<<phipairs[i].idx<<"'s left "<<this->dirneighbours[phipairs[i].idx].neighbouridx[0]<< "as "<<phipairs[i-1].idx<<"'s neighbour"<<endl;
+                this->dirneighbours[phipairs[i-1].idx].neighbouridx.push_back(
+                                                                    this->dirneighbours[phipairs[i].idx].neighbouridx[0]
                                                                     );
-                this->dirneighbours[thpairs[i-1].idx].neighbouridx.push_back(
-                                                                    this->dirneighbours[thpairs[i].idx].neighbouridx[1]
+                cout<<"Adding "<<phipairs[i].idx<<"'s right "<<this->dirneighbours[phipairs[i].idx].neighbouridx[1]<< "as "<<phipairs[i-1].idx<<"'s neighbour"<<endl;
+                this->dirneighbours[phipairs[i-1].idx].neighbouridx.push_back(
+                                                                    this->dirneighbours[phipairs[i].idx].neighbouridx[1]
                                                                     );
             }
 
-            continue; 
+            cout<<"Adding "<<phipairs[i-1].idx<<" as "<<phipairs[i].idx<<"'s neighbour"<<endl;
+            this->dirneighbours[phipairs[i].idx].neighbouridx.push_back(phipairs[i-1].idx);// Add its upper neighbour
+            cout<<"Adding "<<phipairs[i].idx<<" as "<<phipairs[i-1].idx<<"'s neighbour"<<endl;
+            this->dirneighbours[phipairs[i-1].idx].neighbouridx.push_back(phipairs[i].idx); // Add itself to its upper neighbour
+
+            if (i!=this->ndir-1)
+                continue;
         }
-        else
-        {
-            if (i == this->ndir - 1) phictr++;
-            phistartidx = i - phictr + 1;
-            // head and tail
-            this->dirneighbours[thpairs[i].idx].neighbouridx.push_back(phistartidx);
-            this->dirneighbours[thpairs[thstartidx].idx].neighbouridx.push_back(i);
-            thitr += thctr;
-            thctr = 1;
-        }
+
+        int curidx = -1;
+        if (i == this->ndir - 1) {curidx = i; phistartidx = i - phictr + 1;}
+        else {curidx = i - 1; phistartidx = i - phictr;}
+
+        // head and tail
+
+        //this->dirneighbours[thpairs[i].idx].neighbouridx.push_back(phistartidx);
+        //this->dirneighbours[thpairs[thstartidx].idx].neighbouridx.push_back(i);
+        thitr += thctr;
+        thctr = 1;
     }
 
     this->originbaseth = this->baseth;

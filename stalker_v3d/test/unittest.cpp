@@ -253,8 +253,34 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF)
     cout<<"out neighbour set:";
     for (set<int>::iterator itr=outneighbourset.begin(); itr!=outneighbourset.end(); itr++) cout<<*itr<<",";
     cout<<endl;
-    
     assert(expectset==outneighbourset);
+
+
+    cout<<"sph10"<<endl;
+    for (int i=0;i<p.ndir;i++) cout<<i<<": "<<p.baseth[i]<<" "<<p.basephi[i]<<endl;
+
+    outneighbourset.clear();
+
+    for (int i=0; i<p.dirneighbours[5].neighbouridx.size(); i++)
+    {
+        outneighbourset.insert(p.dirneighbours[5].neighbouridx[i]);
+    }
+
+    expectset.clear();
+    expectset.insert(4);
+    expectset.insert(12);
+    expectset.insert(17);
+    expectset.insert(11);
+    expectset.insert(10);
+    expectset.insert(0);
+    expectset.insert(6);
+    expectset.insert(16);
+
+    cout<<"out neighbour set:";
+    for (set<int>::iterator itr=outneighbourset.begin(); itr!=outneighbourset.end(); itr++) cout<<*itr<<",";
+    cout<<endl;
+    assert(expectset==outneighbourset);
+
 	cout<<"== Test Case Passed"<<endl;
 
     cout<<"==== Test Case : GetGradientAtIndex"<<endl;
