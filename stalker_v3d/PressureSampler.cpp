@@ -285,6 +285,7 @@ vector<GradientPixelType> PressureSampler::GetGradientAtIndex(vector<int> lx, ve
  return lvg; } void PressureSampler::UpdatePosition(float x, float y, float z)
 {
     this->x = x; this->y = y; this->z = z;
+    this->GetRadius();
 }
 
 
@@ -379,6 +380,7 @@ const int PressureSampler::FindDirIdx(float th, float phi){
     return (thidx == this->ndir)? -1 : thidx; // If thidx==this->ndir it means not found
 }   
 
+
 void PressureSampler::RandSample()
 {
     vectype rvec(this->ndir, 1);
@@ -397,4 +399,13 @@ void PressureSampler::RandSample()
     }
 
     this->FindPeaks();
+}
+
+
+// It will be called when UpdatePosition
+float PressureSampler::GetRadius()
+{
+    // TODO;  
+    this->radius = -1;
+    return this->radius;
 }

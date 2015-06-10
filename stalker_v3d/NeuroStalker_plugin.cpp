@@ -244,7 +244,6 @@ void reconstruction_func(V3DPluginCallback2 &callback,
     {
         in_sz_int[i] = (int)in_sz[i];
     }
-
     
     // Preprocessing
     IM->Imcreate(data1d, in_sz_int);
@@ -278,8 +277,8 @@ void reconstruction_func(V3DPluginCallback2 &callback,
     if (PARA.unittest & 2){
         cout<<"+++++ Running Unit-Tests +++++"<<endl;
         TestMatMath();
-        TestPressureSampler(IM->I, IM->IGVF);
-        cout<<"Testing Finished"<<endl;
+        TestPressureSampler(IM->I, IM->IGVF, binaryimg, IM->SeedPt);
+        cout<<"All Tests Finished!!!!!!! G'Day!!"<<endl;
     }
 
     if (PARA.unittest & 1) {
@@ -455,10 +454,6 @@ unsigned char * crop(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_i
 
     return p_img8u_crop;
  }   
-
-
-
-
 
 
 LabelImagePointer DeriveForegroundLabelImage(const ImagePointer I, const int threshold)
