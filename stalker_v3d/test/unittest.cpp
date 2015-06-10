@@ -207,8 +207,8 @@ void TestvecProj()
     v[0] = 1; v[1] = 1; v[2] = 1;    
     vectype a(3, 0);
     a[0] = 3; a[1] = 4; a[2] = 5;    
-    vecnorm(u, v);
-    vecproj(a, v);
+    vecnorm(&u, v);
+    vecproj(&a, v);
     if ((u[0] == -1) && (u[1] == 0) && (u[2] == 1) && (a[0] == 4) && (a[1] == 4) && (a[2] == 4))
     {
 		cout<<"== Test Case Passed"<<endl;
@@ -247,7 +247,7 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF)
     bool current_judge = true;
     float dirx = cos(phi) * sin(theta), diry = sin(phi) * sin(theta), dirz = cos(theta);
     float firstd = dirx * (outx)[1] + diry * (outy)[1] + dirz * (outz)[1];
-    for (int n=p.density; n>0; n--) 
+    for (int n=0; n>p.density; n++) 
     {  
 	    float d = dirx * (outx)[n] + diry * (outy)[n] + dirz * (outz)[n];
 	    float center_distance = ((outx)[n] - x) * ((outx)[n] - x) + ((outy)[n] - y) * ((outy)[n] - y)\
@@ -270,8 +270,6 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF)
 
     // Test Neighbours
     p.SetNDir(20);
-    cout<<"sph10"<<endl;
-    for (int i=0;i<p.ndir;i++) cout<<i<<": "<<p.baseth[i]<<" "<<p.basephi[i]<<endl;
     set<int> outneighbourset(p.dirneighbours[0].neighbouridx.begin(), p.dirneighbours[0].neighbouridx.end());
     set<int> expectset;
     expectset.insert(11);
@@ -279,15 +277,7 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF)
     expectset.insert(12);
     expectset.insert(5);
     expectset.insert(13);
-
-    cout<<"out neighbour set:";
-    for (set<int>::iterator itr=outneighbourset.begin(); itr!=outneighbourset.end(); itr++) cout<<*itr<<",";
-    cout<<endl;
     assert(expectset==outneighbourset);
-
-
-    cout<<"sph10"<<endl;
-    for (int i=0;i<p.ndir;i++) cout<<i<<": "<<p.baseth[i]<<" "<<p.basephi[i]<<endl;
 
     outneighbourset.clear();
 
@@ -305,10 +295,6 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF)
     expectset.insert(0);
     expectset.insert(6);
     expectset.insert(16);
-
-    cout<<"out neighbour set:";
-    for (set<int>::iterator itr=outneighbourset.begin(); itr!=outneighbourset.end(); itr++) cout<<*itr<<",";
-    cout<<endl;
     assert(expectset==outneighbourset);
 
 	cout<<"== Test Case Passed"<<endl;
@@ -376,57 +362,48 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF)
     p.lpressure.assign(fpressure, fpressure + 18);
 
     vector<int> peakvec = p.FindPeaks();
-    cout<<"After FindPeaks"<<endl;
     set<int> expectidx, outputidx;
     expectidx.insert(17);
     expectidx.insert(14);
     expectidx.insert(0);
+
     for (int i=0; i<peakvec.size(); i++)
     {
     	outputidx.insert(peakvec[i]);
     }
 
-    cout<<"outputidx:";
-    for (set<int>::iterator itr=outputidx.begin(); itr!=outputidx.end(); ++itr) cout<<*itr<<",";
-    cout<<endl;
-    cout<<"expectidx:";
-    for (set<int>::iterator itr=expectidx.begin(); itr!=expectidx.end(); ++itr) cout<<*itr<<",";
-    cout<<endl;
     assert(expectidx == outputidx);
 
     cout<<"== Test Case Passed"<<endl;
 
     cout<<"==== Test Case : Get the circle Moment"<<endl;
-    vectype int_outx((p.density),0), int_outy((p.density),0), int_outz((p.density),0);
+    vectype int_outx(p.density), int_outy(p.density), int_outz(p.density);
 
-    for(int n=p.density; n>0; n--)
+    for(int n=0; n<p.density; n++)
     {
-    	int_outx[n] = round(outx[n]);int_outy[n] = round(outy[n]);int_outz[n] = round(outz[n]);
+    	int_outx[n] = round(outx[n]);
+    	int_outy[n] = round(outy[n]);
+    	int_outz[n] = round(outz[n]);
     }
 
     float temp_fl = 0; 
-    float tempdis; 
-    float temp_f;
-    vectype u(3, 0);
+    float tempdis, temp_f;
+    vectype u(3);
     u[0] = 3; 
     u[1] = 4; 
     u[2] = 5;
-    vectype v(3, 0);
+    vectype v(3);
     v[0] = 1; 
     v[1] = 7; 
     v[2] = 1;
 
-    float momenttest = p.Moment(v, int_outx, int_outy, int_outz);
-    cout<<"momenttest output: "<<momenttest<<endl;	
-  /*for(int n=p.density;n>0;n--){
-		u[0] = lvg[n][0];u[1] = lvg[n][0];u[2] = lvg[n][0];
-		vecnorm(u, v);
-		tempdis = (x - int_outx[n]) * (x - int_outx[n]) + (y - int_outy[n]) * (y - int_outy[n])\
-    	+ (z - int_outz[n]) * (z - int_outz[n]);
-    	tempdis = pow(tempdis, 0.5);
-    	temp_f = u[0] * u[0] + u[1] * u[1] + u[2] * u[2];
-    	temp_f = pow(temp_f, 0.5);
-    	temp_fl = temp_f * tempdis + temp_fl;
-	}*/
-    cout<<"== Test Case Passed"<<endl;	
+    float m = p.Moment(v, int_outx, int_outy, int_outz);
+    cout<<"momenttest output: "<<m<<endl;	
+    cout<<"== Test Case Passed"<<endl;
+
+    cout<<"==== Test Case RandSample"<<endl;
+    p.UpdatePosition();
+    p.radius = 5;
+    p.RandSample()
+    cout<<"== Test Case Passed"<<endl;
 }

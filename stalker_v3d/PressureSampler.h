@@ -38,7 +38,7 @@ public:
 private:
 	ImagePointer OriginalImg;
 	GradientImagePointer GVF;
-    float radius;
+    float radius = 0;
     float x, y, z;// position
 	int ndir; // Number of directions
     int density; // The density of the sampled points on each sample plane

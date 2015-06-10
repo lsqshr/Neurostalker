@@ -25,5 +25,8 @@ vectype eucdistance2center(float x, float y, float z, vectype lx, vectype ly, ve
 int appradius(unsigned char * inimg1d, V3DLONG * sz,  double thresh, int location_x, int location_y, int location_z);
 
 // vector projecttion 
-void vecproj(vectype& u, vectype& v);
-void vecnorm(vectype& u, vectype& v);
+void vecproj(vectype * u, const vectype v);
+
+void vecnorm(vectype * u, const vectype v);
+
+float constrain(float in, float low, float high);
