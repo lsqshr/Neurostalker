@@ -8,4 +8,4 @@ void TestMatMath();
 
 void TestPressureSampler(ImagePointer, GradientImagePointer, LabelImagePointer, PointList3D);
 
-void TestRadius(unsigned char * inimg1d, V3DLONG * sz);
+//void TestRadius(unsigned char * inimg1d, V3DLONG * sz);

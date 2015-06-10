@@ -185,6 +185,7 @@ void TestEucDistance2Center(){
 }
 
 
+/*
 void TestRadius(unsigned char * inimg1d, V3DLONG * sz)
 {
     //=========radius estimation begin226.719 173.996 44.2629
@@ -196,6 +197,8 @@ void TestRadius(unsigned char * inimg1d, V3DLONG * sz)
 	cout<<"== Test case Passed"<<endl;
     //=========radius estimation end
 }
+*/
+
 
 void TestvecProj()
 {
