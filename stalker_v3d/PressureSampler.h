@@ -2,6 +2,7 @@
 #define __VN_IMGPREPROCESS__
 #include <vector>
 #include "lib/ImageOperation.h"
+#include "lib/PointOperation.h"
 
 using namespace std;
 typedef vector<float> vectype;
@@ -34,7 +35,7 @@ public:
 	vectype GetPeakPhi();
     float GetRadius(); // Calculate the radius at the current position using the raw image
 	void UpdatePosition(float x, float y, float z);
-	friend void TestPressureSampler(ImagePointer, GradientImagePointer);
+	friend void TestPressureSampler(ImagePointer, GradientImagePointer, LabelImagePointer, PointList3D);
 
 private:
 	ImagePointer OriginalImg;
