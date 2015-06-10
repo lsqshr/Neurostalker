@@ -26,12 +26,13 @@ public:
     	             float radius = 10);
     ~PressureSampler();
 	void RandRotateSph();
-	void RandSample(float x, float y, float z); // Randomly sample the pressure at specific postion (x,y,z)
+	void RandSample(); // Randomly sample the pressure at specific postion (x,y,z)
 	void SetNDir(int ndir);
 	vectype GetBaseTh();
 	vectype GetBasePhi();
 	vectype GetPeakTh();
 	vectype GetPeakPhi();
+    float GetRadius(); // Calculate the radius at the current position using the raw image
 	void UpdatePosition(float x, float y, float z);
 	friend void TestPressureSampler(ImagePointer, GradientImagePointer);
 

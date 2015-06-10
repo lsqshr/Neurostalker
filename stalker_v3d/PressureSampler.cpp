@@ -320,6 +320,7 @@ void PressureSampler::SampleVoxels(const vector<float> lx, const vector<float> l
 void PressureSampler::UpdatePosition(float x, float y, float z)
 {
     this->x = x; this->y = y; this->z = z;
+    this->GetRadius();
 }
 
 
@@ -403,3 +404,18 @@ const int PressureSampler::FindDirIdx(float th, float phi){
     int thidx = find(this->baseth.begin() + phiidx, this->baseth.end(), th) - this->baseth.begin();
     return (thidx == this->ndir)? -1 : thidx; // If thidx==this->ndir it means not found
 }   
+
+
+// It will be called when UpdatePosition
+float PressureSampler::GetRadius()
+{
+    // TODO;  
+    this->radius = -1;
+    return this->radius;
+}
+
+
+void PressureSampler::RandSample()
+{
+    // TODO; 
+}

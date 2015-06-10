@@ -457,10 +457,6 @@ unsigned char * crop(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_i
  }   
 
 
-
-
-
-
 LabelImagePointer DeriveForegroundLabelImage(const ImagePointer I, const int threshold)
 {   itk::ImageLinearConstIteratorWithIndex<ImageType> originitr(I, I->GetRequestedRegion());
     originitr.SetDirection(2);
