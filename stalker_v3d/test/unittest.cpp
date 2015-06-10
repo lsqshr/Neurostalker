@@ -382,6 +382,6 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
     savepts2csv(bx, by, bz, "test/testdata/binaryimg.csv");
     cout<<"== Test Case Passed"<<endl;
 
-    system("matlab -nodesktop -nosplash -r \"run(\'test/plotall.m\'); \"; ");
+    system("matlab -nodesktop -nosplash -r \"run(\'test/plotall.m\')\";");
 
 }
