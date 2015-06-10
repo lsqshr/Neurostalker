@@ -207,7 +207,7 @@ void TestMatMath(){
 }
 
 
-void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF)
+void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, LabelImagePointer wallimg, PointList3D seeds)
 {
 
     int ndir = 100;
@@ -342,5 +342,46 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF)
     assert(expectidx == outputidx);
 
     cout<<"== Test Case Passed"<<endl;
+
+    cout<<"== Test Case: Save seeds for visual check "<<endl;
+    int nseed = seeds.GetLength();
+    vectype seedx(nseed);
+    vectype seedy(nseed);
+    vectype seedz(nseed);
+
+    for (int i=0; i<nseed; i++)
+    {
+        seedx[i] = seeds.Pt[i].x;
+        seedy[i] = seeds.Pt[i].y;
+        seedz[i] = seeds.Pt[i].z;
+    }
+
+    savepts2csv(seedx, seedy, seedz, "test/testdata/seeds.csv");
+    // Save the coordinates of the binary labels to csv
+    int M = wallimg->GetLargestPossibleRegion().GetSize()[0];
+    int N = wallimg->GetLargestPossibleRegion().GetSize()[1];
+    int Z = wallimg->GetLargestPossibleRegion().GetSize()[2];
+    vector<float> bx;
+    vector<float> by;
+    vector<float> bz;
+    LabelImageType::IndexType binaryidx;
+    for (int m=0; m<M; m++)
+        for (int n=0; n<N; n++)
+            for (int z=0; z<Z; z++)
+            {
+                binaryidx[0] = m;
+                binaryidx[1] = n;
+                binaryidx[2] = z;
+                unsigned short p = wallimg->GetPixel(binaryidx);
+                if (p!=0){
+                    bx.push_back((float)m);
+                    by.push_back((float)n);
+                    bz.push_back((float)z);
+                }
+            }
+    savepts2csv(bx, by, bz, "test/testdata/binaryimg.csv");
+    cout<<"== Test Case Passed"<<endl;
+
+    system("matlab -nodesktop -nosplash -r \"run(\'test/plotall.m\'); \"; ");
 
 }
