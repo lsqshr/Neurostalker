@@ -40,7 +40,7 @@ public:
 private:
 	ImagePointer OriginalImg;
 	GradientImagePointer GVF;
-    float radius;
+    float radius = 0;
     float x, y, z;// position
 	int ndir; // Number of directions
     int density; // The density of the sampled points on each sample plane
@@ -49,6 +49,7 @@ private:
 	vectype peakth; // The theta values of the peaks
 	vectype peakphi; // The theta values of the peaks
     vectype lpressure; // The pressure sampled at each direction
+    float Moment(vectype v, vectype x, vectype y, vectype z); // Sample the distortion energy at each direction
     pressuremaptype pressuremap;
     void SampleVoxels(vectype, vectype, vectype); // Sample the distortion energy at each direction
     vector<GradientPixelType> GetGradientAtIndex(vector<int> x, vector<int> y, vector<int> z);

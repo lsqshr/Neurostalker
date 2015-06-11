@@ -12,7 +12,6 @@
 
 using namespace std;
 
-
 vectype linspace(const PRECISION a, const PRECISION b, const int n) {
 // Equals to linspace in matlab
     vectype outvec (n);
@@ -241,6 +240,35 @@ int appradius(unsigned char * inimg1d, V3DLONG * sz,  PRECISION thresh, int loca
         }
     }
     return r;
+}
+
+
+void vecproj(vectype * u, const vectype v)
+{
+	// Projv(u) = [ (u•v)/(v•v) ] · v project u ulong v
+	double udotv = (*u)[0] * v[0] + (*u)[1] * v[1] + (*u)[2] * v[2]; 
+	double vdotv = v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
+	(*u)[0] = udotv / vdotv * v[0];
+	(*u)[1] = udotv / vdotv * v[1];
+	(*u)[2] = udotv / vdotv * v[2];
+}
+
+
+void vecnorm(vectype *u, const vectype v)
+{
+	// Projv(u) = [ (u•v)/(v•v) ] · v project u ulong v
+	double udotv = (*u)[0] * v[0] + (*u)[1] * v[1] + (*u)[2] * v[2]; 
+	double vdotv = v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
+	(*u)[0] = (*u)[0] - udotv / vdotv * v[0];
+	(*u)[1] = (*u)[1] - udotv / vdotv * v[1];
+	(*u)[2] = (*u)[2] - udotv / vdotv * v[2];
+}
+
+
+float constrain(float in, float low, float high)
+{
+	if (in < low) return low;
+	if (in > high) return high;
 }
 
 

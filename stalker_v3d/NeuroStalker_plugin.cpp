@@ -198,7 +198,7 @@ void reconstruction_func(V3DPluginCallback2 &callback,
         if (PARA.unittest & 2)
     {
         cout<<"+++++ Running Unit-Tests +++++"<<endl;
-        TestRadius(data1d, in_sz);
+        //TestRadius(data1d, in_sz);
     }
     // ------- Main neuron reconstruction code
     // Crop The image

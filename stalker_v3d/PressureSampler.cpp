@@ -116,39 +116,26 @@ void PressureSampler::GenSph(){
         thctr = 1;
     }
 
-    cout<<"before sorted"<<endl;
-    for (int i=0; i<this->ndir; i++) cout<<i<<" - th: "<<this->baseth[i]<<" "<<this->basephi[i]<<endl;
-
-    cout<<"sorted"<<endl;
-    for (int i=0; i<this->ndir; i++) cout<<thpairs[i].idx<<" - th: "<<thpairs[i].value<<" "<<tphi[i]<<endl;
-
     // Loop through all directions horizontally
     // Add only the left and right neighbours to itself
     // The head and the tail are considered as neighbours as well
     for (int i=1; i<this->ndir; i++)
     {
-        cout<<"At:"<<thpairs[i].idx<<endl;
         if (tphi[i] == tphi[i-1])
         { 
             thctr++;
-            cout<<"Adding "<<thpairs[i-1].idx<<" as "<<thpairs[i].idx<<"'s neighbour"<<endl;
             this->dirneighbours[thpairs[i].idx].neighbouridx.push_back(thpairs[i-1].idx);
-            cout<<"Adding "<<thpairs[i].idx<<" as "<<thpairs[i-1].idx<<"'s neighbour"<<endl;
             this->dirneighbours[thpairs[i-1].idx].neighbouridx.push_back(thpairs[i].idx);
             if (i!=this->ndir-1)
                 continue;
         }
-
-        cout<<"break"<<endl;
 
         int curidx = -1;
         if (i == this->ndir - 1) {curidx = i; thstartidx = i - thctr + 1;}
         else {curidx = i - 1; thstartidx = i - thctr;}
 
         // head and tail
-        cout<<"Adding "<<thpairs[thstartidx].idx<<" as "<<thpairs[curidx].idx<<"'s neighbour"<<endl;
         this->dirneighbours[thpairs[curidx].idx].neighbouridx.push_back(thpairs[thstartidx].idx);
-        cout<<"Adding "<<thpairs[curidx].idx<<" as "<<thpairs[thstartidx].idx<<"'s neighbour"<<endl;
         this->dirneighbours[thpairs[thstartidx].idx].neighbouridx.push_back(thpairs[curidx].idx);
         thitr += thctr;
         thctr = 1;
@@ -180,34 +167,24 @@ void PressureSampler::GenSph(){
                 continue;
         }
 
-        cout<<"sort "<<(*phiitr).idx<<" to "<<(*(phiitr+3)).idx<<endl;
         sort(phiitr, phiitr + phictr);
         // head and tail
         phiitr += phictr;
         phictr = 1;
     }
 
-    cout<<"before sorted"<<endl;
-    for (int i=0; i<this->ndir; i++) cout<<thpairs[i].idx<<" - th: "<<tth[i]<<" "<<tphi[i]<<endl;
-
-    cout<<"sorted"<<endl;
-    for (int i=0; i<this->ndir; i++) cout<<phipairs[i].idx<<" - th: "<<tth[i]<<" "<<phipairs[i].value<<endl;
-
     // Loop through all directions vertically, add neighbours
     for (int i=1; i<this->ndir; i++)
     {
-        cout<<"At:"<<phipairs[i].idx<<endl;
         if (tth[i] == tth[i-1])
         { 
             phictr++;
             // Add the left&right neighbours of its upper neighbour to itself
             if (this->dirneighbours[phipairs[i-1].idx].neighbouridx.size() >=2) 
             {
-                cout<<"Adding "<<phipairs[i-1].idx<<"'s left "<<this->dirneighbours[phipairs[i-1].idx].neighbouridx[0]<< "as "<<phipairs[i].idx<<"'s neighbour"<<endl;
                 this->dirneighbours[phipairs[i].idx].neighbouridx.push_back(
                                                                     this->dirneighbours[phipairs[i-1].idx].neighbouridx[0]
                                                                     );
-                cout<<"Adding "<<phipairs[i-1].idx<<"'s right "<<this->dirneighbours[phipairs[i-1].idx].neighbouridx[1]<< "as "<<phipairs[i].idx<<"'s neighbour"<<endl;
                 this->dirneighbours[phipairs[i].idx].neighbouridx.push_back(
                                                                     this->dirneighbours[phipairs[i-1].idx].neighbouridx[1]
                                                                     );
@@ -216,19 +193,15 @@ void PressureSampler::GenSph(){
             // Add its left and right neighbours to its upper neighbour
             if (this->dirneighbours[phipairs[i].idx].neighbouridx.size() >=2) 
             {
-                cout<<"Adding "<<phipairs[i].idx<<"'s left "<<this->dirneighbours[phipairs[i].idx].neighbouridx[0]<< "as "<<phipairs[i-1].idx<<"'s neighbour"<<endl;
                 this->dirneighbours[phipairs[i-1].idx].neighbouridx.push_back(
                                                                     this->dirneighbours[phipairs[i].idx].neighbouridx[0]
                                                                     );
-                cout<<"Adding "<<phipairs[i].idx<<"'s right "<<this->dirneighbours[phipairs[i].idx].neighbouridx[1]<< "as "<<phipairs[i-1].idx<<"'s neighbour"<<endl;
                 this->dirneighbours[phipairs[i-1].idx].neighbouridx.push_back(
                                                                     this->dirneighbours[phipairs[i].idx].neighbouridx[1]
                                                                     );
             }
 
-            cout<<"Adding "<<phipairs[i-1].idx<<" as "<<phipairs[i].idx<<"'s neighbour"<<endl;
             this->dirneighbours[phipairs[i].idx].neighbouridx.push_back(phipairs[i-1].idx);// Add its upper neighbour
-            cout<<"Adding "<<phipairs[i].idx<<" as "<<phipairs[i-1].idx<<"'s neighbour"<<endl;
             this->dirneighbours[phipairs[i-1].idx].neighbouridx.push_back(phipairs[i].idx); // Add itself to its upper neighbour
 
             if (i!=this->ndir-1)
@@ -262,7 +235,11 @@ void PressureSampler::SetNDir(int ndir){
 
 void PressureSampler::FindVoxel2Sample(float th, float phi, vectype * outx, vectype* outy, vectype* outz, int pointrange)
 {
-    float rl; float random; float random_r; float t;
+    float rl, random, random_r, t;
+    LabelImageType::SizeType size = this->GVF->GetLargestPossibleRegion().GetSize();
+    int M = size[0];
+    int N = size[1];
+    int Z = size[2];
 
     for (int n=pointrange; n>0; n--) 
     {  
@@ -275,6 +252,9 @@ void PressureSampler::FindVoxel2Sample(float th, float phi, vectype * outx, vect
         (*outx)[n] = rl * cos(t) * (-sin(phi)) + rl * sin(t) * cos(th) * cos(phi) +  this->x;
         (*outy)[n] = rl * cos(t) * cos(phi) + rl * sin(t) * cos(th) * sin(phi) +  this->y;
         (*outz)[n] = rl * sin(t) * (-sin(th)) + this->z;
+        (*outx)[n] = constrain((*outx)[n], 0, M);
+        (*outy)[n] = constrain((*outy)[n], 0, N);
+        (*outz)[n] = constrain((*outz)[n], 0, Z);
     }
 
     return; 
@@ -283,6 +263,10 @@ void PressureSampler::FindVoxel2Sample(float th, float phi, vectype * outx, vect
 
 vector<GradientPixelType> PressureSampler::GetGradientAtIndex(vector<int> lx, vector<int> ly, vector<int> lz)
 {
+    LabelImageType::SizeType size = this->GVF->GetLargestPossibleRegion().GetSize();
+    int M = size[0];
+    int N = size[1];
+    int Z = size[2];
 
     vector<GradientPixelType> lvg;
     for (int i = 0; i < lx.size(); i++)
@@ -292,32 +276,13 @@ vector<GradientPixelType> PressureSampler::GetGradientAtIndex(vector<int> lx, ve
             GradientInterpolatorType;
         GradientInterpolatorType::Pointer interpolator = GradientInterpolatorType::New();
         interpolator->SetInputImage(this->GVF);
-        idx[0] = lx[i];
-        idx[1] = ly[i];
-        idx[2] = lz[i];
+        idx[0] = constrain(lx[i], 0, M);
+        idx[1] = constrain(ly[i], 0, N);
+        idx[2] = constrain(lz[i], 0, Z);
         GradientPixelType gpixel = interpolator->EvaluateAtIndex(idx);
         lvg.push_back(gpixel);
     }
-
-    return lvg;
-}
-
-
-void PressureSampler::SampleVoxels(const vector<float> lx, const vector<float> ly, const vector<float> lz)
-{
-// Sample the distortion energy at each direction
-// E = 1/N * sum_i{l_i * f_i}
-// where N is the total number of voxels, l_i is the distance between the sampling position and the center of the plane;
-// f_i is the orthogonal resultant force on the plane
-
-    assert(lx.size() == ly.size() && ly.size() == lz.size());
-    vector<float> distance(lx.size());
-
-    vectype l = eucdistance2center(this->x, this->y, this->z, lx, ly, lz);
-}
-
-
-void PressureSampler::UpdatePosition(float x, float y, float z)
+ return lvg; } void PressureSampler::UpdatePosition(float x, float y, float z)
 {
     this->x = x; this->y = y; this->z = z;
     this->GetRadius();
@@ -338,13 +303,40 @@ void PressureSampler::RandRotateSph()
 }
 
 
+float PressureSampler::Moment(vectype v, vectype xvec, vectype yvec, vectype zvec){
+    // Convert float vectors to int 
+    vector<int> txvec(xvec.begin(), xvec.end());
+    vector<int> tyvec(yvec.begin(), yvec.end());
+    vector<int> tzvec(zvec.begin(), zvec.end());
+
+    vector<GradientPixelType> lvg = this->GetGradientAtIndex(txvec, tyvec, tzvec);
+
+    float testradius = this->density;
+    vectype u(3);
+    float tempdis = 0;
+    float orthfl = 0;
+    float orthf = 0;
+
+    vectype dis = eucdistance2center(this->x, this->y, this->z, xvec, yvec, zvec);
+    assert(dis.size() == xvec.size());
+
+    for(int n=0; n<this->density; n++)
+    {
+        u[0] = lvg[n][0];
+        u[1] = lvg[n][1];
+        u[2] = lvg[n][2];
+        vecnorm(&u, v); // vector projection to u
+        orthf = pow(u[0], 2) + pow(u[1], 2)+ pow(u[2], 2);
+        orthf = pow(orthf, 0.5);
+        orthfl = orthf * dis[n] + orthfl;
+    }
+
+    return orthfl / this->density;
+}
+
+
 vector<int> PressureSampler::FindPeaks()
 {
-    // The base sph before Findpeaks
-    for (int i=0; i<this->ndir; i++)
-    {
-        cout<<i<<": "<<this->baseth[i]<<"\t"<<this->basephi[i]<<endl;
-    }
 
     float r = 0;
     vector<int> peaks;
@@ -353,15 +345,6 @@ vector<int> PressureSampler::FindPeaks()
     {
         r = lpressure[i];
         vector<int> neighbouridx = this->FindSphNeighbours(i);
-
-        // DEBUG:
-        cout<<"For "<<this->baseth[i]<<" "<<this->basephi[i]<<endl;
-        cout<<neighbouridx.size()<<" neighbors found..."<<endl;        
-        for(int j=0; j<neighbouridx.size(); j++)
-        {
-            cout<<"neighbour "<<j<<": "<<this->baseth[neighbouridx[j]]<<","<<this->basephi[neighbouridx[j]]<<"\t";
-        }
-        cout<<endl;
 
         bool minimal = true;
         // A direction is a local minimal if there is no neighbor 
@@ -373,19 +356,11 @@ vector<int> PressureSampler::FindPeaks()
                 minimal = false;
                 break;
             }
-            cout<<"checking minimal at "<<i<<endl;
-            cout<<"neighbour pressure: "<<lpressure[neighbouridx[j]]<<endl;
-            cout<<"self pressure: "<<r<<endl;
         }
 
         if (minimal == true)
         {
-            cout<<"Found minimal at "<<i<<endl;
             peaks.push_back(i);
-        }
-        else
-        {
-            cout<<i<<" is not a minimal"<<endl;
         }
     }
     return peaks;
@@ -406,18 +381,33 @@ const int PressureSampler::FindDirIdx(float th, float phi){
 }   
 
 
+void PressureSampler::RandSample()
+{
+    vectype rvec(this->ndir, 1);
+    vectype xvec(this->ndir), yvec(this->ndir), zvec(this->ndir);
+    vectype cartsampledir(3);
+    vectype samplex(this->density), sampley(this->density), samplez(this->density);
+    sph2cart(this->baseth, this->basephi, rvec, &xvec, &yvec, &zvec);
+
+    for (int i = 0; i < this->ndir; i++)
+    {
+        cartsampledir[0] = xvec[i];
+        cartsampledir[1] = yvec[i];
+        cartsampledir[2] = zvec[i];
+        this->FindVoxel2Sample(this->baseth[i], this->basephi[i], &samplex, &sampley, &samplez, this->radius);
+        this->lpressure[i] = this->Moment(cartsampledir, samplex, sampley, samplez);
+    }
+
+    this->FindPeaks();
+}
+
+
 // It will be called when UpdatePosition
 float PressureSampler::GetRadius()
 {
     // TODO;  
     this->radius = -1;
     return this->radius;
-}
-
-
-void PressureSampler::RandSample()
-{
-    // TODO; 
 }
 
 

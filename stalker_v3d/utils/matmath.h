@@ -29,4 +29,11 @@ vectype sphveccos(vectype th1, vectype phi1, vectype th2, vectype phi2);
 vectype eucdistance2center(PRECISION x, PRECISION y, PRECISION z, vectype lx, vectype ly, vectype lz);
 
 // find the radius of the seed
-int appradius(unsigned char * inimg1d, V3DLONG * sz, PRECISION thresh, int location_x, int location_y, int location_z);
+int appradius(unsigned char * inimg1d, V3DLONG * sz,  double thresh, int location_x, int location_y, int location_z);
+
+// vector projecttion 
+void vecproj(vectype * u, const vectype v);
+
+void vecnorm(vectype * u, const vectype v);
+
+float constrain(float in, float low, float high);
