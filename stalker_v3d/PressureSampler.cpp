@@ -229,7 +229,7 @@ void PressureSampler::SetNDir(int ndir){
     this->ndir = ndir;
     this->GenSph();
     this->lpressure.clear();
-    this->lpressure.resize(ndir);
+    this->lpressure.resize(this->ndir);
 }
 
 
@@ -337,7 +337,8 @@ float PressureSampler::Moment(vectype v, vectype xvec, vectype yvec, vectype zve
 
 vector<int> PressureSampler::FindPeaks()
 {
-
+    // Find peaks on the sphere, save them in this->peakth and this->peakphi
+    // return the indices found for peaks
     float r = 0;
     vector<int> peaks;
     
@@ -363,6 +364,18 @@ vector<int> PressureSampler::FindPeaks()
             peaks.push_back(i);
         }
     }
+
+    int npeak = peaks.size();
+    this->peakth.clear();
+    this->peakth.resize(npeak);
+    this->peakphi.clear();
+    this->peakphi.resize(npeak);
+    for (int i=0; i<npeak; i++)
+    {
+        this->peakth[i] = this->baseth[peaks[i]];
+        this->peakphi[i] = this->basephi[peaks[i]];
+    }
+
     return peaks;
 }
 

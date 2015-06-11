@@ -232,7 +232,7 @@ void TestMatMath(){
 
 void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, LabelImagePointer wallimg, PointList3D seeds)
 {
-
+    //Literature Programming? - SQ
     int ndir = 100;
     PressureSampler p(ndir, 100, OriginalImage, GVF, 10);
 
@@ -406,7 +406,6 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
 
     cout<<"== Test Case: Save seeds for visual check "<<endl;
     int nseed = seeds.GetLength();
-    cout<<nseed<<" detected..."<<endl;
     vectype seedx, seedy, seedz;
     LabelImageType::IndexType binaryidx;
     int M = wallimg->GetLargestPossibleRegion().GetSize()[0];
@@ -457,13 +456,35 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
     savepts2csv(bx, by, bz, "test/testdata/binaryimg.csv");
     cout<<"== Test Case Passed"<<endl;
 
-    //system("matlab -nodesktop -nosplash -r \"run(\'test/plotall.m\')\";");
+    cout<<"Test Case: Visualise Moments in Matlab"<<endl;
+    char sphfiletitle[80];
+
+    for (int i = 0; i < seedx.size(); i++)
+    {
+        p.SetNDir(10000);
+        p.UpdatePosition(seedx[i], seedy[i], seedz[i]);
+        cout<<"Visualising Seed: "<<i<<" -- "<<seedx[i]<<","<<seedy[i]<<","<<seedz[i]<<endl;
+        p.RandSample();
+
+        vectype samplex(p.ndir), sampley(p.ndir), samplez(p.ndir);
+        sph2cart(p.baseth, p.basephi, p.lpressure, &samplex, &sampley, &samplez);
+        sprintf(sphfiletitle, "test/testdata/sampledsphere%d.csv", i);
+        savepts2csv(samplex, sampley, samplez, sphfiletitle);
+
+        // Save the peaks as well
+        vectype xpeak(p.peakth.size()), ypeak(p.peakth.size()), zpeak(p.peakth.size());
+        vectype rpeak (p.peakth.size(), 1);
+        sph2cart(p.GetPeakTh(), p.GetPeakPhi(), rpeak, &xpeak, &ypeak, &zpeak);
+        sprintf(sphfiletitle, "test/testdata/sphpeak%d.csv", i);
+        savepts2csv(xpeak, ypeak, zpeak, sphfiletitle);
+    }
+
+    cout<<"Test Passed"<<endl;
+    
     cout<<"==== Test Case RandSample"<<endl;
     //p.UpdatePosition();
     //p.radius = 5;
     //p.RandSample()
     cout<<"== Test Case Passed"<<endl;
-
-    system("matlab -nodesktop -nosplash -r \"run(\'test/plotall.m\')\";");
 }
 
