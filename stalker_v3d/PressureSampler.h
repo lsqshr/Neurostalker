@@ -57,7 +57,7 @@ private:
     vector<int> FindPeaks(); // Return the indices of the peak directions 
     void FindVoxel2Sample(float th,
                           float phi, vectype * outx, vectype* outy,
-                          vectype* outz, int pointrange);
+                          vectype* outz);
     const int FindDirIdx(float th, float phi);
     vector<int> FindSphNeighbours(int i);
     vector<neighbours> dirneighbours;
