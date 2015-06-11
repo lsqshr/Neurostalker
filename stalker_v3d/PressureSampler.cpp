@@ -419,3 +419,15 @@ void PressureSampler::RandSample()
 {
     // TODO; 
 }
+
+
+vectype PressureSampler::GetPeakTh()
+{
+    return this->peakth;
+}
+
+
+vectype PressureSampler::GetPeakPhi()
+{
+    return this->peakphi;
+}

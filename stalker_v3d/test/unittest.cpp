@@ -345,26 +345,38 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
 
     cout<<"== Test Case: Save seeds for visual check "<<endl;
     int nseed = seeds.GetLength();
-    vectype seedx(nseed);
-    vectype seedy(nseed);
-    vectype seedz(nseed);
-
-    for (int i=0; i<nseed; i++)
-    {
-        seedx[i] = seeds.Pt[i].x;
-        seedy[i] = seeds.Pt[i].y;
-        seedz[i] = seeds.Pt[i].z;
-    }
-
-    savepts2csv(seedx, seedy, seedz, "test/testdata/seeds.csv");
-    // Save the coordinates of the binary labels to csv
+    cout<<nseed<<" detected..."<<endl;
+    vectype seedx, seedy, seedz;
+    LabelImageType::IndexType binaryidx;
     int M = wallimg->GetLargestPossibleRegion().GetSize()[0];
     int N = wallimg->GetLargestPossibleRegion().GetSize()[1];
     int Z = wallimg->GetLargestPossibleRegion().GetSize()[2];
+
+    for (int i=0; i<nseed; i++)
+    {
+        if (seeds.Pt[i].x < 0 || seeds.Pt[i].x > M || seeds.Pt[i].x != seeds.Pt[i].x || 
+            seeds.Pt[i].y < 0 || seeds.Pt[i].y > N || seeds.Pt[i].y != seeds.Pt[i].y ||
+            seeds.Pt[i].z < 0 || seeds.Pt[i].z > Z || seeds.Pt[i].z != seeds.Pt[i].z) 
+            continue;
+        binaryidx[0] = (int)seeds.Pt[i].x;
+        binaryidx[1] = (int)seeds.Pt[i].y;
+        binaryidx[2] = (int)seeds.Pt[i].z;
+        unsigned short p = wallimg->GetPixel(binaryidx);
+        if ( p != 0) 
+        {
+            seedx.push_back(seeds.Pt[i].x); 
+            seedy.push_back(seeds.Pt[i].y); 
+            seedz.push_back(seeds.Pt[i].z); 
+        }
+    }
+
+    cout<<"Saving Seeds to test/testdata/seeds.csv"<<endl;
+    savepts2csv(seedx, seedy, seedz, "test/testdata/seeds.csv");
+
+    // Save the coordinates of the binary labels to csv
     vector<float> bx;
     vector<float> by;
     vector<float> bz;
-    LabelImageType::IndexType binaryidx;
     for (int m=0; m<M; m++)
         for (int n=0; n<N; n++)
             for (int z=0; z<Z; z++)
@@ -373,15 +385,25 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
                 binaryidx[1] = n;
                 binaryidx[2] = z;
                 unsigned short p = wallimg->GetPixel(binaryidx);
-                if (p!=0){
+                if (p != 0){
                     bx.push_back((float)m);
                     by.push_back((float)n);
                     bz.push_back((float)z);
                 }
             }
+
+    cout<<"Saving the binary image to test/testdata/binaryimg.csv"<<endl;
     savepts2csv(bx, by, bz, "test/testdata/binaryimg.csv");
     cout<<"== Test Case Passed"<<endl;
 
-    system("matlab -nodesktop -nosplash -r \"run(\'test/plotall.m\')\";");
+    /*
+    p.RandRotateSph();
+    p.UpdatePosition(seedx[0], seedy[0], seedz[0]);
+    p.RandSample();
+    vectype peakth = p.GetPeakTh();
+    vectype peakphi = p.GetPeakPhi();
+    */
 
+    //system("matlab -nodesktop -nosplash -r \"run(\'test/plotall.m\')\";");
 }
+
