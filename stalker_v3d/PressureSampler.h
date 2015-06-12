@@ -9,6 +9,11 @@ typedef vector<float> vectype;
 typedef map<float*, float> pressuremaptype;
 
 
+#ifndef MAX
+#define MAX(x,y) (x > y ? (x) : (y))
+#endif
+
+
 // For caching the direction neighbours on the sphere
 struct neighbours{
        int idx; 

@@ -249,9 +249,9 @@ void PressureSampler::FindVoxel2Sample(float th, float phi, vectype * outx, vect
     
         //assign theta phi value to the normal vector
         t = 2 * M_PI * random;  rl = this->radius * random_r;
-        (*outx)[n] = rl * cos(t) * (-sin(phi)) + rl * sin(t) * cos(th) * cos(phi) +  this->x;
-        (*outy)[n] = rl * cos(t) * cos(phi) + rl * sin(t) * cos(th) * sin(phi) +  this->y;
-        (*outz)[n] = rl * sin(t) * (-sin(th)) + this->z;
+        (*outx)[n] = rl * cos(t) * (-sin(phi)) + rl * sin(t) * cos(th) * cos(phi) +  this->x + cos(th) * sin(th);
+        (*outy)[n] = rl * cos(t) * cos(phi) + rl * sin(t) * cos(th) * sin(phi) +  this->y + sin(th) * sin(th);
+        (*outz)[n] = rl * sin(t) * (-sin(th)) + this->z + sin(phi);
         (*outx)[n] = constrain((*outx)[n], 0, M);
         (*outy)[n] = constrain((*outy)[n], 0, N);
         (*outz)[n] = constrain((*outz)[n], 0, Z);
@@ -405,7 +405,90 @@ void PressureSampler::RandSample()
 // It will be called when UpdatePosition
 float PressureSampler::GetRadius()
 {
-    // TODO;  
-    this->radius = -1;
-    return this->radius;
+    // TODO; 
+    PRECISION thresh = 30;
+        // Save the coordinates of the binary labels to csv
+    int M = this->OriginalImg->GetLargestPossibleRegion().GetSize()[0];
+    int N = this->OriginalImg->GetLargestPossibleRegion().GetSize()[1];
+    int Z = this->OriginalImg->GetLargestPossibleRegion().GetSize()[2];
+    vector<float> bx;
+    vector<float> by;
+    vector<float> bz;
+    LabelImageType::IndexType binaryidx;
+/*    for (int m=0; m<M; m++)
+        for (int n=0; n<N; n++)
+            for (int z=0; z<Z; z++)
+            {
+                binaryidx[0] = m;
+                binaryidx[1] = n;
+                binaryidx[2] = z;
+                unsigned short ponedim = this->OriginalImg->GetPixel(binaryidx);
+                if (ponedim!=0){
+                    bx.push_back((float)m);
+                    by.push_back((float)n);
+                    bz.push_back((float)z);
+                }
+            }*/
+
+    V3DLONG sz[3];
+    sz[0] = (V3DLONG) M;
+    sz[1] = (V3DLONG) N;
+    sz[2] = (V3DLONG) Z;
+    unsigned short point;
+    int max_r = MAX(MAX(sz[0]/2.0, sz[1]/2.0), sz[2]/2.0);
+    int r;
+    PRECISION tol_num, bak_num;
+    int mx = this->x + 0.5;
+    int my = this->y + 0.5;
+    int mz = this->z + 0.5;
+    V3DLONG x[2], y[2], z[2];
+
+    tol_num = bak_num = 0.0;
+    V3DLONG sz01 = sz[0] * sz[1];
+    for(r = 1; r <= max_r; r++)
+    {
+        PRECISION r1 = r - 0.5;
+        PRECISION r2 = r + 0.5;
+        PRECISION r1_r1 = r1 * r1;
+        PRECISION r2_r2 = r2 * r2;
+        PRECISION z_min = 0, z_max = r2;
+        for(int dz = z_min ; dz < z_max; dz++)
+        {
+            PRECISION dz_dz = dz * dz;
+            PRECISION y_min = 0;
+            PRECISION y_max = sqrt(r2_r2 - dz_dz);
+            for(int dy = y_min; dy < y_max; dy++)
+            {
+                PRECISION dy_dy = dy * dy;
+                PRECISION x_min = r1_r1 - dz_dz - dy_dy;
+                x_min = x_min > 0 ? sqrt(x_min)+1 : 0;
+                PRECISION x_max = sqrt(r2_r2 - dz_dz - dy_dy);
+                for(int dx = x_min; dx < x_max; dx++)
+                {
+                    x[0] = mx - dx, x[1] = mx + dx;
+                    y[0] = my - dy, y[1] = my + dy;
+                    z[0] = mz - dz, z[1] = mz + dz;
+                    for(char b = 0; b < 8; b++)
+                    {
+                        char ii = b & 0x01, jj = (b >> 1) & 0x01, kk = (b >> 2) & 0x01;
+                        binaryidx[0] = ii;
+                        binaryidx[1] = jj;
+                        binaryidx[2] = kk;
+                        if(x[ii]<0 || x[ii] >= sz[0] || y[jj]<0 || y[jj] >= sz[1] || z[kk]<0 || z[kk] >= sz[2]) return this->radius;
+                        else
+                        {
+                            tol_num++;
+                            long pos = z[kk]*sz01 + y[jj] * sz[0] + x[ii];
+                            point = this->OriginalImg->GetPixel(binaryidx);
+                            if(point < thresh){bak_num++;}
+                            if((bak_num / tol_num) > 0.0001) return this->radius;
+                        }
+                    }
+                }
+            }
+        }
+    }    
+
+
+
 }

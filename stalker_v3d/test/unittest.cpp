@@ -234,7 +234,7 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
 {
 
     int ndir = 100;
-    PressureSampler p(ndir, 100, OriginalImage, GVF, 10);
+    PressureSampler p(ndir, 27, OriginalImage, GVF, 10);
 
     cout<<"==== Test Case : FindVoxel2Sample"<<endl;
     srand (time(NULL));
@@ -402,7 +402,61 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
 
     float m = p.Moment(v, int_outx, int_outy, int_outz);
     cout<<"momenttest output: "<<m<<endl;	
-    cout<<"== Test Case Passed"<<endl;
+
+    vectype momentvecx;
+    vectype momentvecy;
+    vectype momentvecz;
+    vectype testv(3,1);
+    for(int i = 0; i < 3; i++)
+        {
+            for(int j = 0; j < 3; j++)
+                {
+                    for(int n = 0; n < 3; n++)
+                        {   
+                            momentvecx.push_back(i);
+                            momentvecy.push_back(j);
+                            momentvecz.push_back(n);
+                        } 
+                } 
+        }
+    vector<int> intmomentvecx(momentvecx.begin(), momentvecx.end());
+    vector<int> intmomentvecy(momentvecy.begin(), momentvecy.end());
+    vector<int> intmomentvecz(momentvecz.begin(), momentvecz.end());
+
+    float testmoment = p.Moment(testv, momentvecx, momentvecy, momentvecz);
+    vector<GradientPixelType> testlvg = p.GetGradientAtIndex(intmomentvecx, intmomentvecy, intmomentvecz);
+    vectype testu(3,0);
+    int couter = 0; 
+    float testumag = 0; 
+    float testdis = 0; 
+    float sqrttestumag = 0; 
+    float sqrttestdis = 0;
+    float fl = 0;
+    for(int i = 0; i < 3; i++)
+        {
+            for(int j = 0; j < 3; j++)
+                {
+                    for(int n = 0; n < 3; n++)
+                        { 
+                            testu[0] = testlvg[couter][0];
+                            testu[1] = testlvg[couter][1];
+                            testu[2] = testlvg[couter][2];
+                            vecnorm(&testu, testv);
+                            testumag = testu[0] * testu[0] + testu[1] * testu[1] + testu[2] * testu[2];
+                            testdis = (p.x - i) * (p.x - i) + (p.y - j) * (p.y - j) 
+                                            +  (p.z - n) * (p.z - n); 
+                            sqrttestumag = pow(testumag, 0.5);
+                            sqrttestdis = pow(testdis, 0.5);
+                            couter++;
+                            fl = fl + sqrttestdis * sqrttestumag; 
+                        }
+                }
+        }
+    fl = fl / p.density;                            
+    if (abs(fl-testmoment)<0.0001)   
+        {
+            cout<<"== Test Case Passed"<<endl;
+        }
 
     cout<<"== Test Case: Save seeds for visual check "<<endl;
     int nseed = seeds.GetLength();
@@ -449,5 +503,10 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
     //p.RandSample()
     cout<<"== Test Case Passed"<<endl;
 
-    system("matlab -nodesktop -nosplash -r \"run(\'test/plotall.m\')\";");
+    cout<<"==== Test Case NewRadius"<<endl;
+    float radiusvalue = p.GetRadius();
+    cout<<"radius value: "<<radiusvalue<<endl;
+    cout<<"== Test Case Passed"<<endl;
+
+    //system("matlab -nodesktop -nosplash -r \"run(\'test/plotall.m\')\";");
 }
