@@ -316,16 +316,11 @@ void PressureSampler::FindVoxel2Sample(float th, float phi, vectype * outx, vect
     
         //assign theta phi value to the normal vector
         t = 2 * M_PI * random;  rl = this->radius * random_r;
-<<<<<<< HEAD
-        (*outx)[n] = rl * cos(t) * (-sin(phi)) + rl * sin(t) * cos(th) * cos(phi) +  this->x + cos(th) * sin(th);
-        (*outy)[n] = rl * cos(t) * cos(phi) + rl * sin(t) * cos(th) * sin(phi) +  this->y + sin(th) * sin(th);
-        (*outz)[n] = rl * sin(t) * (-sin(th)) + this->z + sin(phi);
-=======
+
         (*outx)[n] = rl * cos(t) * (-sin(phi)) + rl * sin(t) * cos(th) * cos(phi) +  this->x;
         (*outy)[n] = rl * cos(t) * cos(phi) + rl * sin(t) * cos(th) * sin(phi) +  this->y;
         (*outz)[n] = rl * sin(t) * (-sin(th)) + this->z;
         //cout<<"After Constrain"<<(*outx)[n]<<" "<<(*outy)[n]<<" "<<(*outz)[n]<<" "<<radius<<endl;
->>>>>>> d34ecb495f5b682f632b04dbb75499a2b18afc0e
         (*outx)[n] = constrain((*outx)[n], 0, M);
         (*outy)[n] = constrain((*outy)[n], 0, N);
         (*outz)[n] = constrain((*outz)[n], 0, Z);

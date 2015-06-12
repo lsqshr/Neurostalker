@@ -234,8 +234,8 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
 {
     //Literature Programming? - SQ
     int ndir = 100;
-    PressureSampler p(ndir, 27, OriginalImage, GVF, 10);
-    p.radius = 4;
+    PressureSampler p(ndir, 100, OriginalImage, GVF, 10);
+    p.radius = 2;
 
     cout<<"==== Test Case : FindVoxel2Sample"<<endl;
     srand (time(NULL));
@@ -496,6 +496,9 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
     vector<float> bx;
     vector<float> by;
     vector<float> bz;
+    int bctr = 0;
+    ofstream bstream;
+    bstream.open("test/testdata/binaryimg.csv");
     for (int m=0; m<M; m++)
         for (int n=0; n<N; n++)
             for (int z=0; z<Z; z++)
@@ -505,14 +508,12 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
                 binaryidx[2] = z;
                 unsigned short p = wallimg->GetPixel(binaryidx);
                 if (p != 0){
-                    bx.push_back((float)m);
-                    by.push_back((float)n);
-                    bz.push_back((float)z);
+                    bstream<<m<<","<<n<<","<<z<<","<<bctr<<endl;
                 }
+                bctr++;
             }
 
     cout<<"Saving the binary image to test/testdata/binaryimg.csv"<<endl;
-    savepts2csv(bx, by, bz, "test/testdata/binaryimg.csv");
     cout<<"== Test Case Passed"<<endl;
 
     cout<<"Test Case: Visualise Moments in Matlab"<<endl;
@@ -530,6 +531,9 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
         sprintf(sphfiletitle, "test/testdata/sampledsphere%d.csv", i);
         savepts2csv(samplex, sampley, samplez, sphfiletitle);
 
+        sprintf(sphfiletitle, "test/testdata/moment%d.csv", i);
+        savepts2csv(p.baseth, p.basephi, p.lpressure, sphfiletitle);
+
         // Save the peaks as well
         vectype xpeak(p.peakth.size()), ypeak(p.peakth.size()), zpeak(p.peakth.size());
         vectype rpeak (p.peakth.size(), 1);
@@ -539,7 +543,33 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
     }
 
     cout<<"Test Passed"<<endl;
-    
+
+    cout<<"Visualise GVF"<<endl;
+    int gM = p.GVF->GetLargestPossibleRegion().GetSize()[0];
+    int gN = p.GVF->GetLargestPossibleRegion().GetSize()[1];
+    int gZ = p.GVF->GetLargestPossibleRegion().GetSize()[2];
+    int gsz = gM * gN * gZ;
+    vector<int> gx(gsz), gy(gsz), gz(gsz);
+    ofstream fgvf;
+    fgvf.open ("test/testdata/gvf-littlesoma.csv");
+    int gctr = 0;
+    for(int i=0; i< gM; i++)
+        for(int j=0; j< gN; j++)
+            for(int k=0; k< gZ; k++)
+            {   
+                vector<int> vi(1, i);
+                vector<int> vj(1, j);
+                vector<int> vk(1, k);
+                vector<GradientPixelType> vpx = p.GetGradientAtIndex(vi, vj, vk);
+                GradientPixelType px = vpx[0];
+                fgvf<<i<<","<<j<<","<<k<<","<<px[0]<<","<<px[1]<<","<<px[2]<<","<<gctr<<endl;
+                gctr++;
+            }
+
+    fgvf.close();
+
+    cout<<"Test Case Passed"<<endl;
+
     cout<<"==== Test Case RandSample"<<endl;
     //p.UpdatePosition();
     //p.radius = 5;
