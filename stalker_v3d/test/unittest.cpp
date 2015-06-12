@@ -232,9 +232,10 @@ void TestMatMath(){
 
 void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, LabelImagePointer wallimg, PointList3D seeds)
 {
-
+    //Literature Programming? - SQ
     int ndir = 100;
     PressureSampler p(ndir, 27, OriginalImage, GVF, 10);
+    p.radius = 4;
 
     cout<<"==== Test Case : FindVoxel2Sample"<<endl;
     srand (time(NULL));
@@ -246,7 +247,7 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
     x = 3.0; y = 4.0; z = 5.0;
     float phi = 0.8; float theta = 0.6; float radius = 5;
     p.UpdatePosition(x, y, z);
-    p.FindVoxel2Sample(theta, phi, &outx, &outy, &outz, p.density);
+    p.FindVoxel2Sample(theta, phi, &outx, &outy, &outz);
     bool current_judge = true;
     float dirx = cos(phi) * sin(theta), diry = sin(phi) * sin(theta), dirz = cos(theta);
     float firstd = dirx * (outx)[1] + diry * (outy)[1] + dirz * (outz)[1];
@@ -271,6 +272,7 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
     sph2cart(p.baseth, p.basephi, rvec100, &x100, &y100, &z100);
     savepts2csv(x100, y100, z100, "test/testdata/100sph.csv");
 
+    /*
     // Test Neighbours
     p.SetNDir(20);
     set<int> outneighbourset(p.dirneighbours[0].neighbouridx.begin(), p.dirneighbours[0].neighbouridx.end());
@@ -299,6 +301,7 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
     expectset.insert(6);
     expectset.insert(16);
     assert(expectset==outneighbourset);
+    */
 
 	cout<<"== Test Case Passed"<<endl;
 
@@ -355,6 +358,7 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
     savepts2csv(x100, y100, z100, "test/testdata/RandRotated3.csv");
     cout<<"== Test Case Passed"<<endl;
 
+    /*
     cout<<"==== Test Case : FindPeaks"<<endl;
     p.SetNDir(20);
     p.RandRotateSph();
@@ -378,6 +382,7 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
     assert(expectidx == outputidx);
 
     cout<<"== Test Case Passed"<<endl;
+    */
 
     cout<<"==== Test Case : Get the circle Moment"<<endl;
     vectype int_outx(p.density), int_outy(p.density), int_outz(p.density);
@@ -460,26 +465,37 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
 
     cout<<"== Test Case: Save seeds for visual check "<<endl;
     int nseed = seeds.GetLength();
-    vectype seedx(nseed);
-    vectype seedy(nseed);
-    vectype seedz(nseed);
-
-    for (int i=0; i<nseed; i++)
-    {
-        seedx[i] = seeds.Pt[i].x;
-        seedy[i] = seeds.Pt[i].y;
-        seedz[i] = seeds.Pt[i].z;
-    }
-
-    savepts2csv(seedx, seedy, seedz, "test/testdata/seeds.csv");
-    // Save the coordinates of the binary labels to csv
+    vectype seedx, seedy, seedz;
+    LabelImageType::IndexType binaryidx;
     int M = wallimg->GetLargestPossibleRegion().GetSize()[0];
     int N = wallimg->GetLargestPossibleRegion().GetSize()[1];
     int Z = wallimg->GetLargestPossibleRegion().GetSize()[2];
+
+    for (int i=0; i<nseed; i++)
+    {
+        if (seeds.Pt[i].x < 0 || seeds.Pt[i].x > M || seeds.Pt[i].x != seeds.Pt[i].x || 
+            seeds.Pt[i].y < 0 || seeds.Pt[i].y > N || seeds.Pt[i].y != seeds.Pt[i].y ||
+            seeds.Pt[i].z < 0 || seeds.Pt[i].z > Z || seeds.Pt[i].z != seeds.Pt[i].z) 
+            continue;
+        binaryidx[0] = (int)seeds.Pt[i].x;
+        binaryidx[1] = (int)seeds.Pt[i].y;
+        binaryidx[2] = (int)seeds.Pt[i].z;
+        unsigned short p = wallimg->GetPixel(binaryidx);
+        if ( p != 0) 
+        {
+            seedx.push_back(seeds.Pt[i].x); 
+            seedy.push_back(seeds.Pt[i].y); 
+            seedz.push_back(seeds.Pt[i].z); 
+        }
+    }
+
+    cout<<"Saving Seeds to test/testdata/seeds.csv"<<endl;
+    savepts2csv(seedx, seedy, seedz, "test/testdata/seeds.csv");
+
+    // Save the coordinates of the binary labels to csv
     vector<float> bx;
     vector<float> by;
     vector<float> bz;
-    LabelImageType::IndexType binaryidx;
     for (int m=0; m<M; m++)
         for (int n=0; n<N; n++)
             for (int z=0; z<Z; z++)
@@ -488,15 +504,42 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
                 binaryidx[1] = n;
                 binaryidx[2] = z;
                 unsigned short p = wallimg->GetPixel(binaryidx);
-                if (p!=0){
+                if (p != 0){
                     bx.push_back((float)m);
                     by.push_back((float)n);
                     bz.push_back((float)z);
                 }
             }
+
+    cout<<"Saving the binary image to test/testdata/binaryimg.csv"<<endl;
     savepts2csv(bx, by, bz, "test/testdata/binaryimg.csv");
     cout<<"== Test Case Passed"<<endl;
 
+    cout<<"Test Case: Visualise Moments in Matlab"<<endl;
+    char sphfiletitle[80];
+
+    for (int i = 0; i < seedx.size(); i++)
+    {
+        p.SetNDir(10000);
+        p.UpdatePosition(seedx[i], seedy[i], seedz[i]);
+        cout<<"Visualising Seed: "<<i<<" -- "<<seedx[i]<<","<<seedy[i]<<","<<seedz[i]<<endl;
+        p.RandSample();
+
+        vectype samplex(p.ndir), sampley(p.ndir), samplez(p.ndir);
+        sph2cart(p.baseth, p.basephi, p.lpressure, &samplex, &sampley, &samplez);
+        sprintf(sphfiletitle, "test/testdata/sampledsphere%d.csv", i);
+        savepts2csv(samplex, sampley, samplez, sphfiletitle);
+
+        // Save the peaks as well
+        vectype xpeak(p.peakth.size()), ypeak(p.peakth.size()), zpeak(p.peakth.size());
+        vectype rpeak (p.peakth.size(), 1);
+        sph2cart(p.GetPeakTh(), p.GetPeakPhi(), rpeak, &xpeak, &ypeak, &zpeak);
+        sprintf(sphfiletitle, "test/testdata/sphpeak%d.csv", i);
+        savepts2csv(xpeak, ypeak, zpeak, sphfiletitle);
+    }
+
+    cout<<"Test Passed"<<endl;
+    
     cout<<"==== Test Case RandSample"<<endl;
     //p.UpdatePosition();
     //p.radius = 5;

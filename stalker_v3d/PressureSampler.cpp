@@ -126,6 +126,12 @@ void PressureSampler::GenSph(){
             thctr++;
             this->dirneighbours[thpairs[i].idx].neighbouridx.push_back(thpairs[i-1].idx);
             this->dirneighbours[thpairs[i-1].idx].neighbouridx.push_back(thpairs[i].idx);
+            if ( i >= 2)
+            {
+                this->dirneighbours[thpairs[i].idx].neighbouridx.push_back(thpairs[i-2].idx);
+                this->dirneighbours[thpairs[i-2].idx].neighbouridx.push_back(thpairs[i].idx);
+            }
+
             if (i!=this->ndir-1)
                 continue;
         }
@@ -137,6 +143,8 @@ void PressureSampler::GenSph(){
         // head and tail
         this->dirneighbours[thpairs[curidx].idx].neighbouridx.push_back(thpairs[thstartidx].idx);
         this->dirneighbours[thpairs[thstartidx].idx].neighbouridx.push_back(thpairs[curidx].idx);
+        this->dirneighbours[thpairs[thstartidx+1].idx].neighbouridx.push_back(thpairs[curidx].idx);
+        this->dirneighbours[thpairs[curidx].idx].neighbouridx.push_back(thpairs[thstartidx+1].idx);
         thitr += thctr;
         thctr = 1;
     }
@@ -180,7 +188,7 @@ void PressureSampler::GenSph(){
         { 
             phictr++;
             // Add the left&right neighbours of its upper neighbour to itself
-            if (this->dirneighbours[phipairs[i-1].idx].neighbouridx.size() >=2) 
+            if (this->dirneighbours[phipairs[i-1].idx].neighbouridx.size() >= 4 ) 
             {
                 this->dirneighbours[phipairs[i].idx].neighbouridx.push_back(
                                                                     this->dirneighbours[phipairs[i-1].idx].neighbouridx[0]
@@ -188,10 +196,17 @@ void PressureSampler::GenSph(){
                 this->dirneighbours[phipairs[i].idx].neighbouridx.push_back(
                                                                     this->dirneighbours[phipairs[i-1].idx].neighbouridx[1]
                                                                     );
+                this->dirneighbours[phipairs[i].idx].neighbouridx.push_back(
+                                                                    this->dirneighbours[phipairs[i-1].idx].neighbouridx[2]
+                                                                    );
+                this->dirneighbours[phipairs[i].idx].neighbouridx.push_back(
+                                                                    this->dirneighbours[phipairs[i-1].idx].neighbouridx[3]
+                                                                    );
             }
 
+
             // Add its left and right neighbours to its upper neighbour
-            if (this->dirneighbours[phipairs[i].idx].neighbouridx.size() >=2) 
+            if (this->dirneighbours[phipairs[i].idx].neighbouridx.size() >= 4) 
             {
                 this->dirneighbours[phipairs[i-1].idx].neighbouridx.push_back(
                                                                     this->dirneighbours[phipairs[i].idx].neighbouridx[0]
@@ -199,23 +214,75 @@ void PressureSampler::GenSph(){
                 this->dirneighbours[phipairs[i-1].idx].neighbouridx.push_back(
                                                                     this->dirneighbours[phipairs[i].idx].neighbouridx[1]
                                                                     );
+                this->dirneighbours[phipairs[i-1].idx].neighbouridx.push_back(
+                                                                    this->dirneighbours[phipairs[i].idx].neighbouridx[2]
+                                                                    );
+                this->dirneighbours[phipairs[i-1].idx].neighbouridx.push_back(
+                                                                    this->dirneighbours[phipairs[i].idx].neighbouridx[3]
+                                                                    );
             }
 
             this->dirneighbours[phipairs[i].idx].neighbouridx.push_back(phipairs[i-1].idx);// Add its upper neighbour
             this->dirneighbours[phipairs[i-1].idx].neighbouridx.push_back(phipairs[i].idx); // Add itself to its upper neighbour
 
+            if (i >= 2)
+            {
+                // Add the left&right neighbours of its upper+1 neighbour to itself
+                if (this->dirneighbours[phipairs[i-2].idx].neighbouridx.size() >= 4 ) 
+                {
+                    this->dirneighbours[phipairs[i].idx].neighbouridx.push_back(
+                                                                        this->dirneighbours[phipairs[i-2].idx].neighbouridx[0]
+                                                                        );
+                    this->dirneighbours[phipairs[i].idx].neighbouridx.push_back(
+                                                                        this->dirneighbours[phipairs[i-2].idx].neighbouridx[1]
+                                                                        );
+                    this->dirneighbours[phipairs[i].idx].neighbouridx.push_back(
+                                                                        this->dirneighbours[phipairs[i-2].idx].neighbouridx[2]
+                                                                        );
+                    this->dirneighbours[phipairs[i].idx].neighbouridx.push_back(
+                                                                        this->dirneighbours[phipairs[i-2].idx].neighbouridx[3]
+                                                                        );
+                }
+
+                // Add its left and right neighbours to its upper+1  neighbour
+                if (this->dirneighbours[phipairs[i].idx].neighbouridx.size() >= 4) 
+                {
+                    this->dirneighbours[phipairs[i-2].idx].neighbouridx.push_back(
+                                                                        this->dirneighbours[phipairs[i].idx].neighbouridx[0]
+                                                                        );
+                    this->dirneighbours[phipairs[i-2].idx].neighbouridx.push_back(
+                                                                        this->dirneighbours[phipairs[i].idx].neighbouridx[1]
+                                                                        );
+                    this->dirneighbours[phipairs[i-2].idx].neighbouridx.push_back(
+                                                                        this->dirneighbours[phipairs[i].idx].neighbouridx[2]
+                                                                        );
+                    this->dirneighbours[phipairs[i-2].idx].neighbouridx.push_back(
+                                                                        this->dirneighbours[phipairs[i].idx].neighbouridx[3]
+                                                                        );
+                }
+
+                this->dirneighbours[phipairs[i].idx].neighbouridx.push_back(phipairs[i-2].idx);// Add its upper neighbour
+                this->dirneighbours[phipairs[i-2].idx].neighbouridx.push_back(phipairs[i].idx); // Add itself to its upper neighbour
+            }
+
             if (i!=this->ndir-1)
+            {
                 continue;
+            }
         }
 
         int curidx = -1;
-        if (i == this->ndir - 1) {curidx = i; phistartidx = i - phictr + 1;}
-        else {curidx = i - 1; phistartidx = i - phictr;}
+        if (i == this->ndir - 1) 
+        {
+            curidx = i; 
+            phistartidx = i - phictr + 1;
+        }
+        else 
+        {
+            curidx = i - 1; 
+            phistartidx = i - phictr;
+        }
 
-        // head and tail
-
-        //this->dirneighbours[thpairs[i].idx].neighbouridx.push_back(phistartidx);
-        //this->dirneighbours[thpairs[thstartidx].idx].neighbouridx.push_back(i);
         thitr += thctr;
         thctr = 1;
     }
@@ -229,11 +296,11 @@ void PressureSampler::SetNDir(int ndir){
     this->ndir = ndir;
     this->GenSph();
     this->lpressure.clear();
-    this->lpressure.resize(ndir);
+    this->lpressure.resize(this->ndir);
 }
 
 
-void PressureSampler::FindVoxel2Sample(float th, float phi, vectype * outx, vectype* outy, vectype* outz, int pointrange)
+void PressureSampler::FindVoxel2Sample(float th, float phi, vectype * outx, vectype* outy, vectype* outz)
 {
     float rl, random, random_r, t;
     LabelImageType::SizeType size = this->GVF->GetLargestPossibleRegion().GetSize();
@@ -241,7 +308,7 @@ void PressureSampler::FindVoxel2Sample(float th, float phi, vectype * outx, vect
     int N = size[1];
     int Z = size[2];
 
-    for (int n=pointrange; n>0; n--) 
+    for (int n=0; n < this->density; n++) 
     {  
         //random ranges from 0 to 1
         random = ((float) rand()) / (float) RAND_MAX;
@@ -249,12 +316,20 @@ void PressureSampler::FindVoxel2Sample(float th, float phi, vectype * outx, vect
     
         //assign theta phi value to the normal vector
         t = 2 * M_PI * random;  rl = this->radius * random_r;
+<<<<<<< HEAD
         (*outx)[n] = rl * cos(t) * (-sin(phi)) + rl * sin(t) * cos(th) * cos(phi) +  this->x + cos(th) * sin(th);
         (*outy)[n] = rl * cos(t) * cos(phi) + rl * sin(t) * cos(th) * sin(phi) +  this->y + sin(th) * sin(th);
         (*outz)[n] = rl * sin(t) * (-sin(th)) + this->z + sin(phi);
+=======
+        (*outx)[n] = rl * cos(t) * (-sin(phi)) + rl * sin(t) * cos(th) * cos(phi) +  this->x;
+        (*outy)[n] = rl * cos(t) * cos(phi) + rl * sin(t) * cos(th) * sin(phi) +  this->y;
+        (*outz)[n] = rl * sin(t) * (-sin(th)) + this->z;
+        //cout<<"After Constrain"<<(*outx)[n]<<" "<<(*outy)[n]<<" "<<(*outz)[n]<<" "<<radius<<endl;
+>>>>>>> d34ecb495f5b682f632b04dbb75499a2b18afc0e
         (*outx)[n] = constrain((*outx)[n], 0, M);
         (*outy)[n] = constrain((*outy)[n], 0, N);
         (*outz)[n] = constrain((*outz)[n], 0, Z);
+        //cout<<"After Constrain"<<(*outx)[n]<<" "<<(*outy)[n]<<" "<<(*outz)[n]<<" "<<radius<<endl;
     }
 
     return; 
@@ -282,9 +357,15 @@ vector<GradientPixelType> PressureSampler::GetGradientAtIndex(vector<int> lx, ve
         GradientPixelType gpixel = interpolator->EvaluateAtIndex(idx);
         lvg.push_back(gpixel);
     }
- return lvg; } void PressureSampler::UpdatePosition(float x, float y, float z)
+    return lvg; 
+} 
+
+
+void PressureSampler::UpdatePosition(float x, float y, float z)
 {
-    this->x = x; this->y = y; this->z = z;
+    this->x = x; 
+    this->y = y; 
+    this->z = z;
     this->GetRadius();
 }
 
@@ -325,10 +406,11 @@ float PressureSampler::Moment(vectype v, vectype xvec, vectype yvec, vectype zve
         u[0] = lvg[n][0];
         u[1] = lvg[n][1];
         u[2] = lvg[n][2];
-        vecnorm(&u, v); // vector projection to u
+        vecproj(&u, v); // vector projection to u
         orthf = pow(u[0], 2) + pow(u[1], 2)+ pow(u[2], 2);
         orthf = pow(orthf, 0.5);
         orthfl = orthf * dis[n] + orthfl;
+        //orthfl = orthf + orthfl;
     }
 
     return orthfl / this->density;
@@ -337,7 +419,8 @@ float PressureSampler::Moment(vectype v, vectype xvec, vectype yvec, vectype zve
 
 vector<int> PressureSampler::FindPeaks()
 {
-
+    // Find peaks on the sphere, save them in this->peakth and this->peakphi
+    // return the indices found for peaks
     float r = 0;
     vector<int> peaks;
     
@@ -346,23 +429,34 @@ vector<int> PressureSampler::FindPeaks()
         r = lpressure[i];
         vector<int> neighbouridx = this->FindSphNeighbours(i);
 
-        bool minimal = true;
-        // A direction is a local minimal if there is no neighbor 
+        bool maximal = true;
+        // A direction is a local maximal if there is no neighbor 
         // direction has a smaller pressure sampled
         for (int j=0; j<neighbouridx.size(); j++) 
         {
-            if (lpressure[neighbouridx[j]] < r) 
+            if (lpressure[neighbouridx[j]] > r) 
             {
-                minimal = false;
+                maximal = false;
                 break;
             }
         }
 
-        if (minimal == true)
+        if (maximal == true)
         {
             peaks.push_back(i);
         }
     }
+
+    this->peakth.clear();
+    this->peakphi.clear();
+    for (int i=0; i<peaks.size(); i++)
+    {   if (abs(M_PI - this->basephi[peaks[i]]) < 1e-2) continue;
+        this->peakth.push_back(this->baseth[peaks[i]]);
+        this->peakphi.push_back(this->basephi[peaks[i]]);
+    }
+
+    cout<<"npeak"<<this->peakth.size()<<endl;
+
     return peaks;
 }
 
@@ -394,7 +488,8 @@ void PressureSampler::RandSample()
         cartsampledir[0] = xvec[i];
         cartsampledir[1] = yvec[i];
         cartsampledir[2] = zvec[i];
-        this->FindVoxel2Sample(this->baseth[i], this->basephi[i], &samplex, &sampley, &samplez, this->radius);
+
+        this->FindVoxel2Sample(this->baseth[i], this->basephi[i], &samplex, &sampley, &samplez);
         this->lpressure[i] = this->Moment(cartsampledir, samplex, sampley, samplez);
     }
 
@@ -491,4 +586,16 @@ float PressureSampler::GetRadius()
 
 
 
+}
+
+
+vectype PressureSampler::GetPeakTh()
+{
+    return this->peakth;
+}
+
+
+vectype PressureSampler::GetPeakPhi()
+{
+    return this->peakphi;
 }

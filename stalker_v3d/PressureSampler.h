@@ -59,10 +59,10 @@ private:
     void SampleVoxels(vectype, vectype, vectype); // Sample the distortion energy at each direction
     vector<GradientPixelType> GetGradientAtIndex(vector<int> x, vector<int> y, vector<int> z);
 	void GenSph(); // Generate the base spherical directions
-	vector<int> FindPeaks(); // Return the indices of the peak directions 
+    vector<int> FindPeaks(); // Return the indices of the peak directions 
     void FindVoxel2Sample(float th,
                           float phi, vectype * outx, vectype* outy,
-                          vectype* outz, int pointrange);
+                          vectype* outz);
     const int FindDirIdx(float th, float phi);
     vector<int> FindSphNeighbours(int i);
     vector<neighbours> dirneighbours;
