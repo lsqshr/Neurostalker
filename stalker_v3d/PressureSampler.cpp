@@ -291,6 +291,48 @@ void PressureSampler::GenSph(){
     this->originbasephi = this->basephi;
 }
 
+void PressureSampler::HalfSphere(float inputth, float inputphi, vectype * binaryth, vectype * binaryphi)
+{
+    cout<<"output HalfSphere test?"<<endl;
+    int thsize =  this->baseth.size();
+    cout<<"the size of baseth should be the output: "<<thsize<<endl;
+    vector<float>::iterator minth, maxth;  
+    // Find the min and max elements in the vector
+    maxth = max_element((this->baseth).begin(), (this->baseth).end());
+    minth = min_element((this->baseth).begin(), (this->baseth).end());
+    cout<<"the max is: "<<*maxth<<"the min is: "<<*minth<<endl;
+    float lowth = (*maxth + *minth) / 4 + *minth;
+    float highth = (*maxth + *minth) / 4 * 3 + *minth;
+    cout<<"lowth output: "<<lowth<<"highth output: "<<highth<<endl;
+    
+    vector<float>::iterator minphi, maxphi;  
+    // Find the min and max elements in the vector
+    maxphi = max_element((this->basephi).begin(), (this->basephi).end());
+    minphi = min_element((this->basephi).begin(), (this->basephi).end());
+    cout<<"the max is: "<<*maxth<<"the min is: "<<*minth<<endl;
+    float lowphi = (*maxphi + *minphi) / 4 + *minphi;
+    float highphi = (*maxphi + *minphi) / 4 * 3 + *minphi;
+    cout<<"lowphi output: "<<lowphi<<"highphi output: "<<highphi<<endl;
+    int counter = 0;
+    float curth = 0;
+    float curphi = 0;
+    for (int i = 0; i < this->baseth.size(); i++)
+    {
+       if ( (this->baseth[i] > lowth) && (this->baseth[i] < highth)  )
+                                            {
+                                                curth = inputth + this->baseth[i];
+                                                (*binaryth).push_back(curth);
+                                                curphi = inputphi + this->basephi[i];
+                                                (*binaryphi).push_back(curphi);
+                                                counter++;
+                                            }
+
+    }
+    cout<<"binaryphi[100]: "<<(*binaryphi)[100]<<endl;
+    cout<<"test for Loop!"<<counter<<endl;
+
+}
+
 
 void PressureSampler::SetNDir(int ndir){
     this->ndir = ndir;

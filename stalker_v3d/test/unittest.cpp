@@ -580,12 +580,18 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
     cout<<"radius value: "<<radiusvalue<<endl;
     cout<<"== Test Case Passed"<<endl;
 
-    cout<<"Try to make the radius work"<<endl;
+    cout<<"==== Test Case Radius"<<endl;
         for (int i = 0; i < seedx.size(); i++)
     {
         p.UpdatePosition(seedx[i], seedy[i], seedz[i]);
         cout<<"See the radius of seed location: "<<p.radius<<endl;
     }
+    cout<<"== Test Case Passed"<<endl;
+
+    cout<<"==== Test Case HalfSphere"<<endl;
+    vectype halfth, halfphi;
+    p.HalfSphere(3.3, 4.4, &halfth, &halfphi);
+    cout<<"== Test Case Passed"<<endl;
 
     //system("matlab -nodesktop -nosplash -r \"run(\'test/plotall.m\')\";");
 }

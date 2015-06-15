@@ -38,6 +38,7 @@ public:
 	vectype GetBasePhi();
 	vectype GetPeakTh();
 	vectype GetPeakPhi();
+    void HalfSphere(float inputth, float inputphi, vectype * binaryth, vectype * binaryphi);
     float GetRadius(); // Calculate the radius at the current position using the raw image
 	void UpdatePosition(float x, float y, float z);
 	friend void TestPressureSampler(ImagePointer, GradientImagePointer, LabelImagePointer, PointList3D);
