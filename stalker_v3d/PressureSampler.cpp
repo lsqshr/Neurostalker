@@ -293,7 +293,7 @@ void PressureSampler::GenSph(){
 
 void PressureSampler::HalfSphere(float inputth, float inputphi, vectype * binaryth, vectype * binaryphi)
 {
-    cout<<"output HalfSphere test?"<<endl;
+/*    cout<<"output HalfSphere test?"<<endl;
     int thsize =  this->baseth.size();
     cout<<"the size of baseth should be the output: "<<thsize<<endl;
     vector<float>::iterator minth, maxth;  
@@ -312,17 +312,17 @@ void PressureSampler::HalfSphere(float inputth, float inputphi, vectype * binary
     cout<<"the max is: "<<*maxth<<"the min is: "<<*minth<<endl;
     float lowphi = (*maxphi + *minphi) / 4 + *minphi;
     float highphi = (*maxphi + *minphi) / 4 * 3 + *minphi;
-    cout<<"lowphi output: "<<lowphi<<"highphi output: "<<highphi<<endl;
+    cout<<"lowphi output: "<<lowphi<<"highphi output: "<<highphi<<endl;*/
     int counter = 0;
     float curth = 0;
     float curphi = 0;
     for (int i = 0; i < this->baseth.size(); i++)
     {
-       if ( (this->baseth[i] > lowth) && (this->baseth[i] < highth)  )
+       if ( (this->originbaseth[i] > 0) && (this->originbasephi[i] < (M_PI / 2) )  )
                                             {
-                                                curth = inputth + this->baseth[i];
+                                                curth = inputth + this->originbaseth[i];
                                                 (*binaryth).push_back(curth);
-                                                curphi = inputphi + this->basephi[i];
+                                                curphi = inputphi + this->originbasephi[i];
                                                 (*binaryphi).push_back(curphi);
                                                 counter++;
                                             }
@@ -330,6 +330,7 @@ void PressureSampler::HalfSphere(float inputth, float inputphi, vectype * binary
     }
     cout<<"binaryphi[100]: "<<(*binaryphi)[100]<<endl;
     cout<<"test for Loop!"<<counter<<endl;
+    cout<<"test pi: ?"<<M_PI<<endl;
 
 }
 

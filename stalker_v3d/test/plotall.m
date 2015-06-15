@@ -31,6 +31,9 @@ for i = 1 : nseed
 end
 hold off
 
+figure
+halfsphere = csvread(fullfile(filepath, 'testdata', 'halfsphere.csv'));
+scatter3(halfsphere(:,1), halfsphere(:, 2), halfsphere(:, 3))
 
 
 

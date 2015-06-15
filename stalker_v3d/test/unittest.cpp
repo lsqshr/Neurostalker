@@ -590,7 +590,14 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
 
     cout<<"==== Test Case HalfSphere"<<endl;
     vectype halfth, halfphi;
-    p.HalfSphere(3.3, 4.4, &halfth, &halfphi);
+    p.HalfSphere(1.5, 2, &halfth, &halfphi);
+    vectype rhalf(halfphi.size(), 1);
+    vectype outxhalf(halfphi.size());
+    vectype outyhalf(halfphi.size());
+    vectype outzhalf(halfphi.size());
+    sph2cart(halfth, halfphi, rhalf, &outxhalf, &outyhalf, &outzhalf);
+    sprintf(sphfiletitle, "test/testdata/halfsphere.csv");
+    savepts2csv(outxhalf, outyhalf, outzhalf, sphfiletitle);
     cout<<"== Test Case Passed"<<endl;
 
     //system("matlab -nodesktop -nosplash -r \"run(\'test/plotall.m\')\";");
