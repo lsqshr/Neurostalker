@@ -384,6 +384,9 @@ float PressureSampler::Moment(vectype v, vectype xvec, vectype yvec, vectype zve
     vector<int> txvec(xvec.begin(), xvec.end());
     vector<int> tyvec(yvec.begin(), yvec.end());
     vector<int> tzvec(zvec.begin(), zvec.end());
+    LabelImageType::IndexType binaryidx;
+    unsigned short point;
+    float threshold = 30;
 
     vector<GradientPixelType> lvg = this->GetGradientAtIndex(txvec, tyvec, tzvec);
 
@@ -392,6 +395,7 @@ float PressureSampler::Moment(vectype v, vectype xvec, vectype yvec, vectype zve
     float tempdis = 0;
     float orthfl = 0;
     float orthf = 0;
+    int   walljudge  = 1;
 
     vectype dis = eucdistance2center(this->x, this->y, this->z, xvec, yvec, zvec);
     assert(dis.size() == xvec.size());
@@ -401,13 +405,22 @@ float PressureSampler::Moment(vectype v, vectype xvec, vectype yvec, vectype zve
         u[0] = lvg[n][0];
         u[1] = lvg[n][1];
         u[2] = lvg[n][2];
+        binaryidx[0] =  txvec[n]; 
+        binaryidx[1] =  tyvec[n];
+        binaryidx[2] =  tzvec[n];
         vecproj(&u, v); // vector projection to u
+        point = this->OriginalImg->GetPixel(binaryidx);
+        if (point < 30)
+            {
+                walljudge = 0; 
+            }
+        //cout<<"point output: "<<point;
         orthf = pow(u[0], 2) + pow(u[1], 2)+ pow(u[2], 2);
         orthf = pow(orthf, 0.5);
-        orthfl = orthf * dis[n] + orthfl;
-        //orthfl = orthf + orthfl;
+        //orthfl = orthf * dis[n] * walljudge + orthfl;
+        orthfl = orthf + orthfl;
     }
-
+    //cout<<"work!"<<endl;
     return orthfl / this->density;
 }
 
@@ -496,7 +509,7 @@ void PressureSampler::RandSample()
 float PressureSampler::GetRadius()
 {
     // TODO; 
-    PRECISION thresh = 30;
+ /*   PRECISION thresh = 30;
         // Save the coordinates of the binary labels to csv
     int M = this->OriginalImg->GetLargestPossibleRegion().GetSize()[0];
     int N = this->OriginalImg->GetLargestPossibleRegion().GetSize()[1];
@@ -505,21 +518,6 @@ float PressureSampler::GetRadius()
     vector<float> by;
     vector<float> bz;
     LabelImageType::IndexType binaryidx;
-/*    for (int m=0; m<M; m++)
-        for (int n=0; n<N; n++)
-            for (int z=0; z<Z; z++)
-            {
-                binaryidx[0] = m;
-                binaryidx[1] = n;
-                binaryidx[2] = z;
-                unsigned short ponedim = this->OriginalImg->GetPixel(binaryidx);
-                if (ponedim!=0){
-                    bx.push_back((float)m);
-                    by.push_back((float)n);
-                    bz.push_back((float)z);
-                }
-            }*/
-
     V3DLONG sz[3];
     sz[0] = (V3DLONG) M;
     sz[1] = (V3DLONG) N;
@@ -564,20 +562,29 @@ float PressureSampler::GetRadius()
                         binaryidx[0] = ii;
                         binaryidx[1] = jj;
                         binaryidx[2] = kk;
-                        if(x[ii]<0 || x[ii] >= sz[0] || y[jj]<0 || y[jj] >= sz[1] || z[kk]<0 || z[kk] >= sz[2]) return this->radius;
+                        if(x[ii]<0 || x[ii] >= sz[0] || y[jj]<0 || y[jj] >= sz[1] || z[kk]<0 || z[kk] >= sz[2]) 
+                            {
+                                this->radius = r;
+                                return this->radius;
+                            }
                         else
                         {
                             tol_num++;
                             long pos = z[kk]*sz01 + y[jj] * sz[0] + x[ii];
                             point = this->OriginalImg->GetPixel(binaryidx);
                             if(point < thresh){bak_num++;}
-                            if((bak_num / tol_num) > 0.0001) return this->radius;
+                            if((bak_num / tol_num) > 0.0001)
+                                    {
+                                        this->radius = r;
+                                        return this->radius;
+                                    }
                         }
                     }
                 }
             }
         }
-    }    
+    }    */
+    return this->radius;        
 
 
 

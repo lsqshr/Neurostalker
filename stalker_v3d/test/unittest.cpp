@@ -235,7 +235,7 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
     //Literature Programming? - SQ
     int ndir = 100;
     PressureSampler p(ndir, 100, OriginalImage, GVF, 10);
-    p.radius = 2;
+    p.radius = 5;
 
     cout<<"==== Test Case : FindVoxel2Sample"<<endl;
     srand (time(NULL));
@@ -384,7 +384,7 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
     cout<<"== Test Case Passed"<<endl;
     */
 
-    cout<<"==== Test Case : Get the circle Moment"<<endl;
+/*    cout<<"==== Test Case : Get the circle Moment"<<endl;
     vectype int_outx(p.density), int_outy(p.density), int_outz(p.density);
 
     for(int n=0; n<p.density; n++)
@@ -461,7 +461,7 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
     if (abs(fl-testmoment)<0.0001)   
         {
             cout<<"== Test Case Passed"<<endl;
-        }
+        }*/
 
     cout<<"== Test Case: Save seeds for visual check "<<endl;
     int nseed = seeds.GetLength();
@@ -518,12 +518,13 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
 
     cout<<"Test Case: Visualise Moments in Matlab"<<endl;
     char sphfiletitle[80];
-
+    p.radius = 5;
     for (int i = 0; i < seedx.size(); i++)
     {
         p.SetNDir(10000);
         p.UpdatePosition(seedx[i], seedy[i], seedz[i]);
         cout<<"Visualising Seed: "<<i<<" -- "<<seedx[i]<<","<<seedy[i]<<","<<seedz[i]<<endl;
+
         p.RandSample();
 
         vectype samplex(p.ndir), sampley(p.ndir), samplez(p.ndir);
@@ -541,8 +542,6 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
         sprintf(sphfiletitle, "test/testdata/sphpeak%d.csv", i);
         savepts2csv(xpeak, ypeak, zpeak, sphfiletitle);
     }
-
-    cout<<"Test Passed"<<endl;
 
     cout<<"Visualise GVF"<<endl;
     int gM = p.GVF->GetLargestPossibleRegion().GetSize()[0];
@@ -567,7 +566,6 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
             }
 
     fgvf.close();
-
     cout<<"Test Case Passed"<<endl;
 
     cout<<"==== Test Case RandSample"<<endl;
@@ -580,6 +578,14 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
     float radiusvalue = p.GetRadius();
     cout<<"radius value: "<<radiusvalue<<endl;
     cout<<"== Test Case Passed"<<endl;
+
+/*    cout<<"Test Passed"<<endl;
+        for (int i = 0; i < seedx.size(); i++)
+    {
+        p.UpdatePosition(seedx[i], seedy[i], seedz[i]);
+        cout<<"See the radius of seed location: "<<p.GetRadius()<<endl;
+    }*/
+    cout<<"Try to make the radius work"<<endl;
 
     //system("matlab -nodesktop -nosplash -r \"run(\'test/plotall.m\')\";");
 }

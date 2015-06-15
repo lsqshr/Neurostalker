@@ -470,7 +470,7 @@ LabelImagePointer DeriveForegroundLabelImage(const ImagePointer I, const int thr
     LabelImageType::IndexType idx;
     idx.Fill(0);
     LabelImageType::RegionType region;
-    region.SetSize( size );
+    region.SetSize(size);
     region.SetIndex(idx);
     pBinaryImage->SetRegions(region);
     pBinaryImage->Allocate();
