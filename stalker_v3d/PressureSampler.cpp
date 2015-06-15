@@ -509,7 +509,7 @@ void PressureSampler::RandSample()
 float PressureSampler::GetRadius()
 {
     // TODO; 
- /*   PRECISION thresh = 30;
+    PRECISION thresh = 30;
         // Save the coordinates of the binary labels to csv
     int M = this->OriginalImg->GetLargestPossibleRegion().GetSize()[0];
     int N = this->OriginalImg->GetLargestPossibleRegion().GetSize()[1];
@@ -529,8 +529,11 @@ float PressureSampler::GetRadius()
     int mx = this->x + 0.5;
     int my = this->y + 0.5;
     int mz = this->z + 0.5;
+    binaryidx[0] = mx;
+    binaryidx[1] = my;
+    binaryidx[2] = mz;
+    point = this->OriginalImg->GetPixel(binaryidx);
     V3DLONG x[2], y[2], z[2];
-
     tol_num = bak_num = 0.0;
     V3DLONG sz01 = sz[0] * sz[1];
     for(r = 1; r <= max_r; r++)
@@ -559,9 +562,10 @@ float PressureSampler::GetRadius()
                     for(char b = 0; b < 8; b++)
                     {
                         char ii = b & 0x01, jj = (b >> 1) & 0x01, kk = (b >> 2) & 0x01;
-                        binaryidx[0] = ii;
-                        binaryidx[1] = jj;
-                        binaryidx[2] = kk;
+                        binaryidx[0] =  x[ii];
+                        binaryidx[1] =  y[jj];
+                        binaryidx[2] =  z[kk];
+                        //cout<<"ii: "<<(int) ii<<"jj: "<<(int) jj<<"kk"<<(int) kk<<endl;
                         if(x[ii]<0 || x[ii] >= sz[0] || y[jj]<0 || y[jj] >= sz[1] || z[kk]<0 || z[kk] >= sz[2]) 
                             {
                                 this->radius = r;
@@ -583,7 +587,7 @@ float PressureSampler::GetRadius()
                 }
             }
         }
-    }    */
+    }    
     return this->radius;        
 
 

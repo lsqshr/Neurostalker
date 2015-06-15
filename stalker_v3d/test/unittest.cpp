@@ -542,6 +542,7 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
         sprintf(sphfiletitle, "test/testdata/sphpeak%d.csv", i);
         savepts2csv(xpeak, ypeak, zpeak, sphfiletitle);
     }
+    cout<<"Test Passed"<<endl;
 
     cout<<"Visualise GVF"<<endl;
     int gM = p.GVF->GetLargestPossibleRegion().GetSize()[0];
@@ -579,13 +580,12 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
     cout<<"radius value: "<<radiusvalue<<endl;
     cout<<"== Test Case Passed"<<endl;
 
-/*    cout<<"Test Passed"<<endl;
+    cout<<"Try to make the radius work"<<endl;
         for (int i = 0; i < seedx.size(); i++)
     {
         p.UpdatePosition(seedx[i], seedy[i], seedz[i]);
-        cout<<"See the radius of seed location: "<<p.GetRadius()<<endl;
-    }*/
-    cout<<"Try to make the radius work"<<endl;
+        cout<<"See the radius of seed location: "<<p.radius<<endl;
+    }
 
     //system("matlab -nodesktop -nosplash -r \"run(\'test/plotall.m\')\";");
 }
