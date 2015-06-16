@@ -65,3 +65,14 @@ idx = bimg(:, 1) * max(gvf(:, 2)) * max(gvf(:, 3)) + bimg(:,2) * max(gvf(:, 3)) 
 plot3(bimg(:,1), bimg(:,2), bimg(:,3), 'rh');
 quiver3(gvf(bimg(:,end), 1), gvf(bimg(:,end), 2), gvf(bimg(:, end), 3), gvf(bimg(:,end), 4), gvf(bimg(:,end), 5), gvf(bimg(:,end), 6), 0.5)
 
+
+figure
+hold on
+plot3(bimg(:,1), bimg(:,2), bimg(:,3), 'b.');
+bimg = csvread(fullfile(filepath, 'testdata', 'binaryimg.csv'));
+peakdir = csvread(fullfile(filepath, 'testdata', sprintf('sphpeak%d.csv', nseed-1)));
+for i = 1: nseed
+quiver3(seeds(i, 1), seeds(i, 2), seeds(i, 3), peakdir(i, 1), peakdir(i, 2), peakdir(i, 3), 4);
+end
+hold off
+

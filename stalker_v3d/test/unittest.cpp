@@ -11,6 +11,7 @@
 #include "assert.h"
 #include "utils/matmath.h"
 #include "PressureSampler.h"
+#include "DandelionTracer.h"
 
 using namespace std;
 typedef vector<float> vectype;
@@ -536,9 +537,11 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
         savepts2csv(p.baseth, p.basephi, p.lpressure, sphfiletitle);
 
         // Save the peaks as well
+        p.GetPeakTh();
+        p.GetPeakPhi();
         vectype xpeak(p.peakth.size()), ypeak(p.peakth.size()), zpeak(p.peakth.size());
         vectype rpeak (p.peakth.size(), 1);
-        sph2cart(p.GetPeakTh(), p.GetPeakPhi(), rpeak, &xpeak, &ypeak, &zpeak);
+        sph2cart(p.peakth, p.peakphi, rpeak, &xpeak, &ypeak, &zpeak);
         sprintf(sphfiletitle, "test/testdata/sphpeak%d.csv", i);
         savepts2csv(xpeak, ypeak, zpeak, sphfiletitle);
     }
@@ -600,5 +603,35 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
     savepts2csv(outxhalf, outyhalf, outzhalf, sphfiletitle);
     cout<<"== Test Case Passed"<<endl;
 
+    cout<<"==== Test Case Dandelion Basic data flow"<<endl;
+    Point3D fakepoint;
+    int step = 1;
+        ndir = 1000;
+    float fromth = 0;
+    float fromphi = 0;        
+    for (int i = 0; i < seedx.size(); i++)
+    {
+        PressureSampler p(ndir, 100, OriginalImage, GVF, 10);
+        p.UpdatePosition(seedx[i], seedy[i], seedz[i]);
+        cout<<"Visualising Seed: "<<i<<" -- "<<seedx[i]<<","<<seedy[i]<<","<<seedz[i]<<endl;
+        p.RandSample();
+        p.GetPeakTh();
+        p.GetPeakPhi();
+        fakepoint.x = seedx[i];
+        fakepoint.y = seedy[i];
+        fakepoint.z = seedz[i];
+        fromth = p.peakth[0];
+        fromphi = p.peakphi[0];
+        Dandelion dandelion(p, fakepoint, step, fromth,  fromphi,  wallimg, NULL);
+    }
+    cout<<"== Test Case Passed!!!"<<endl;
+/*
+    cout<<"==== Test Case GetPeakPhi and GetPeakTh"<<endl;
+    p.GetPeakTh();
+    p.GetPeakPhi();
+    cout<<"==== Test Case Passed"<<endl;*/
+
+
     //system("matlab -nodesktop -nosplash -r \"run(\'test/plotall.m\')\";");
 }
+

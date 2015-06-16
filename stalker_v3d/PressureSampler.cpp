@@ -34,7 +34,9 @@ PressureSampler::PressureSampler(int ndir,
 }
 
 
-PressureSampler::~PressureSampler(){
+PressureSampler::~PressureSampler()
+{
+    //cout<<"PressureSampler is removed successfully"<<endl;
 }
 
 
@@ -293,27 +295,6 @@ void PressureSampler::GenSph(){
 
 void PressureSampler::HalfSphere(float inputth, float inputphi, vectype * binaryth, vectype * binaryphi)
 {
-/*    cout<<"output HalfSphere test?"<<endl;
-    int thsize =  this->baseth.size();
-    cout<<"the size of baseth should be the output: "<<thsize<<endl;
-    vector<float>::iterator minth, maxth;  
-    // Find the min and max elements in the vector
-    maxth = max_element((this->baseth).begin(), (this->baseth).end());
-    minth = min_element((this->baseth).begin(), (this->baseth).end());
-    cout<<"the max is: "<<*maxth<<"the min is: "<<*minth<<endl;
-    float lowth = (*maxth + *minth) / 4 + *minth;
-    float highth = (*maxth + *minth) / 4 * 3 + *minth;
-    cout<<"lowth output: "<<lowth<<"highth output: "<<highth<<endl;
-    
-    vector<float>::iterator minphi, maxphi;  
-    // Find the min and max elements in the vector
-    maxphi = max_element((this->basephi).begin(), (this->basephi).end());
-    minphi = min_element((this->basephi).begin(), (this->basephi).end());
-    cout<<"the max is: "<<*maxth<<"the min is: "<<*minth<<endl;
-    float lowphi = (*maxphi + *minphi) / 4 + *minphi;
-    float highphi = (*maxphi + *minphi) / 4 * 3 + *minphi;
-    cout<<"lowphi output: "<<lowphi<<"highphi output: "<<highphi<<endl;*/
-    int counter = 0;
     float curth = 0;
     float curphi = 0;
     for (int i = 0; i < this->baseth.size(); i++)
@@ -324,14 +305,9 @@ void PressureSampler::HalfSphere(float inputth, float inputphi, vectype * binary
                                                 (*binaryth).push_back(curth);
                                                 curphi = inputphi + this->originbasephi[i];
                                                 (*binaryphi).push_back(curphi);
-                                                counter++;
                                             }
 
     }
-    cout<<"binaryphi[100]: "<<(*binaryphi)[100]<<endl;
-    cout<<"test for Loop!"<<counter<<endl;
-    cout<<"test pi: ?"<<M_PI<<endl;
-
 }
 
 
@@ -544,7 +520,7 @@ void PressureSampler::RandSample()
         this->lpressure[i] = this->Moment(cartsampledir, samplex, sampley, samplez);
     }
 
-    this->FindPeaks();
+    //this->FindPeaks();
 }
 
 
@@ -611,7 +587,7 @@ float PressureSampler::GetRadius()
                         //cout<<"ii: "<<(int) ii<<"jj: "<<(int) jj<<"kk"<<(int) kk<<endl;
                         if(x[ii]<0 || x[ii] >= sz[0] || y[jj]<0 || y[jj] >= sz[1] || z[kk]<0 || z[kk] >= sz[2]) 
                             {
-                                this->radius = r;
+                                this->radius = r + 3;
                                 return this->radius;
                             }
                         else
@@ -622,7 +598,7 @@ float PressureSampler::GetRadius()
                             if(point < thresh){bak_num++;}
                             if((bak_num / tol_num) > 0.0001)
                                     {
-                                        this->radius = r;
+                                        this->radius = r + 3;
                                         return this->radius;
                                     }
                         }
@@ -640,11 +616,37 @@ float PressureSampler::GetRadius()
 
 vectype PressureSampler::GetPeakTh()
 {
+    int counter = 0;
+    float minpressure = 100000;
+    float curpressure = 0;
+    for (int i = 0; i < this->lpressure.size(); i++)
+        {
+            curpressure = this->lpressure[i];
+            if (minpressure > curpressure)
+            {
+                minpressure = curpressure;
+                counter = i;
+            }
+        }
+    this->peakth.push_back(this->baseth[counter]);
     return this->peakth;
 }
 
 
 vectype PressureSampler::GetPeakPhi()
 {
+    int counter = 0;
+    float minpressure = 100000;
+    float curpressure = 0;
+    for (int i = 0; i < this->lpressure.size(); i++)
+        {
+            curpressure = this->lpressure[i];
+            if (minpressure > curpressure)
+            {
+                minpressure = curpressure;
+                counter = i;
+            }
+        }
+    this->peakphi.push_back(this->basephi[counter]);
     return this->peakphi;
 }
