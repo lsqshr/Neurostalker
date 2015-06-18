@@ -517,7 +517,9 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
     cout<<"Saving the binary image to test/testdata/binaryimg.csv"<<endl;
     cout<<"== Test Case Passed"<<endl;
 
-    cout<<"Test Case: Visualise Moments in Matlab"<<endl;
+    char sphfiletitle[80];
+
+/*    cout<<"Test Case: Visualise Moments in Matlab"<<endl;
     char sphfiletitle[80];
     p.radius = 5;
     for (int i = 0; i < seedx.size(); i++)
@@ -545,7 +547,7 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
         sprintf(sphfiletitle, "test/testdata/sphpeak%d.csv", i);
         savepts2csv(xpeak, ypeak, zpeak, sphfiletitle);
     }
-    cout<<"Test Passed"<<endl;
+    cout<<"Test Passed"<<endl;*/
 
     cout<<"Visualise GVF"<<endl;
     int gM = p.GVF->GetLargestPossibleRegion().GetSize()[0];
@@ -587,7 +589,7 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
         for (int i = 0; i < seedx.size(); i++)
     {
         p.UpdatePosition(seedx[i], seedy[i], seedz[i]);
-        cout<<"See the radius of seed location: "<<p.radius<<endl;
+        //cout<<"See the radius of seed location: "<<p.radius<<endl;
     }
     cout<<"== Test Case Passed"<<endl;
 
@@ -604,27 +606,47 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
     cout<<"== Test Case Passed"<<endl;
 
     cout<<"==== Test Case Dandelion Basic data flow"<<endl;
-    Point3D fakepoint;
+    //Point3D fakepoint;
     int step = 1;
-        ndir = 1000;
+        ndir = 100;
     float fromth = 0;
-    float fromphi = 0;        
-    for (int i = 0; i < seedx.size(); i++)
-    {
-        PressureSampler p(ndir, 100, OriginalImage, GVF, 10);
-        p.UpdatePosition(seedx[i], seedy[i], seedz[i]);
-        cout<<"Visualising Seed: "<<i<<" -- "<<seedx[i]<<","<<seedy[i]<<","<<seedz[i]<<endl;
-        p.RandSample();
-        p.GetPeakTh();
-        p.GetPeakPhi();
-        fakepoint.x = seedx[i];
-        fakepoint.y = seedy[i];
-        fakepoint.z = seedz[i];
-        fromth = p.peakth[0];
-        fromphi = p.peakphi[0];
-        Dandelion dandelion(p, fakepoint, step, fromth,  fromphi,  wallimg, NULL);
-    }
-    cout<<"== Test Case Passed!!!"<<endl;
+    float fromphi = 0;
+    char mpfiletitle[80];        
+    vectype xpoint, ypoint, zpoint;
+    for (int j = 0; j < seedx.size(); j++)
+        {
+            PressureSampler p(ndir, 100, OriginalImage, GVF, 10);
+            p.UpdatePosition(seedx[j], seedy[j], seedz[j]);
+            cout<<"Visualising Seed: "<<j<<" -- "<<seedx[j]<<","<<seedy[j]<<","<<seedz[j]<<endl;
+            for (int i = 1; i < 10; i++)
+                {
+                        //cout<<"RandSample stage: "<<endl;
+                        p.RandSample();
+                        //cout<<"NextMove stage: "<<endl;
+                        p.NextMove(1.1);
+                        //cout<<"push_back stage: "<<endl;
+                        xpoint.push_back(p.x);
+                        ypoint.push_back(p.y);
+                        zpoint.push_back(p.z);
+                }
+        //fakepoint.x = seedx[i];
+        //fakepoint.y = seedy[i];
+        //fakepoint.z = seedz[i];
+        //Dandelion dandelion(p, fakepoint, step, fromth,  fromphi,  wallimg, NULL);
+        //vector<Dandelion*> newgen = dandelion.walk();
+
+/*        for (int j = 0; j < newgen.size(); j++) 
+        {
+            delete newgen[i];
+        }*/
+        }
+    sprintf(mpfiletitle, "test/testdata/manypoint.csv");
+    savepts2csv(xpoint, ypoint, zpoint, mpfiletitle);
+
+    //ofstream bstream;
+    //bstream.open("test/testdata/binaryimg.csv");
+    
+    cout<<"== Test Case Passed!!"<<endl;
 /*
     cout<<"==== Test Case GetPeakPhi and GetPeakTh"<<endl;
     p.GetPeakTh();

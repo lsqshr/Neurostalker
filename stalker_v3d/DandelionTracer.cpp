@@ -24,7 +24,9 @@ vector<Dandelion*> Dandelion::walk()
     this->sampler.UpdatePosition(this->position.x, this->position.y, this->position.z);
     this->sampler.RandSample();
     vectype peakth = this->sampler.GetPeakTh();
-    vectype peakphi = this->sampler.GetPeakTh();
+    vectype peakphi = this->sampler.GetPeakPhi();
+    cout<<"peakth size: "<<peakth.size()<<"peakphi size: "<<peakphi.size();
+    cout<<"peakth vaule: "<<peakth[0]<<"peakphi vaule: "<<peakphi[0]<<endl;
     assert(peakth.size() == peakphi.size());
 
     // TODO: Filtering the peaks
@@ -37,6 +39,7 @@ vector<Dandelion*> Dandelion::walk()
     vectype dz (ndir);
     vectype rvec(ndir, this->step);
     sph2cart(peakth, peakphi, rvec, &dx, &dy, &dz);
+    cout<<"dx: "<<dx[0]<<"dy: "<<dy[0]<<"dz: "<<dz[0]<<endl;
 
 
     // Create a new dandelion for new directions, except its coming direction    
@@ -47,6 +50,7 @@ vector<Dandelion*> Dandelion::walk()
     	// Calculate the new position
     	Point3D newposition;
     	// TODO: Hinder by the wall
+        cout<<"rounddx: "<<round(dx[i])<<"rounddy: "<<round(dy[i])<<"rounddz: "<<round(dz[i])<<endl;
     	newposition.x = round(dx[i]) + this->position.x;
      	newposition.y = round(dy[i]) + this->position.y;
     	newposition.z = round(dz[i]) + this->position.z;

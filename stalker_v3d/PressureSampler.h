@@ -41,6 +41,7 @@ public:
     void HalfSphere(float inputth, float inputphi, vectype * binaryth, vectype * binaryphi);
     float GetRadius(); // Calculate the radius at the current position using the raw image
 	void UpdatePosition(float x, float y, float z);
+    void NextMove(float step); //This function just makes robot move one step
 	friend void TestPressureSampler(ImagePointer, GradientImagePointer, LabelImagePointer, PointList3D);
 
 private:

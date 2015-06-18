@@ -356,21 +356,24 @@ vector<GradientPixelType> PressureSampler::GetGradientAtIndex(vector<int> lx, ve
     int M = size[0];
     int N = size[1];
     int Z = size[2];
-
+    //cout<<"M: "<<M<<"N: "<<N<<"Z: "<<Z<<endl;
     vector<GradientPixelType> lvg;
     for (int i = 0; i < lx.size(); i++)
     {
+        //cout<<"i loop stop but why? "<<i<<endl;
         GradientImageType::IndexType idx;
         typedef itk::VectorLinearInterpolateImageFunction<GradientImageType, float >
             GradientInterpolatorType;
         GradientInterpolatorType::Pointer interpolator = GradientInterpolatorType::New();
         interpolator->SetInputImage(this->GVF);
-        idx[0] = constrain(lx[i], 0, M);
-        idx[1] = constrain(ly[i], 0, N);
-        idx[2] = constrain(lz[i], 0, Z);
+        idx[0] = constrain(lx[i], 0, (M - 1));
+        idx[1] = constrain(ly[i], 0, (N - 1));
+        idx[2] = constrain(lz[i], 0, (Z - 1));
+        //cout<<"Still have idx value: idx[0]: "<<idx[0]<<"idx[1]: "<<idx[1]<<"idx[2]"<<idx[2]<<endl;
         GradientPixelType gpixel = interpolator->EvaluateAtIndex(idx);
         lvg.push_back(gpixel);
     }
+    //cout<<"After pixel for loop: "<<endl;
     return lvg; 
 } 
 
@@ -381,6 +384,7 @@ void PressureSampler::UpdatePosition(float x, float y, float z)
     this->y = y; 
     this->z = z;
     this->GetRadius();
+    this->radius = 5;
 }
 
 
@@ -407,39 +411,41 @@ float PressureSampler::Moment(vectype v, vectype xvec, vectype yvec, vectype zve
     unsigned short point;
     float threshold = 30;
 
+    //cout<<"GetGradientAtIndex stage: "<<endl;
     vector<GradientPixelType> lvg = this->GetGradientAtIndex(txvec, tyvec, tzvec);
-
+    //cout<<"Lock problem: "<<endl;
     float testradius = this->density;
     vectype u(3);
     float tempdis = 0;
     float orthfl = 0;
     float orthf = 0;
-    int   walljudge  = 1;
-
+    //int   walljudge  = 1;
+    //cout<<"eucdistance2center stage: "<<endl;
     vectype dis = eucdistance2center(this->x, this->y, this->z, xvec, yvec, zvec);
     assert(dis.size() == xvec.size());
 
+    //cout<<"Before loop"<<endl;
     for(int n=0; n<this->density; n++)
     {
         u[0] = lvg[n][0];
         u[1] = lvg[n][1];
         u[2] = lvg[n][2];
-        binaryidx[0] =  txvec[n]; 
+ /*       binaryidx[0] =  txvec[n]; 
         binaryidx[1] =  tyvec[n];
         binaryidx[2] =  tzvec[n];
-        vecproj(&u, v); // vector projection to u
-        point = this->OriginalImg->GetPixel(binaryidx);
-        if (point < 30)
+ */       vecproj(&u, v); // vector projection to u
+        //point = this->OriginalImg->GetPixel(binaryidx);
+/*        if (point < 30)
             {
                 walljudge = 0; 
-            }
+            }*/
         //cout<<"point output: "<<point;
         orthf = pow(u[0], 2) + pow(u[1], 2)+ pow(u[2], 2);
         orthf = pow(orthf, 0.5);
         //orthfl = orthf * dis[n] * walljudge + orthfl;
         orthfl = orthf + orthfl;
     }
-    //cout<<"work!"<<endl;
+    //cout<<"After loop"<<endl;
     return orthfl / this->density;
 }
 
@@ -508,18 +514,19 @@ void PressureSampler::RandSample()
     vectype xvec(this->ndir), yvec(this->ndir), zvec(this->ndir);
     vectype cartsampledir(3);
     vectype samplex(this->density), sampley(this->density), samplez(this->density);
+    //cout<<"Before sph2cart stage: "<<endl;
     sph2cart(this->baseth, this->basephi, rvec, &xvec, &yvec, &zvec);
-
+    //cout<<"After sph2cart stage: "<<endl;
     for (int i = 0; i < this->ndir; i++)
     {
         cartsampledir[0] = xvec[i];
         cartsampledir[1] = yvec[i];
         cartsampledir[2] = zvec[i];
-
+        //cout<<"FindVoxel2Sample stage: "<<endl;
         this->FindVoxel2Sample(this->baseth[i], this->basephi[i], &samplex, &sampley, &samplez);
+        //cout<<"Moment stage: "<<endl;
         this->lpressure[i] = this->Moment(cartsampledir, samplex, sampley, samplez);
     }
-
     //this->FindPeaks();
 }
 
@@ -587,7 +594,7 @@ float PressureSampler::GetRadius()
                         //cout<<"ii: "<<(int) ii<<"jj: "<<(int) jj<<"kk"<<(int) kk<<endl;
                         if(x[ii]<0 || x[ii] >= sz[0] || y[jj]<0 || y[jj] >= sz[1] || z[kk]<0 || z[kk] >= sz[2]) 
                             {
-                                this->radius = r + 3;
+                                this->radius = r;
                                 return this->radius;
                             }
                         else
@@ -598,7 +605,7 @@ float PressureSampler::GetRadius()
                             if(point < thresh){bak_num++;}
                             if((bak_num / tol_num) > 0.0001)
                                     {
-                                        this->radius = r + 3;
+                                        this->radius = r;
                                         return this->radius;
                                     }
                         }
@@ -649,4 +656,35 @@ vectype PressureSampler::GetPeakPhi()
         }
     this->peakphi.push_back(this->basephi[counter]);
     return this->peakphi;
+}
+
+void PressureSampler::NextMove(float step)
+{
+
+    this->GetPeakPhi();
+    this->GetPeakTh();    
+    int ndir = peakth.size();
+    // Calculate the displacement vectors for cartisian
+    vectype dx (ndir);
+    vectype dy (ndir);
+    vectype dz (ndir);
+    vectype rvec(ndir, step);
+    sph2cart(peakth, peakphi, rvec, &dx, &dy, &dz);
+    this->x = round(dx[0]) + this->x;
+    this->y = round(dy[0]) + this->y;
+    this->z = round(dz[0]) + this->z;
+//    int counter = 0;
+/*    cout<<"round x: "<<round(dx[0])<<"round y: "<<dy[0]<<"round z: "<<dz[0]<<endl;
+    while ((abs(round(dx[0])) < 0.47) && ((abs(round(dy[0])) < 0.47) && ((abs(round(dy[0])) < 0.47))
+    {
+        dx[0] = dx[0] * 1.1;
+        dy[0] = dy[0] * 1.1;
+        dz[0] = dz[0] * 1.1;
+        newx = newx +  round(dx[0]);  
+        newy = newy +  round(dy[0]);  
+        newz = newz +  round(dz[0]);
+        counter++;
+        cout<<"counter number: "<<counter<<endl;  
+    }*/  
+    //cout<<" "<<this->x<<" "<<this->y<<" "<<this->z<<endl;
 }
