@@ -84,11 +84,18 @@ mp = csvread(fullfile(filepath, 'testdata', 'manypoint.csv'));
 plot3(mp(:,1), mp(:,2), mp(:,3), 'g+');
 hold off
 
-figure
 [x,y,z] = sphere();
+figure
 surf(x,y,z)  % sphere centered at origin
 hold on
-surf(1.5*x+3,1.5*y-2,z*1.5)  % sphere centered at (3,-2,0)
-surf(x,y+1,z-3)  % sphere centered at (0,1,-3)
+for i = 1 : size(mp, 1)
+surf(mp(i, 4) * x + mp(i, 1), mp(i, 4) * y + mp(i, 2), mp(i, 4) * z + mp(i, 3))  % sphere centered at (3,-2,0)
+end
 daspect([1 1 1])
 hold off
+
+
+addpath(genpath('/home/donghao/Downloads/TREES1.15'))
+figure
+tree = MST_tree (1, [mp(50, 1); mp(:, 1)], [mp(50, 2); mp(:, 2)], [mp(50, 3); mp(:, 3)], .5, 50, [], [], 'none');
+plot_tree(tree)

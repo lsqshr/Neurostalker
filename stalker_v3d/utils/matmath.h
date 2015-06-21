@@ -21,6 +21,9 @@ void cart2sph(vectype xvec, vectype yvec, vectype zvec, vectype* thvec, vectype*
 
 void savepts2csv(vectype a, vectype b, vectype c, const char* filename); // Save a list of points to a text file
 
+void savepts2csvfourva(vectype a, vectype b, vectype c, vectype d, const char* filename); // Save a list of points to a text file
+
+
 // Calculate the value of the cosine of the angle between two spherical vectors
 // Larger cosine between these two angles means closer these two angles are
 // Ref: http://math.stackexchange.com/questions/231221/great-arc-distance-between-two-points-on-a-unit-sphere
@@ -37,3 +40,5 @@ void vecproj(vectype * u, const vectype v);
 void vecnorm(vectype * u, const vectype v);
 
 float constrain(float in, float low, float high);
+
+void seedadjust(vectype seedx, vectype seedy, vectype seedz, vectype * adseedx, vectype * adseedy, vectype * adseedz);

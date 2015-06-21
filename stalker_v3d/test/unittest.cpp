@@ -609,44 +609,63 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
     //Point3D fakepoint;
     int step = 1;
         ndir = 100;
-    float fromth = 0;
-    float fromphi = 0;
+    //float fromth = 0;
+    //float fromphi = 0;
     char mpfiletitle[80];        
-    vectype xpoint, ypoint, zpoint;
-    for (int j = 0; j < seedx.size(); j++)
-        {
-            PressureSampler p(ndir, 100, OriginalImage, GVF, 10);
-            p.UpdatePosition(seedx[j], seedy[j], seedz[j]);
+    vectype xpoint, ypoint, zpoint, rpoint;
+    LabelImageType::IndexType wallfilteridx;
+    unsigned short filter;
+    if (seedx.size() < 1000)
+    {
+        cout<<"seedx size: "<<seedx.size()<<endl;
+        for (int j = 0; j < seedx.size(); j++)
+            {
+                PressureSampler p(ndir, 100, OriginalImage, GVF, 10);
+                p.UpdatePosition(seedx[j], seedy[j], seedz[j]);
             cout<<"Visualising Seed: "<<j<<" -- "<<seedx[j]<<","<<seedy[j]<<","<<seedz[j]<<endl;
-            for (int i = 1; i < 10; i++)
-                {
+                for (int i = 1; i < 20; i++)
+                    {
                         //cout<<"RandSample stage: "<<endl;
                         p.RandSample();
                         //cout<<"NextMove stage: "<<endl;
                         p.NextMove(1.1);
                         //cout<<"push_back stage: "<<endl;
-                        xpoint.push_back(p.x);
-                        ypoint.push_back(p.y);
-                        zpoint.push_back(p.z);
-                }
+                        wallfilteridx[0] = int (p.x);
+                        wallfilteridx[1] = int (p.y);
+                        wallfilteridx[2] = int (p.z);
+                        filter = wallimg->GetPixel(wallfilteridx);
+                        if (filter != 0)
+                        {
+                            xpoint.push_back(p.x);
+                            ypoint.push_back(p.y);
+                            zpoint.push_back(p.z);
+                            p.GetRadius();
+                            rpoint.push_back(p.radius);
+                            //cout<<"filter work or not: "<<endl;
+                        }
+                    }
+            }
         //fakepoint.x = seedx[i];
         //fakepoint.y = seedy[i];
         //fakepoint.z = seedz[i];
         //Dandelion dandelion(p, fakepoint, step, fromth,  fromphi,  wallimg, NULL);
         //vector<Dandelion*> newgen = dandelion.walk();
-
-/*        for (int j = 0; j < newgen.size(); j++) 
-        {
-            delete newgen[i];
-        }*/
-        }
-    sprintf(mpfiletitle, "test/testdata/manypoint.csv");
-    savepts2csv(xpoint, ypoint, zpoint, mpfiletitle);
+        sprintf(mpfiletitle, "test/testdata/manypoint.csv");
+        savepts2csvfourva(xpoint, ypoint, zpoint, rpoint, mpfiletitle);
+    }
 
     //ofstream bstream;
     //bstream.open("test/testdata/binaryimg.csv");
     
     cout<<"== Test Case Passed!!"<<endl;
+
+    cout<<"==== Test Case Adjust seed"<<endl;
+    vectype adseedx, adseedy, adseedz;
+    seedadjust(seedx, seedy, seedz, &adseedx, &adseedy, &adseedz);
+    cout<<"== Test Case Passed!!"<<endl;
+
+
+
 /*
     cout<<"==== Test Case GetPeakPhi and GetPeakTh"<<endl;
     p.GetPeakTh();

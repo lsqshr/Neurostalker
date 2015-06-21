@@ -170,6 +170,21 @@ void savepts2csv(vectype a, vectype b, vectype c, const char* filename){
 	f.close();
 }
 
+void savepts2csvfourva(vectype a, vectype b, vectype c, vectype d, const char* filename){
+// Save a list of points to a text file
+// Each point occupies a line
+// Since three coordinates are saved, this function works both for Cartisian and Spherical 
+	ofstream f;
+	f.open(filename);
+	assert(a.size() == b.size() && b.size() == c.size() && c.size() == d.size());
+
+	for (int i = 0; i < a.size(); i++)
+	{
+	   f<<a[i]<<","<<b[i]<<","<<c[i]<<","<<d[i]<<endl;
+	}
+
+	f.close();
+}
 
 vectype eucdistance2center(const PRECISION x, const PRECISION y, const PRECISION z, const vectype lx, const vectype ly, const vectype lz)
 {
@@ -287,4 +302,20 @@ vectype sphveccos(vectype th1, vectype phi1, vectype th2, vectype phi2)
     }
 
     return result;
+}
+
+void seedadjust(vectype seedx, vectype seedy, vectype seedz, vectype * adseedx, vectype * adseedy, vectype * adseedz){
+	//seedadjust is put in math for a reason. the seedadjust can also be used as a approximation to filter
+	//redundant points similar to k-means
+	assert(seedx.size() == seedy.size() && seedy.size() == seedz.size());
+	vectype::iterator xitr, yitr, zitr;
+	int counter = 0;
+	for (xitr = seedx.begin(), 
+		 yitr = seedy.begin(), 
+		 zitr = seedz.begin(); 
+		 xitr != seedx.end();
+		 xitr++, yitr++, zitr++)
+	{
+		cout<<"xitr: "<<round(*xitr)<<"yitr: "<<round(*yitr)<<"zitr: "<<(*zitr)<<endl;
+	}
 }
