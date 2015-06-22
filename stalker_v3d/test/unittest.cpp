@@ -605,24 +605,28 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
     savepts2csv(outxhalf, outyhalf, outzhalf, sphfiletitle);
     cout<<"== Test Case Passed"<<endl;
 
-    cout<<"==== Test Case Dandelion Basic data flow"<<endl;
-    //Point3D fakepoint;
+    cout<<"==== Test Case Adjust seed"<<endl;
+    if (seedx.size() > 1000) 
+        {
+            seedadjust(&seedx, &seedy, &seedz);
+        }
+    cout<<"== Test Case Passed"<<endl;
+
+    cout<<"==== Test Case Dandelion Walk"<<endl;
     int step = 1;
         ndir = 100;
-    //float fromth = 0;
-    //float fromphi = 0;
     char mpfiletitle[80];        
     vectype xpoint, ypoint, zpoint, rpoint;
     LabelImageType::IndexType wallfilteridx;
     unsigned short filter;
     if (seedx.size() < 1000)
     {
-        cout<<"seedx size: "<<seedx.size()<<endl;
+        //cout<<"seedx size: "<<seedx.size()<<endl;
         for (int j = 0; j < seedx.size(); j++)
             {
                 PressureSampler p(ndir, 100, OriginalImage, GVF, 10);
                 p.UpdatePosition(seedx[j], seedy[j], seedz[j]);
-            cout<<"Visualising Seed: "<<j<<" -- "<<seedx[j]<<","<<seedy[j]<<","<<seedz[j]<<endl;
+                //cout<<"Visualising Seed: "<<j<<" -- "<<seedx[j]<<","<<seedy[j]<<","<<seedz[j]<<endl;
                 for (int i = 1; i < 20; i++)
                     {
                         //cout<<"RandSample stage: "<<endl;
@@ -630,9 +634,9 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
                         //cout<<"NextMove stage: "<<endl;
                         p.NextMove(1.1);
                         //cout<<"push_back stage: "<<endl;
-                        wallfilteridx[0] = int (p.x);
-                        wallfilteridx[1] = int (p.y);
-                        wallfilteridx[2] = int (p.z);
+                        wallfilteridx[0] = int (constrain((p.x), 1, M - 1));
+                        wallfilteridx[1] = int (constrain((p.y), 1, N - 1));
+                        wallfilteridx[2] = int (constrain((p.z), 1, Z - 1));
                         filter = wallimg->GetPixel(wallfilteridx);
                         if (filter != 0)
                         {
@@ -645,24 +649,12 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
                         }
                     }
             }
-        //fakepoint.x = seedx[i];
-        //fakepoint.y = seedy[i];
-        //fakepoint.z = seedz[i];
-        //Dandelion dandelion(p, fakepoint, step, fromth,  fromphi,  wallimg, NULL);
-        //vector<Dandelion*> newgen = dandelion.walk();
         sprintf(mpfiletitle, "test/testdata/manypoint.csv");
         savepts2csvfourva(xpoint, ypoint, zpoint, rpoint, mpfiletitle);
     }
+    cout<<"== Test Case Passed"<<endl;
 
-    //ofstream bstream;
-    //bstream.open("test/testdata/binaryimg.csv");
-    
-    cout<<"== Test Case Passed!!"<<endl;
 
-    cout<<"==== Test Case Adjust seed"<<endl;
-    vectype adseedx, adseedy, adseedz;
-    seedadjust(seedx, seedy, seedz, &adseedx, &adseedy, &adseedz);
-    cout<<"== Test Case Passed!!"<<endl;
 
 
 

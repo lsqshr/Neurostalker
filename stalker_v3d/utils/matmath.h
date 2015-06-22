@@ -41,4 +41,4 @@ void vecnorm(vectype * u, const vectype v);
 
 float constrain(float in, float low, float high);
 
-void seedadjust(vectype seedx, vectype seedy, vectype seedz, vectype * adseedx, vectype * adseedy, vectype * adseedz);
+void seedadjust(vectype * seedx, vectype * seedy, vectype * seedz);

@@ -304,18 +304,59 @@ vectype sphveccos(vectype th1, vectype phi1, vectype th2, vectype phi2)
     return result;
 }
 
-void seedadjust(vectype seedx, vectype seedy, vectype seedz, vectype * adseedx, vectype * adseedy, vectype * adseedz){
+void seedadjust(vectype *seedx, vectype *seedy, vectype *seedz){
 	//seedadjust is put in math for a reason. the seedadjust can also be used as a approximation to filter
 	//redundant points similar to k-means
-	assert(seedx.size() == seedy.size() && seedy.size() == seedz.size());
+    vectype adseedx, adseedy, adseedz;
+	assert((*seedx).size() == (*seedy).size() && (*seedy).size() == (*seedz).size());
 	vectype::iterator xitr, yitr, zitr;
 	int counter = 0;
-	for (xitr = seedx.begin(), 
-		 yitr = seedy.begin(), 
-		 zitr = seedz.begin(); 
-		 xitr != seedx.end();
+	bool judge = true;
+	bool curjudge = false;
+	bool xjudge = true;
+	bool yjudge = true;
+	bool zjudge = true;
+	float diffx = 0;
+	float diffy = 0;
+	float diffz = 0;
+	for (xitr = seedx->begin(), 
+		 yitr = seedy->begin(), 
+		 zitr = seedz->begin(); 
+		 xitr != seedx->end();
 		 xitr++, yitr++, zitr++)
 	{
-		cout<<"xitr: "<<round(*xitr)<<"yitr: "<<round(*yitr)<<"zitr: "<<(*zitr)<<endl;
+		judge = true;
+		curjudge = false;
+		counter++;
+		//cout<<"counter: "<<counter<<endl;
+		//cout<<"xitr: "<<round(*xitr)<<"yitr: "<<round(*yitr)<<"zitr: "<<round(*zitr)<<endl;
+		for(int i = 0; i < adseedx.size(); i++)
+		{
+			//cout<<"adseedx value is working: "<<(*adseedx)[i]<<endl;x
+			diffx = abs((*xitr)-adseedx[i]);
+			diffy = abs((*yitr)-adseedy[i]);
+			diffz = abs((*zitr)-adseedz[i]);
+			xjudge = (diffx > 3);
+			yjudge = (diffy > 3);
+			zjudge = (diffz > 3);
+			curjudge = xjudge || yjudge || zjudge; 
+			//cout<<"xdiff: "<<diffx<<"ydiff: "<<diffy<<"zdiff: "<<diffz<<endl;
+			//cout<<"xjudge: "<<xjudge<<"yjudge: "<<yjudge<<"zjudge: "<<zjudge<<"curjudge: "<<curjudge<<endl;
+			judge = judge && curjudge;
+		}
+		if (judge == true)
+		{
+			(adseedx).push_back(round(*xitr));
+			(adseedy).push_back(round(*yitr));
+			(adseedz).push_back(round(*zitr));
+		}
+		//cout<<"adseedx size: "<<adseedx.size()<<endl;
 	}
+	(*seedx).clear();
+	(*seedy).clear();
+	(*seedz).clear();
+	(*seedx) = (adseedx);
+	(*seedy) = (adseedy);
+	(*seedz) = (adseedz);
+
 }

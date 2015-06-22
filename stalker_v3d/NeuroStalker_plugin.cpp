@@ -287,6 +287,33 @@ void reconstruction_func(V3DPluginCallback2 &callback,
 
     //Output
     NeuronTree nt;
+    QList <NeuronSWC> listNeuron;
+    QHash <int, int> hashNeuron;
+    listNeuron.clear();
+    hashNeuron.clear();
+    NeuronSWC S;
+    S.n = 1;
+    S.type = 7;
+    S.x = 1;
+    S.y = 1;
+    S.z = 1;
+    S.r = 1;
+    S.pn = -1;
+    listNeuron.append(S);
+    S.n = 1;
+    S.type = 7;
+    S.x = 3;
+    S.y = 4;
+    S.z = 5;
+    S.r = 1;
+    S.pn = -1;
+    listNeuron.append(S);
+    hashNeuron.insert(S.n, listNeuron.size() - 1);
+    nt.n = -1;
+    nt.on = true;
+    nt.listNeuron = listNeuron;
+    nt.hashNeuron = hashNeuron;
+
     QString swc_name = PARA.inimg_file + "_NeuroStalker.swc";
     nt.name = "NeuroStalker";
     writeSWC_file(swc_name.toStdString().c_str(), nt);
