@@ -15,6 +15,8 @@
 #include "lib/ImageOperation.h"
 #include "test/unittest.h"
 //#include "../../v3d_main/basic_c_fun/basic_memory.cpp"//note: should not include .h file, since they are template functions
+using namespace std;
+typedef vector<float> vectype;
 
 ImageOperation *IM;
 
@@ -273,14 +275,17 @@ void reconstruction_func(V3DPluginCallback2 &callback,
     }
     saveImage("test/testdata/binaryimage.v3draw", binaryimg2uchar, in_sz, V3D_UINT8);
 
+    vectype xpfinal, ypfinal, zpfinal, rfinal, pn, sn;
+
     // ------- Run Unit-Tests
     if (PARA.unittest & 2){
         cout<<"+++++ Running Unit-Tests +++++"<<endl;
         TestMatMath();
-        TestPressureSampler(IM->I, IM->IGVF, binaryimg, IM->SeedPt);
+        TestPressureSampler(IM->I, IM->IGVF, binaryimg, IM->SeedPt, &xpfinal, &ypfinal, &zpfinal, &pn,  &rfinal, &sn);
         cout<<"All Tests Finished!!!!!!! G'Day!!"<<endl;
     }
-
+    cout<<"pn size: "<<pn.size()<<"xpoint size: "<<xpfinal.size()<<"ypoint size: "
+            <<ypfinal.size()<<"zpoint size: "<<zpfinal.size()<<"rpoint size: "<<rfinal.size()<<endl; 
     if (PARA.unittest & 1) {
         // TODO: Run the real tracing
     }
@@ -292,23 +297,18 @@ void reconstruction_func(V3DPluginCallback2 &callback,
     listNeuron.clear();
     hashNeuron.clear();
     NeuronSWC S;
-    S.n = 1;
-    S.type = 7;
-    S.x = 1;
-    S.y = 1;
-    S.z = 1;
-    S.r = 1;
-    S.pn = -1;
-    listNeuron.append(S);
-    S.n = 1;
-    S.type = 7;
-    S.x = 3;
-    S.y = 4;
-    S.z = 5;
-    S.r = 1;
-    S.pn = -1;
-    listNeuron.append(S);
-    hashNeuron.insert(S.n, listNeuron.size() - 1);
+    for (int i = 0; i < ypfinal.size(); i++)
+    {
+        S.n = sn[i];
+        S.type = 7;
+        S.x = xpfinal[i];
+        S.y = ypfinal[i];
+        S.z = zpfinal[i];
+        S.r = rfinal[i];
+        S.pn = pn[i];
+        listNeuron.append(S);
+        hashNeuron.insert(S.n, listNeuron.size() - 1);       
+    }
     nt.n = -1;
     nt.on = true;
     nt.listNeuron = listNeuron;

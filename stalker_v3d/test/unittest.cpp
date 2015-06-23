@@ -15,6 +15,7 @@
 
 using namespace std;
 typedef vector<float> vectype;
+#define INF 1E9
 
 
 int approx_equal(double x, double y)
@@ -231,7 +232,8 @@ void TestMatMath(){
 }
 
 
-void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, LabelImagePointer wallimg, PointList3D seeds)
+void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, LabelImagePointer wallimg,
+ PointList3D seeds, vectype * xpfinal, vectype * ypfinal, vectype * zpfinal, vectype * pn, vectype * rfinal, vectype * sn)
 {
     //Literature Programming? - SQ
     int ndir = 100;
@@ -586,11 +588,11 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
     cout<<"== Test Case Passed"<<endl;
 
     cout<<"==== Test Case Radius"<<endl;
-        for (int i = 0; i < seedx.size(); i++)
-    {
-        p.UpdatePosition(seedx[i], seedy[i], seedz[i]);
-        //cout<<"See the radius of seed location: "<<p.radius<<endl;
-    }
+    for (int i = 0; i < seedx.size(); i++)
+        {
+            p.UpdatePosition(seedx[i], seedy[i], seedz[i]);
+            //cout<<"See the radius of seed location: "<<p.radius<<endl;
+        }
     cout<<"== Test Case Passed"<<endl;
 
     cout<<"==== Test Case HalfSphere"<<endl;
@@ -653,6 +655,80 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
         savepts2csvfourva(xpoint, ypoint, zpoint, rpoint, mpfiletitle);
     }
     cout<<"== Test Case Passed"<<endl;
+
+    cout<<"==== Test Case Minimum Spanning Tree"<<endl;
+    cout<<"xpoint size: "<<xpoint.size()<<endl;
+    int edgesize = xpoint.size();
+    cout<<"edgesize: "<<edgesize<<endl;
+    float** edgemap = new float*[edgesize];
+    for(int i = 0; i < edgesize; i++)
+    {
+        edgemap[i] = new float[edgesize];
+
+    }
+    for (int edgei = 0; edgei < edgesize; edgei++)
+        {
+            for(int edgej = 0; edgej < edgesize; edgej++)
+                {
+                    edgemap[edgei][edgej] = (xpoint[edgei] - xpoint[edgej]) *(xpoint[edgei] - xpoint[edgej]) +
+                    (ypoint[edgei] - ypoint[edgej]) *(ypoint[edgei] - ypoint[edgej]) +
+                    (zpoint[edgei] - zpoint[edgej]) *(zpoint[edgei] - zpoint[edgej]);
+                } 
+
+        }
+    int* pi = new int[edgesize];
+    for(int i = 0; i< edgesize;i++)
+    {
+        pi[i] = 0;
+    }
+    pi[0] = 1;
+    int indexi, indexj;
+    //vectype pn, xpfinal, ypfinal, zpfinal, rfinal;
+    (*pn).push_back(-1);
+    (*xpfinal).push_back(xpoint[0]);
+    (*ypfinal).push_back(ypoint[0]);
+    (*zpfinal).push_back(zpoint[0]);
+    (*rfinal).push_back(rpoint[0]);
+    (*sn).push_back(1);
+    for(int loop = 0; loop<edgesize;loop++)
+        {
+            double min = INF;
+            for(int i = 0; i<edgesize; i++)
+              {
+                if (pi[i] == 1)
+                {
+                    for(int j = 0;j<edgesize; j++)
+                    {
+                        if(pi[j] == 0 && min > edgemap[i][j])
+                        {
+                            min = edgemap[i][j];
+                            indexi = i;
+                            indexj = j;
+                        }
+                    }
+                }
+
+              }
+              if(indexi>=0)
+              {
+                (*pn).push_back(indexi+1);
+                (*xpfinal).push_back(xpoint[indexj]);
+                (*ypfinal).push_back(ypoint[indexj]);
+                (*zpfinal).push_back(zpoint[indexj]);
+                (*rfinal).push_back(rpoint[indexj]);
+                (*sn).push_back(indexj+1);
+              }else
+              {
+                  break;
+              }
+            pi[indexj] = 1;
+            indexi = -1;
+            indexj = -1;
+        }
+    cout<<"edgemap work or not? "<<edgemap[3][4]<<endl;
+/*    cout<<"pn size: "<<(*pn).size()<<"xpoint size: "<<(*xpoint).size()<<"ypoint size: "
+            <<(*ypoint).size()<<"zpoint size: "<<(*zpoint).size()<<"rpoint size: "<<(*rpoint).size()<<endl; */     
+    cout<<"==Test Case Passed"<<endl;
 
 
 
