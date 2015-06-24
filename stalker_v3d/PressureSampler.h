@@ -1,5 +1,6 @@
-#ifndef __VN_IMGPREPROCESS__
-#define __VN_IMGPREPROCESS__
+#pragma once
+#ifndef __PRESSSAMPLER__
+#define __PRESSSAMPLER__
 #include <vector>
 #include "lib/ImageOperation.h"
 #include "lib/PointOperation.h"
@@ -38,18 +39,20 @@ public:
 	vectype GetBasePhi();
 	vectype GetPeakTh();
 	vectype GetPeakPhi();
+    float radius = 0;
+    float x, y, z;// position
     void HalfSphere(float inputth, float inputphi, vectype * binaryth, vectype * binaryphi);
     float GetRadius(); // Calculate the radius at the current position using the raw image
 	void UpdatePosition(float x, float y, float z);
     void NextMove(float step); //This function just makes robot move one step
 	friend void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, LabelImagePointer wallimg,
  PointList3D seeds, vectype * xpfinal, vectype * ypfinal, vectype * zpfinal, vectype * pn, vectype * rfinal, vectype * sn);
+    friend void Trace(ImagePointer OriginalImage, GradientImagePointer GVF, LabelImagePointer wallimg,
+ PointList3D seeds, vectype * xpfinal, vectype * ypfinal, vectype * zpfinal, vectype * pn, vectype * rfinal, vectype * sn);
 
 private:
 	ImagePointer OriginalImg;
 	GradientImagePointer GVF;
-    float radius = 0;
-    float x, y, z;// position
 	int ndir; // Number of directions
     int density; // The density of the sampled points on each sample plane
 	vectype baseth, originbaseth; // The theta values of the base vectors

@@ -744,3 +744,143 @@ void TestPressureSampler(ImagePointer OriginalImage, GradientImagePointer GVF, L
     //system("matlab -nodesktop -nosplash -r \"run(\'test/plotall.m\')\";");
 }
 
+void Trace(ImagePointer OriginalImage, GradientImagePointer GVF, LabelImagePointer wallimg,
+ PointList3D seeds, vectype * xpfinal, vectype * ypfinal, vectype * zpfinal, vectype * pn, vectype * rfinal, vectype * sn)
+{
+
+    int nseed = seeds.GetLength();
+    vectype seedx, seedy, seedz;
+    LabelImageType::IndexType binaryidx;
+    int M = wallimg->GetLargestPossibleRegion().GetSize()[0];
+    int N = wallimg->GetLargestPossibleRegion().GetSize()[1];
+    int Z = wallimg->GetLargestPossibleRegion().GetSize()[2];
+
+    for (int i=0; i<nseed; i++)
+    {
+        if (seeds.Pt[i].x < 0 || seeds.Pt[i].x > M || seeds.Pt[i].x != seeds.Pt[i].x || 
+            seeds.Pt[i].y < 0 || seeds.Pt[i].y > N || seeds.Pt[i].y != seeds.Pt[i].y ||
+            seeds.Pt[i].z < 0 || seeds.Pt[i].z > Z || seeds.Pt[i].z != seeds.Pt[i].z) 
+            continue;
+        binaryidx[0] = (int)seeds.Pt[i].x;
+        binaryidx[1] = (int)seeds.Pt[i].y;
+        binaryidx[2] = (int)seeds.Pt[i].z;
+        unsigned short p = wallimg->GetPixel(binaryidx);
+        if ( p != 0) 
+        {
+            seedx.push_back(seeds.Pt[i].x); 
+            seedy.push_back(seeds.Pt[i].y); 
+            seedz.push_back(seeds.Pt[i].z); 
+        }
+    }
+    if (seedx.size() > 1000) 
+        {
+            seedadjust(&seedx, &seedy, &seedz);
+        }
+    int step = 1;
+    int ndir = 100;
+    char mpfiletitle[80];        
+    vectype xpoint, ypoint, zpoint, rpoint;
+    LabelImageType::IndexType wallfilteridx;
+    unsigned short filter;
+    if (seedx.size() < 2000)
+    {
+        //cout<<"seedx size: "<<seedx.size()<<endl;
+        for (int j = 0; j < seedx.size(); j++)
+            {
+                PressureSampler p(ndir, 100, OriginalImage, GVF, 10);
+                p.UpdatePosition(seedx[j], seedy[j], seedz[j]);
+                //cout<<"Visualising Seed: "<<j<<" -- "<<seedx[j]<<","<<seedy[j]<<","<<seedz[j]<<endl;
+                for (int i = 1; i < 20; i++)
+                    {
+                        //cout<<"RandSample stage: "<<endl;
+                        p.RandSample();
+                        //cout<<"NextMove stage: "<<endl;
+                        p.NextMove(1.1);
+                        //cout<<"push_back stage: "<<endl;
+                        wallfilteridx[0] = int (constrain((p.x), 1, M - 1));
+                        wallfilteridx[1] = int (constrain((p.y), 1, N - 1));
+                        wallfilteridx[2] = int (constrain((p.z), 1, Z - 1));
+                        filter = wallimg->GetPixel(wallfilteridx);
+                        if (filter != 0)
+                        {
+                            xpoint.push_back(p.x);
+                            ypoint.push_back(p.y);
+                            zpoint.push_back(p.z);
+                            p.GetRadius();
+                            rpoint.push_back(p.radius);
+                            //cout<<"filter work or not: "<<endl;
+                        }
+                    }
+            }
+    }
+
+    int edgesize = xpoint.size();
+    float** edgemap = new float*[edgesize];
+    for(int i = 0; i < edgesize; i++)
+    {
+        edgemap[i] = new float[edgesize];
+
+    }
+    for (int edgei = 0; edgei < edgesize; edgei++)
+        {
+            for(int edgej = 0; edgej < edgesize; edgej++)
+                {
+                    edgemap[edgei][edgej] = (xpoint[edgei] - xpoint[edgej]) *(xpoint[edgei] - xpoint[edgej]) +
+                    (ypoint[edgei] - ypoint[edgej]) *(ypoint[edgei] - ypoint[edgej]) +
+                    (zpoint[edgei] - zpoint[edgej]) *(zpoint[edgei] - zpoint[edgej]);
+                } 
+
+        }
+    int* pi = new int[edgesize];
+    for(int i = 0; i< edgesize;i++)
+    {
+        pi[i] = 0;
+    }
+    pi[0] = 1;
+    int indexi, indexj;
+    //vectype pn, xpfinal, ypfinal, zpfinal, rfinal;
+    (*pn).push_back(-1);
+    (*xpfinal).push_back(xpoint[0]);
+    (*ypfinal).push_back(ypoint[0]);
+    (*zpfinal).push_back(zpoint[0]);
+    (*rfinal).push_back(rpoint[0]);
+    (*sn).push_back(1);
+    for(int loop = 0; loop<edgesize;loop++)
+        {
+            double min = INF;
+            for(int i = 0; i<edgesize; i++)
+              {
+                if (pi[i] == 1)
+                {
+                    for(int j = 0;j<edgesize; j++)
+                    {
+                        if(pi[j] == 0 && min > edgemap[i][j])
+                        {
+                            min = edgemap[i][j];
+                            indexi = i;
+                            indexj = j;
+                        }
+                    }
+                }
+
+              }
+              if(indexi>=0)
+              {
+                (*pn).push_back(indexi+1);
+                (*xpfinal).push_back(xpoint[indexj]);
+                (*ypfinal).push_back(ypoint[indexj]);
+                (*zpfinal).push_back(zpoint[indexj]);
+                (*rfinal).push_back(rpoint[indexj]);
+                (*sn).push_back(indexj+1);
+              }else
+              {
+                  break;
+              }
+            pi[indexj] = 1;
+            indexi = -1;
+            indexj = -1;
+        }
+}
+
+
+
