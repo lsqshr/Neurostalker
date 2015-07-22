@@ -27,3 +27,5 @@ stalker_matlab/lib/*
 /stalker_matlab/scripts/train-nn.pbs
 *output.txt
 *.v3draw
+*.v3dpbd
+*.swc
