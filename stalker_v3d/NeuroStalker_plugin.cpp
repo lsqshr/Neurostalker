@@ -36,12 +36,13 @@ struct input_PARA
     int unittest; // 2 : Run Unit-Test; 1: Run Tracing; 0: Run Nothing
     int step;
     int stepsize;
+    double threshold;
 };
 
 
 void reconstruction_func(V3DPluginCallback2 &callback, QWidget *parent, input_PARA &PARA, bool bmenu);
 unsigned char * downsample(V3DLONG* in_sz, V3DLONG c, unsigned char* data1d, V3DLONG * downsz);
-unsigned char * crop(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_img_crop[4], vectype * boxlowsize);
+unsigned char * crop(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_img_crop[4], vectype * boxlowsize, double threshold);
 LabelImagePointer DeriveForegroundLabelImage(const ImagePointer I, const int threshold);
 void TraceReal(ImagePointer OriginalImage, GradientImagePointer GVF, LabelImagePointer wallimg,
  PointList3D seeds, vectype * xpfinal, vectype * ypfinal, vectype * zpfinal, vectype * pn, vectype * rfinal, vectype * sn,
@@ -72,6 +73,7 @@ void NeuroStalker::domenu(const QString &menu_name, V3DPluginCallback2 &callback
         PARA.unittest = 1;
         PARA.step = 5;
         PARA.stepsize = 5;
+        PARA.threshold = 30;
         cout<<"PARA.channel: "<<PARA.channel<<"PARA.preprocessing: "<<PARA.preprocessing<<"PARA.unittest"
             <<PARA.unittest<<endl;
         reconstruction_func(callback,parent,PARA,bmenu);
@@ -114,6 +116,7 @@ bool NeuroStalker::dofunc(const QString & func_name,
         PARA.unittest = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
         PARA.step = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
         PARA.stepsize = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
+        PARA.threshold = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
         cout<<"Input step test: "<<PARA.step<<endl;
         reconstruction_func(callback,parent,PARA,bmenu);
     }
@@ -231,7 +234,7 @@ void reconstruction_func(V3DPluginCallback2 &callback,
     {
         cout<<"=============== Cropping the image ==============="<<endl;
         V3DLONG sz_img_crop[4];
-        unsigned char *p_img8u_crop = crop(in_sz, data1d, sz_img_crop, &boxlowsize);
+        unsigned char *p_img8u_crop = crop(in_sz, data1d, sz_img_crop, &boxlowsize, PARA.threshold);
         cout<<"boxlowsize: "<<boxlowsize[0]<<"boxlowsize: "<<boxlowsize[1]<<"boxlowsize: "<<boxlowsize[2]<<endl;    
         //cout<<"Saving cropped image to downsample.v3draw"<<endl;
         //saveImage("test/cropoutside.v3draw", p_img8u_crop, sz_img_crop, V3D_UINT8);
@@ -336,7 +339,7 @@ void reconstruction_func(V3DPluginCallback2 &callback,
     // Get the Binary Image
     //replace simple threshold by adaptive thresholding
     //LabelImagePointer binaryimg = DeriveForegroundLabelImage(IM->I, ForegroundThreshold);
-    LabelImagePointer binaryimg = DeriveForegroundLabelImage(IM->I, testthreshold);
+    LabelImagePointer binaryimg = DeriveForegroundLabelImage(IM->I, (int) PARA.threshold);
 
     // Save the binary img to visualise the segmentation
     unsigned short int * binaryimgbuffer =  binaryimg->GetBufferPointer();
@@ -492,7 +495,7 @@ unsigned char * downsample(V3DLONG *in_sz,
 }
 
 
-unsigned char * crop(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_img_crop[4], vectype * boxlowsize)
+unsigned char * crop(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_img_crop[4], vectype * boxlowsize, double threshold)
 {    
     //Otsu threshold to deal with different types of images
     double histogram[256];
@@ -510,7 +513,7 @@ unsigned char * crop(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_i
     float maxbetweenvariance=0;//max between group variance
     double sum=0;//sum of all histogram values to calculate the mean grey level value of the imagem values before threshholding
     int pixelvalue=0;//value of a pixel
-    float optimizedthresh=0;//optimized threshhold, at the end of otsu's algorithm this will be the thresshold with the max between group vairance
+    float optimizedthresh=0;//optimized threshold, at the end of otsu's algorithm this will be the threshold with the max between group vairance
     //find bounding box
     unsigned char ***p_img8u_3d = 0;
     float maxintensity = 0;
@@ -609,7 +612,7 @@ unsigned char * crop(const V3DLONG in_sz[4], unsigned char *data1d, V3DLONG sz_i
         for(V3DLONG Y=0;Y<in_sz[1];Y++)
             for(V3DLONG Z=0;Z<in_sz[2];Z++)
             {
-                if( p_img8u_3d[Z][Y][X] > optimizedthresh)
+                if( p_img8u_3d[Z][Y][X] > threshold)
                 {
                     if(l_boundbox_min[0] > X) l_boundbox_min[0] = X;    if(l_boundbox_max[0] < X) l_boundbox_max[0] = X;
                     if(l_boundbox_min[1] > Y) l_boundbox_min[1] = Y;    if(l_boundbox_max[1] < Y) l_boundbox_max[1] = Y;
